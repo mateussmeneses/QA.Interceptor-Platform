@@ -3,12 +3,16 @@ import type { InterceptedRequest, Rule } from "../../../packages/shared-types/sr
 
 const CAPTURED_REQUESTS_KEY = "capturedRequests";
 const RULES_KEY = "rules";
+const RULE_VALIDATION_KEY = "ruleValidation";
 const MAX_CAPTURED_REQUESTS = 100;
 const DYNAMIC_RULE_ID_BASE = 1;
 
 let syncDynamicRulesInFlight: Promise<void> = Promise.resolve();
 
 type CapturedRequest = InterceptedRequest & {
+  captureSource: "network" | "mock";
+  resourceType?: string;
+  tabId?: number;
   startedAtMs: number;
   matchedRules: MatchedRule[];
   response?: CapturedResponse;
@@ -32,14 +36,66 @@ type RewriteHeaderPayload = {
   }>;
 };
 
+type RedirectPayload = {
+  redirectTo: string;
+};
+
+type MockAppliedPayload = {
+  requestId: string;
+  method: string;
+  url: string;
+  timestamp: string;
+  status: number;
+  durationMs: number;
+  matchedRules: MatchedRule[];
+};
+
+type RuleValidation = {
+  timestamp: string;
+  passed: boolean;
+  checks: Array<{
+    name: string;
+    passed: boolean;
+    details: string;
+  }>;
+};
+
 const DEFAULT_RULES: Rule[] = [
+  {
+    id: "mk-001",
+    name: "MK001 Mock static users response",
+    type: "mock-response",
+    enabled: true,
+    priority: 0,
+    createdAt: "2026-06-09T00:00:00.000Z",
+    condition: {
+      urlContains: "/api/users"
+    },
+    payload: {
+      body: '{"source":"qa-interceptor","users":[{"id":1,"name":"QA Mock User"}]}'
+    }
+  },
+  {
+    id: "mk-002",
+    name: "MK002 Override status for users mock",
+    type: "mock-status",
+    enabled: true,
+    priority: 1,
+    createdAt: "2026-06-09T00:00:01.000Z",
+    condition: {
+      urlContains: "/api/users"
+    },
+    payload: {
+      status: 202
+    }
+  },
   {
     id: "rw-001",
     name: "RW001 Rewrite /api to /qa-api",
     type: "rewrite-url",
     enabled: true,
-    priority: 1,
-    createdAt: "2026-06-09T00:00:00.000Z",
+    priority: 10,
+    createdAt: "2026-06-09T00:00:10.000Z",
     condition: {
       urlContains: "/api"
     },
@@ -52,8 +108,8 @@ const DEFAULT_RULES: Rule[] = [
     name: "RW002 Set x-qa-interceptor header",
     type: "rewrite-header",
     enabled: true,
-    priority: 2,
-    createdAt: "2026-06-09T00:01:00.000Z",
+    priority: 11,
+    createdAt: "2026-06-09T00:00:11.000Z",
     condition: {
       urlContains: "/api"
     },
@@ -68,17 +124,43 @@ const DEFAULT_RULES: Rule[] = [
     }
   },
   {
-    id: "rule-admin-disabled",
-    name: "Disabled admin request matcher",
+    id: "ns-001",
+    name: "NS001 Block tracking calls",
+    type: "block",
+    enabled: false,
+    priority: 90,
+    createdAt: "2026-06-09T00:00:55.000Z",
+    condition: {
+      urlContains: "/tracking"
+    },
+    payload: {}
+  },
+  {
+    id: "ns-003",
+    name: "NS003 Redirect admin route",
     type: "redirect",
     enabled: false,
-    priority: 3,
-    createdAt: "2026-06-09T00:02:00.000Z",
+    priority: 91,
+    createdAt: "2026-06-09T00:00:56.000Z",
     condition: {
       urlContains: "/admin"
     },
     payload: {
-      note: "Disabled rule kept for enabled-state coverage"
+      redirectTo: "https://example.com/qa-admin"
+    }
+  },
+  {
+    id: "ns-002",
+    name: "NS002 Delay checkout calls",
+    type: "delay",
+    enabled: false,
+    priority: 92,
+    createdAt: "2026-06-09T00:00:57.000Z",
+    condition: {
+      urlContains: "/checkout"
+    },
+    payload: {
+      delayMs: 1200
     }
   }
 ];
@@ -103,6 +185,26 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   void queueSyncDynamicRules();
 });
 
+chrome.runtime.onMessage.addListener((message) => {
+  if (!message || typeof message !== "object") {
+    return;
+  }
+
+  const normalized = message as { type?: string; payload?: unknown };
+
+  if (normalized.type !== "MOCK_APPLIED") {
+    return;
+  }
+
+  const payload = readMockAppliedPayload(normalized.payload);
+
+  if (!payload) {
+    return;
+  }
+
+  void appendMockedRequest(payload);
+});
+
 chrome.webRequest.onBeforeRequest.addListener(
   (details) => {
     void (async () => {
@@ -116,6 +218,9 @@ chrome.webRequest.onBeforeRequest.addListener(
       url: details.url,
       headers: {},
       timestamp: new Date().toISOString(),
+      captureSource: "network" as const,
+      resourceType: details.type,
+      tabId: details.tabId,
       startedAtMs: details.timeStamp,
       matchedRules: []
     };
@@ -216,11 +321,77 @@ const syncDynamicRules = async () => {
   const rules = await loadRules();
   const nextDynamicRules = dedupeDynamicRuleIds(buildDynamicRules(rules));
   const existingDynamicRules = await chrome.declarativeNetRequest.getDynamicRules();
+  const validation = buildRuleValidation(rules, nextDynamicRules);
 
   await chrome.declarativeNetRequest.updateDynamicRules({
     removeRuleIds: existingDynamicRules.map((rule) => rule.id),
     addRules: nextDynamicRules
   });
+
+  await chrome.storage.local.set({
+    [RULE_VALIDATION_KEY]: validation
+  });
+};
+
+const buildRuleValidation = (
+  rules: Rule[],
+  dynamicRules: chrome.declarativeNetRequest.Rule[]
+): RuleValidation => {
+  const enabledRewriteRules = rules.filter(
+    (rule) => rule.enabled && (rule.type === "rewrite-url" || rule.type === "rewrite-header")
+  );
+  const enabledMockRules = rules.filter(
+    (rule) => rule.enabled && (rule.type === "mock-response" || rule.type === "mock-status")
+  );
+  const enabledDelayRules = rules.filter((rule) => rule.enabled && rule.type === "delay");
+
+  const checks: RuleValidation["checks"] = [
+    {
+      name: "rewrite-rules-enabled",
+      passed: enabledRewriteRules.length > 0,
+      details:
+        enabledRewriteRules.length > 0
+          ? `${enabledRewriteRules.length} rewrite rule(s) enabled`
+          : "No rewrite rules enabled"
+    },
+    {
+      name: "mock-rules-enabled",
+      passed: enabledMockRules.length > 0,
+      details:
+        enabledMockRules.length > 0
+          ? `${enabledMockRules.length} mock rule(s) enabled`
+          : "No mock rules enabled"
+    },
+    {
+      name: "delay-rules-enabled",
+      passed: enabledDelayRules.length > 0,
+      details:
+        enabledDelayRules.length > 0
+          ? `${enabledDelayRules.length} delay rule(s) enabled`
+          : "No delay rules enabled"
+    },
+    {
+      name: "dnr-supported-actions-only",
+      passed: dynamicRules.every(
+        (rule) =>
+          rule.action.type === "redirect" ||
+          rule.action.type === "modifyHeaders" ||
+          rule.action.type === "block"
+      ),
+      details: "DNR updates include only supported actions (redirect/modifyHeaders/block)"
+    },
+    {
+      name: "dynamic-rule-id-unique",
+      passed: new Set(dynamicRules.map((rule) => rule.id)).size === dynamicRules.length,
+      details: "Dynamic rules applied without duplicate IDs"
+    }
+  ];
+
+  return {
+    timestamp: new Date().toISOString(),
+    passed: checks.every((check) => check.passed),
+    checks
+  };
 };
 
 const dedupeDynamicRuleIds = (
@@ -241,6 +412,35 @@ const dedupeDynamicRuleIds = (
       ...rule,
       id: nextId
     };
+  });
+};
+
+const appendMockedRequest = async (payload: MockAppliedPayload) => {
+  const stored = await chrome.storage.local.get(CAPTURED_REQUESTS_KEY);
+  const existing = readCapturedRequests(stored[CAPTURED_REQUESTS_KEY]);
+
+  const mockedRequest: CapturedRequest = {
+    id: payload.requestId,
+    method: payload.method as InterceptedRequest["method"],
+    url: payload.url,
+    headers: {
+      "x-qa-interceptor": "mocked"
+    },
+    timestamp: payload.timestamp,
+    captureSource: "mock",
+    resourceType: "xmlhttprequest",
+    tabId: -1,
+    startedAtMs: Date.parse(payload.timestamp),
+    matchedRules: payload.matchedRules,
+    response: {
+      status: payload.status,
+      durationMs: payload.durationMs,
+      timestamp: payload.timestamp
+    }
+  };
+
+  await chrome.storage.local.set({
+    [CAPTURED_REQUESTS_KEY]: [mockedRequest, ...existing].slice(0, MAX_CAPTURED_REQUESTS)
   });
 };
 
@@ -316,6 +516,35 @@ const toDynamicRule = (rule: Rule): Omit<chrome.declarativeNetRequest.Rule, "id"
     };
   }
 
+  if (rule.type === "redirect") {
+    const payload = readRedirectPayload(rule.payload);
+
+    if (!payload) {
+      return null;
+    }
+
+    return {
+      priority: toDynamicPriority(rule.priority),
+      action: {
+        type: "redirect",
+        redirect: {
+          url: payload.redirectTo
+        }
+      },
+      condition: commonCondition
+    };
+  }
+
+  if (rule.type === "block") {
+    return {
+      priority: toDynamicPriority(rule.priority),
+      action: {
+        type: "block"
+      },
+      condition: commonCondition
+    };
+  }
+
   return null;
 };
 
@@ -362,6 +591,28 @@ const readRewriteHeaderPayload = (payload: Rule["payload"]): RewriteHeaderPayloa
   };
 };
 
+const readRedirectPayload = (payload: Rule["payload"]): RedirectPayload | null => {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  const candidate = payload as Record<string, unknown>;
+
+  if (typeof candidate.redirectTo !== "string") {
+    return null;
+  }
+
+  try {
+    new URL(candidate.redirectTo);
+  } catch {
+    return null;
+  }
+
+  return {
+    redirectTo: candidate.redirectTo
+  };
+};
+
 const isRewriteHeaderOperation = (
   value: unknown
 ): value is RewriteHeaderPayload["operations"][number] => {
@@ -384,6 +635,38 @@ const isRewriteHeaderOperation = (
   }
 
   return true;
+};
+
+const readMockAppliedPayload = (value: unknown): MockAppliedPayload | null => {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  if (
+    typeof candidate.requestId !== "string" ||
+    typeof candidate.method !== "string" ||
+    typeof candidate.url !== "string" ||
+    typeof candidate.timestamp !== "string" ||
+    typeof candidate.status !== "number" ||
+    typeof candidate.durationMs !== "number" ||
+    !Array.isArray(candidate.matchedRules)
+  ) {
+    return null;
+  }
+
+  const matchedRules = candidate.matchedRules.filter(isMatchedRule);
+
+  return {
+    requestId: candidate.requestId,
+    method: candidate.method,
+    url: candidate.url,
+    timestamp: candidate.timestamp,
+    status: candidate.status,
+    durationMs: candidate.durationMs,
+    matchedRules
+  };
 };
 
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

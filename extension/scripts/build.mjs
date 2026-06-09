@@ -22,6 +22,14 @@ const tasks = [
   {
     entryPoints: [path.join(rootDir, "src", "sidepanel", "main.ts")],
     outfile: path.join(distDir, "sidepanel.js")
+  },
+  {
+    entryPoints: [path.join(rootDir, "src", "content", "injector.ts")],
+    outfile: path.join(distDir, "content-injector.js")
+  },
+  {
+    entryPoints: [path.join(rootDir, "src", "content", "mock-bridge.ts")],
+    outfile: path.join(distDir, "mock-bridge.js")
   }
 ];
 

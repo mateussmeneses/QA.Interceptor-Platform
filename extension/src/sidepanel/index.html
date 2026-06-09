@@ -7,34 +7,606 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="panel">
-      <header class="panel-header">
-        <h1>QA.Interceptor</h1>
-        <p>Traffic inspection shell for MVP.</p>
-      </header>
-
-      <section class="rules-section" aria-label="rules list">
-        <div class="section-head">
-          <div>
-            <h2>Rules</h2>
-            <p id="rules-stats">0 enabled / 0 total</p>
-          </div>
+    <main class="app-shell">
+      <aside class="app-sidebar" aria-label="main navigation">
+        <div class="brand-block">
+          <h1>QA.Interceptor</h1>
+          <p>Frontend Preview</p>
         </div>
-        <ul id="rules-list">
-          <li class="placeholder">No rules configured yet.</li>
-        </ul>
-      </section>
 
-      <section class="traffic-list" aria-label="traffic list">
-        <div class="section-head">
+        <nav class="nav-stack">
+          <button class="nav-item active" type="button" data-view="rules">Rules</button>
+          <button class="nav-item" type="button" data-view="network">Network</button>
+          <button class="nav-item" type="button" data-view="mocks">Mocks</button>
+          <button class="nav-item" type="button" data-view="history">History</button>
+          <button class="nav-item" type="button" data-view="settings">Settings</button>
+        </nav>
+
+        <p class="sidebar-hint">Actions tagged as Preview are not wired yet.</p>
+      </aside>
+
+      <section class="workspace">
+        <header class="workspace-header">
           <div>
-            <h2>Captured Requests</h2>
-            <p>Matched rules are shown on each request.</p>
+            <h2 id="workspace-title">Rules Workspace</h2>
+            <p id="workspace-subtitle">Requestly-inspired shell with live data widgets.</p>
           </div>
-        </div>
-        <ul id="request-list">
-          <li class="placeholder">No traffic captured yet.</li>
-        </ul>
+          <span class="pill">UI First</span>
+        </header>
+
+        <section class="view-panel" data-panel="rules">
+          <section class="rules-workspace" aria-label="rules management">
+            <section class="rules-section" aria-label="rules list">
+              <div class="section-head">
+                <div>
+                  <h3>Rules</h3>
+                  <p id="rules-stats">0 enabled / 0 total</p>
+                </div>
+              </div>
+
+              <div class="rules-toolbar" aria-label="rules filters">
+                <label class="field-inline" for="rules-search">
+                  <span>Search</span>
+                  <input id="rules-search" type="search" placeholder="Name, URL, method" />
+                </label>
+
+                <label class="field-inline" for="rules-type-filter">
+                  <span>Type</span>
+                  <select id="rules-type-filter">
+                    <option value="all">All types</option>
+                    <option value="rewrite-url">Rewrite URL</option>
+                    <option value="rewrite-header">Rewrite Header</option>
+                    <option value="block">Block</option>
+                    <option value="redirect">Redirect</option>
+                    <option value="delay">Delay</option>
+                    <option value="mock-response">Mock Response</option>
+                    <option value="mock-status">Mock Status</option>
+                  </select>
+                </label>
+
+                <label class="field-inline" for="rules-status-filter">
+                  <span>Status</span>
+                  <select id="rules-status-filter">
+                    <option value="all">All</option>
+                    <option value="enabled">Enabled</option>
+                    <option value="disabled">Disabled</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="rules-actions-row" aria-label="rules actions">
+                <button id="rules-create-button" type="button" class="action-btn primary">Create Rule</button>
+                <button type="button" class="action-btn preview">Import (Preview)</button>
+                <button type="button" class="action-btn preview">Export (Preview)</button>
+              </div>
+
+              <div id="rules-validation" class="rules-validation" aria-live="polite"></div>
+
+              <div id="rules-empty-state" class="placeholder hidden">
+                No rules match current filters.
+              </div>
+
+              <div id="rules-grouped-list" class="rules-grouped-list"></div>
+            </section>
+
+            <aside class="rule-editor" aria-label="rule editor">
+              <div class="section-head">
+                <div>
+                  <h3>Rule Editor</h3>
+                  <p id="rule-editor-caption">Select a rule to preview and edit fields.</p>
+                </div>
+                <span class="pill preview">Preview</span>
+              </div>
+
+              <form id="rule-editor-form" class="editor-form">
+                <label class="field-block" for="editor-rule-name">
+                  <span>Name</span>
+                  <input id="editor-rule-name" name="name" type="text" />
+                </label>
+
+                <div class="editor-grid">
+                  <label class="field-block" for="editor-rule-type">
+                    <span>Type</span>
+                    <select id="editor-rule-type" name="type" disabled>
+                      <option value="rewrite-url">rewrite-url</option>
+                      <option value="rewrite-header">rewrite-header</option>
+                      <option value="block">block</option>
+                      <option value="redirect">redirect</option>
+                      <option value="delay">delay</option>
+                      <option value="mock-response">mock-response</option>
+                      <option value="mock-status">mock-status</option>
+                    </select>
+                  </label>
+
+                  <label class="field-block" for="editor-rule-priority">
+                    <span>Priority</span>
+                    <input id="editor-rule-priority" name="priority" type="number" min="1" step="1" />
+                  </label>
+                </div>
+
+                <div class="editor-grid">
+                  <label class="field-block" for="editor-rule-method">
+                    <span>Method</span>
+                    <select id="editor-rule-method" name="method">
+                      <option value="">Any</option>
+                      <option value="GET">GET</option>
+                      <option value="POST">POST</option>
+                      <option value="PUT">PUT</option>
+                      <option value="PATCH">PATCH</option>
+                      <option value="DELETE">DELETE</option>
+                    </select>
+                  </label>
+
+                  <label class="field-block" for="editor-rule-enabled">
+                    <span>Enabled</span>
+                    <select id="editor-rule-enabled" name="enabled">
+                      <option value="true">Enabled</option>
+                      <option value="false">Disabled</option>
+                    </select>
+                  </label>
+                </div>
+
+                <label class="field-block" for="editor-rule-url">
+                  <span>URL contains</span>
+                  <input id="editor-rule-url" name="urlContains" type="text" placeholder="/api/orders" />
+                </label>
+
+                <label class="field-block" for="editor-rule-payload">
+                  <span>Payload JSON</span>
+                  <textarea
+                    id="editor-rule-payload"
+                    name="payload"
+                    rows="8"
+                    spellcheck="false"
+                    placeholder='{"status": 200, "body": {"ok": true}}'
+                  ></textarea>
+                </label>
+
+                <p id="editor-save-status" class="editor-save-status">Edit fields and click Save Changes.</p>
+
+                <div class="editor-actions">
+                  <button id="editor-save-button" type="submit" class="action-btn primary">Save Changes</button>
+                  <button id="editor-duplicate-button" type="button" class="action-btn">Duplicate</button>
+                  <button id="editor-delete-button" type="button" class="action-btn">Delete</button>
+                </div>
+              </form>
+            </aside>
+          </section>
+
+          <section class="traffic-list" aria-label="traffic list">
+            <div class="section-head">
+              <div>
+                <h3>Captured Requests</h3>
+                <p>Matched rules are shown on each request.</p>
+              </div>
+            </div>
+            <ul id="request-list">
+              <li class="placeholder">No traffic captured yet.</li>
+            </ul>
+          </section>
+        </section>
+
+        <section class="view-panel hidden" data-panel="network">
+          <section class="network-inspector" aria-label="network inspector">
+            <div class="section-head">
+              <div>
+                <h3>Network Inspector</h3>
+                <p>Traffic table, status chips, and request detail timeline preview.</p>
+              </div>
+            </div>
+
+            <div class="network-toolbar" aria-label="network filters">
+              <label class="field-inline" for="network-search">
+                <span>Search URL</span>
+                <input id="network-search" type="search" placeholder="/api/orders" />
+              </label>
+
+              <label class="field-inline" for="network-method-filter">
+                <span>Method</span>
+                <select id="network-method-filter">
+                  <option value="all">All methods</option>
+                  <option value="GET">GET</option>
+                  <option value="POST">POST</option>
+                  <option value="PUT">PUT</option>
+                  <option value="PATCH">PATCH</option>
+                  <option value="DELETE">DELETE</option>
+                </select>
+              </label>
+
+              <label class="field-inline" for="network-status-filter">
+                <span>Status</span>
+                <select id="network-status-filter">
+                  <option value="all">All statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="2xx">2xx</option>
+                  <option value="3xx">3xx</option>
+                  <option value="4xx">4xx</option>
+                  <option value="5xx">5xx</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="network-actions-row" aria-label="network actions">
+              <button type="button" class="action-btn preview">Clear Session (Preview)</button>
+              <button type="button" class="action-btn preview">Export HAR (Preview)</button>
+            </div>
+
+            <div class="network-layout">
+              <section class="network-table-panel" aria-label="network request table">
+                <div class="network-table-head">
+                  <span>Method</span>
+                  <span>URL</span>
+                  <span>Status</span>
+                  <span>Time</span>
+                </div>
+                <ul id="network-request-list" class="network-request-list">
+                  <li class="placeholder">No network requests yet.</li>
+                </ul>
+              </section>
+
+              <aside class="network-detail" aria-label="network detail drawer">
+                <p id="network-detail-empty" class="placeholder">Select a request to inspect details.</p>
+
+                <div id="network-detail-content" class="network-detail-content hidden">
+                  <div class="network-detail-top">
+                    <span id="network-detail-method" class="status-chip">GET</span>
+                    <strong id="network-detail-url">/api/example</strong>
+                  </div>
+
+                  <div class="network-detail-grid">
+                    <div>
+                      <span>Request ID</span>
+                      <strong id="network-detail-id">-</strong>
+                    </div>
+                    <div>
+                      <span>Timestamp</span>
+                      <strong id="network-detail-time">-</strong>
+                    </div>
+                    <div>
+                      <span>Status</span>
+                      <strong id="network-detail-status">Pending</strong>
+                    </div>
+                    <div>
+                      <span>Duration</span>
+                      <strong id="network-detail-duration">-</strong>
+                    </div>
+                    <div>
+                      <span>Capture Source</span>
+                      <strong id="network-detail-source">-</strong>
+                    </div>
+                    <div>
+                      <span>Resource Type</span>
+                      <strong id="network-detail-resource">-</strong>
+                    </div>
+                    <div>
+                      <span>Tab ID</span>
+                      <strong id="network-detail-tab">-</strong>
+                    </div>
+                  </div>
+
+                  <div class="network-timeline">
+                    <div class="network-timeline-track">
+                      <span id="network-timeline-bar"></span>
+                    </div>
+                    <small id="network-timeline-caption">No response timing yet.</small>
+                  </div>
+
+                  <section>
+                    <h4>Matched Rules</h4>
+                    <div id="network-detail-rules" class="rule-chips"></div>
+                  </section>
+
+                  <section>
+                    <h4>Preview</h4>
+                    <p class="preview-note">
+                      Headers and payload diff will be connected in integration phase.
+                    </p>
+                  </section>
+                </div>
+              </aside>
+            </div>
+          </section>
+        </section>
+
+        <section class="view-panel hidden" data-panel="mocks">
+          <section class="mock-playground" aria-label="mock playground">
+            <div class="section-head">
+              <div>
+                <h3>Mock Playground</h3>
+                <p>Mock response and status playground for QA scenarios and error simulation.</p>
+              </div>
+            </div>
+
+            <div class="mock-toolbar" aria-label="mock filters">
+              <label class="field-inline" for="mock-search">
+                <span>Search</span>
+                <input id="mock-search" type="search" placeholder="Rule name or URL" />
+              </label>
+
+              <label class="field-inline" for="mock-type-filter">
+                <span>Type</span>
+                <select id="mock-type-filter">
+                  <option value="all">All mock types</option>
+                  <option value="mock-response">Mock Response</option>
+                  <option value="mock-status">Mock Status</option>
+                </select>
+              </label>
+
+              <label class="field-inline" for="mock-status-filter">
+                <span>Status</span>
+                <select id="mock-status-filter">
+                  <option value="all">All</option>
+                  <option value="enabled">Enabled</option>
+                  <option value="disabled">Disabled</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="mock-layout">
+              <section class="mock-list-panel" aria-label="mock list">
+                <div class="mock-actions-row">
+                  <button type="button" class="action-btn preview">Create Mock (Preview)</button>
+                  <button type="button" class="action-btn preview">Import Collection (Preview)</button>
+                </div>
+
+                <div id="mock-empty-state" class="placeholder hidden">No mock rules match current filters.</div>
+                <ul id="mock-rule-list" class="mock-rule-list"></ul>
+              </section>
+
+              <aside class="mock-editor" aria-label="mock editor">
+                <div class="section-head">
+                  <div>
+                    <h4>Mock Editor</h4>
+                    <p id="mock-editor-caption">Select a mock rule to edit payload and status.</p>
+                  </div>
+                  <span class="pill preview">Preview</span>
+                </div>
+
+                <form id="mock-editor-form" class="editor-form">
+                  <div class="editor-grid">
+                    <label class="field-block" for="mock-editor-enabled">
+                      <span>Enabled</span>
+                      <select id="mock-editor-enabled">
+                        <option value="true">Enabled</option>
+                        <option value="false">Disabled</option>
+                      </select>
+                    </label>
+
+                    <label class="field-block" for="mock-editor-method">
+                      <span>Method</span>
+                      <select id="mock-editor-method">
+                        <option value="">Any</option>
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="PATCH">PATCH</option>
+                        <option value="DELETE">DELETE</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <label class="field-block" for="mock-editor-url">
+                    <span>URL contains</span>
+                    <input id="mock-editor-url" type="text" placeholder="/api/orders" />
+                  </label>
+
+                  <div class="editor-grid">
+                    <label class="field-block" for="mock-editor-http-status">
+                      <span>HTTP Status</span>
+                      <input id="mock-editor-http-status" type="number" min="100" max="599" step="1" />
+                    </label>
+
+                    <label class="field-block" for="mock-editor-delay-ms">
+                      <span>Delay (ms)</span>
+                      <input id="mock-editor-delay-ms" type="number" min="0" step="50" placeholder="0" />
+                    </label>
+                  </div>
+
+                  <label class="field-block" for="mock-editor-headers">
+                    <span>Headers JSON</span>
+                    <textarea
+                      id="mock-editor-headers"
+                      rows="4"
+                      spellcheck="false"
+                      placeholder='{"content-type": "application/json"}'
+                    ></textarea>
+                  </label>
+
+                  <label class="field-block" for="mock-editor-body">
+                    <span>Response Body JSON/Text</span>
+                    <textarea
+                      id="mock-editor-body"
+                      rows="7"
+                      spellcheck="false"
+                      placeholder='{"ok": true, "message": "mocked"}'
+                    ></textarea>
+                  </label>
+
+                  <p id="mock-save-status" class="editor-save-status">Edit fields and click Save Mock.</p>
+
+                  <div class="editor-actions">
+                    <button id="mock-save-button" type="submit" class="action-btn primary">Save Mock</button>
+                    <button type="button" class="action-btn preview">Test Scenario (Preview)</button>
+                    <button type="button" class="action-btn preview">Delete Mock (Preview)</button>
+                  </div>
+                </form>
+
+                <section class="mock-hints" aria-label="qa hints">
+                  <h4>QA Hints</h4>
+                  <ul id="mock-qa-hints">
+                    <li>Use 401 + error body to validate auth fallback.</li>
+                    <li>Use 500 + delay to validate retry and loading states.</li>
+                    <li>Use status-only mock to isolate UI handling without payload changes.</li>
+                  </ul>
+                </section>
+              </aside>
+            </div>
+          </section>
+        </section>
+
+        <section class="view-panel hidden" data-panel="history">
+          <section class="history-evidence" aria-label="history and evidence">
+            <div class="section-head">
+              <div>
+                <h3>History & Evidence</h3>
+                <p>Captured sessions, evidence timeline, and export-ready QA snapshot.</p>
+              </div>
+            </div>
+
+            <div class="history-toolbar" aria-label="history filters">
+              <label class="field-inline" for="history-search">
+                <span>Search URL</span>
+                <input id="history-search" type="search" placeholder="/checkout" />
+              </label>
+
+              <label class="field-inline" for="history-outcome-filter">
+                <span>Outcome</span>
+                <select id="history-outcome-filter">
+                  <option value="all">All outcomes</option>
+                  <option value="passed">Passed (2xx/3xx)</option>
+                  <option value="failed">Failed (4xx/5xx)</option>
+                  <option value="pending">Pending</option>
+                </select>
+              </label>
+
+              <label class="field-inline" for="history-sort">
+                <span>Sort</span>
+                <select id="history-sort">
+                  <option value="recent">Most recent first</option>
+                  <option value="oldest">Oldest first</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="history-layout">
+              <section class="history-sessions" aria-label="captured sessions">
+                <div class="history-actions-row">
+                  <button type="button" class="action-btn preview">Start Session (Preview)</button>
+                  <button type="button" class="action-btn preview">Pin Session (Preview)</button>
+                </div>
+
+                <div id="history-empty-state" class="placeholder hidden">No sessions match current filters.</div>
+                <ul id="history-session-list" class="history-session-list"></ul>
+              </section>
+
+              <aside class="history-detail" aria-label="evidence detail">
+                <p id="history-detail-empty" class="placeholder">Select a session to inspect evidence timeline.</p>
+
+                <div id="history-detail-content" class="history-detail-content hidden">
+                  <div class="history-detail-head">
+                    <strong id="history-detail-title">Session</strong>
+                    <span id="history-detail-summary" class="pill muted">0 requests</span>
+                  </div>
+
+                  <div class="history-kpi-grid">
+                    <div>
+                      <span>Requests</span>
+                      <strong id="history-kpi-requests">0</strong>
+                    </div>
+                    <div>
+                      <span>Failures</span>
+                      <strong id="history-kpi-failures">0</strong>
+                    </div>
+                    <div>
+                      <span>Avg Duration</span>
+                      <strong id="history-kpi-duration">0 ms</strong>
+                    </div>
+                    <div>
+                      <span>Matched Rules</span>
+                      <strong id="history-kpi-rules">0</strong>
+                    </div>
+                  </div>
+
+                  <section>
+                    <h4>Timeline</h4>
+                    <ul id="history-timeline-list" class="history-timeline-list"></ul>
+                  </section>
+
+                  <section class="history-export-card">
+                    <h4>Evidence Export</h4>
+                    <p class="preview-note">Generate QA proof package with timeline and assertions.</p>
+                    <div class="editor-actions">
+                      <button type="button" class="action-btn preview">Export JSON (Preview)</button>
+                      <button type="button" class="action-btn preview">Export Markdown (Preview)</button>
+                    </div>
+                  </section>
+                </div>
+              </aside>
+            </div>
+          </section>
+        </section>
+
+        <section class="view-panel hidden" data-panel="settings">
+          <section class="settings-panel" aria-label="settings preview">
+            <div class="section-head">
+              <div>
+                <h3>Settings</h3>
+                <p>Workspace preferences, defaults, and diagnostics controls.</p>
+              </div>
+              <span class="pill preview">Preview</span>
+            </div>
+
+            <div class="settings-grid">
+              <section class="settings-card" aria-label="general preferences">
+                <h4>General Preferences</h4>
+                <label class="field-inline" for="settings-theme">
+                  <span>Theme</span>
+                  <select id="settings-theme">
+                    <option>Light</option>
+                    <option>System (Preview)</option>
+                  </select>
+                </label>
+                <label class="field-inline" for="settings-default-view">
+                  <span>Default View</span>
+                  <select id="settings-default-view">
+                    <option>Rules</option>
+                    <option>Network</option>
+                    <option>Mocks</option>
+                    <option>History</option>
+                  </select>
+                </label>
+                <div class="editor-actions">
+                  <button type="button" class="action-btn preview">Save Preferences (Preview)</button>
+                </div>
+              </section>
+
+              <section class="settings-card" aria-label="rules defaults">
+                <h4>Rules Defaults</h4>
+                <label class="field-inline" for="settings-priority">
+                  <span>Default Priority</span>
+                  <input id="settings-priority" type="number" value="100" min="1" step="1" />
+                </label>
+                <label class="field-inline" for="settings-autovalidate">
+                  <span>Auto Validate Rules</span>
+                  <select id="settings-autovalidate">
+                    <option>Enabled</option>
+                    <option>Disabled</option>
+                  </select>
+                </label>
+                <div class="editor-actions">
+                  <button type="button" class="action-btn preview">Apply Defaults (Preview)</button>
+                </div>
+              </section>
+
+              <section class="settings-card" aria-label="runtime diagnostics">
+                <h4>Runtime Diagnostics</h4>
+                <p class="preview-note">Quick checks and logs for QA troubleshooting workflows.</p>
+                <div class="editor-actions">
+                  <button type="button" class="action-btn preview">Run Health Check (Preview)</button>
+                  <button type="button" class="action-btn preview">Download Logs (Preview)</button>
+                </div>
+              </section>
+
+              <section class="settings-card" aria-label="danger zone">
+                <h4>Danger Zone</h4>
+                <p class="preview-note">Reset local rules and captured evidence in this workspace.</p>
+                <div class="editor-actions">
+                  <button type="button" class="action-btn preview">Reset Workspace (Preview)</button>
+                </div>
+              </section>
+            </div>
+          </section>
+        </section>
       </section>
     </main>
 
