@@ -3,9 +3,10 @@
   "private": true,
   "version": "0.1.0",
   "workspaces": [
-    "extension"
+    "extension",
+    "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w @qa-interceptor/extension"
+    "build": "npm run build -w @qa-interceptor/extension && npm run build -w @qa-interceptor/shared-types && npm run build -w @qa-interceptor/rule-engine"
   }
 }
