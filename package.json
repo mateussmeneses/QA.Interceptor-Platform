@@ -1,0 +1,11 @@
+{
+  "name": "qa-interceptor-platform",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "extension"
+  ],
+  "scripts": {
+    "build": "npm run build -w @qa-interceptor/extension"
+  }
+}
