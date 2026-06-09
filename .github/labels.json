@@ -1,0 +1,52 @@
+[
+  {
+    "name": "type:feature",
+    "color": "1d76db",
+    "description": "New feature implementation"
+  },
+  {
+    "name": "type:tech-debt",
+    "color": "d4c5f9",
+    "description": "Refactoring and maintainability improvements"
+  },
+  {
+    "name": "domain:extension",
+    "color": "0e8a16",
+    "description": "Browser extension scope"
+  },
+  {
+    "name": "domain:rule-engine",
+    "color": "5319e7",
+    "description": "Rule engine scope"
+  },
+  {
+    "name": "domain:ui",
+    "color": "fbca04",
+    "description": "UI and UX scope"
+  },
+  {
+    "name": "priority:P0",
+    "color": "b60205",
+    "description": "Critical priority"
+  },
+  {
+    "name": "priority:P1",
+    "color": "d93f0b",
+    "description": "High priority"
+  },
+  {
+    "name": "priority:P2",
+    "color": "fbca04",
+    "description": "Medium priority"
+  },
+  {
+    "name": "status:blocked",
+    "color": "000000",
+    "description": "Blocked by dependency"
+  },
+  {
+    "name": "qa-workflow",
+    "color": "0052cc",
+    "description": "Direct QA workflow impact"
+  }
+]
