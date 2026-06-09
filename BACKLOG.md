@@ -22,8 +22,8 @@ Use this file as the prioritized execution list. Keep status and acceptance crit
 
 | ID | Item | Priority | Status | Owner | Acceptance Criteria |
 | --- | --- | --- | --- | --- | --- |
-| RW-001 | URL rewrite rule | P1 | Todo | Unassigned | Matching requests can rewrite target URL before dispatch |
-| RW-002 | Header rewrite rule | P1 | Todo | Unassigned | Rule can add, update, and remove request headers |
+| RW-001 | URL rewrite rule | P1 | Done | Copilot | Matching requests can rewrite target URL before dispatch |
+| RW-002 | Header rewrite rule | P1 | Done | Copilot | Rule can add, update, and remove request headers |
 
 ## MVP - Mock Rules
 

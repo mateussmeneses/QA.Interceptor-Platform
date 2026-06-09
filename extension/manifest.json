@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "description": "QA-focused traffic interception and rule testing extension.",
   "permissions": [
+    "declarativeNetRequest",
     "storage",
     "sidePanel",
     "tabs",
