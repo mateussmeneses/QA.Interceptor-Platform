@@ -14,9 +14,9 @@ Use this file as the prioritized execution list. Keep status and acceptance crit
 | MVP-001 | Create extension shell | P0 | Done | Copilot | Manifest V3 extension workspace and build scripts created |
 | MVP-002 | Configure Manifest V3 | P0 | Done | Copilot | Required permissions and entry points are defined in manifest |
 | MVP-003 | Build Side Panel base UI | P0 | Done | Copilot | Side panel opens from action click and renders placeholder list |
-| MVP-004 | Implement request capture | P0 | Todo | Unassigned | HTTP requests are captured and displayed with method, URL, and timestamp |
-| MVP-005 | Implement response capture | P0 | Todo | Unassigned | Responses are linked to requests and show status and timing |
-| MVP-006 | Implement Rule Engine core | P0 | Todo | Unassigned | Rules can be enabled and evaluated in deterministic order |
+| MVP-004 | Implement request capture | P0 | Done | Copilot | HTTP requests are captured and displayed with method, URL, and timestamp |
+| MVP-005 | Implement response capture | P0 | Done | Copilot | Responses are linked to requests and show status and timing |
+| MVP-006 | Implement Rule Engine core | P0 | Done | Copilot | Rules can be enabled and evaluated in deterministic order |
 
 ## MVP - Rewrite Rules
 

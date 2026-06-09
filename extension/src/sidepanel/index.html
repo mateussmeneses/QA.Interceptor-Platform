@@ -13,8 +13,25 @@
         <p>Traffic inspection shell for MVP.</p>
       </header>
 
+      <section class="rules-section" aria-label="rules list">
+        <div class="section-head">
+          <div>
+            <h2>Rules</h2>
+            <p id="rules-stats">0 enabled / 0 total</p>
+          </div>
+        </div>
+        <ul id="rules-list">
+          <li class="placeholder">No rules configured yet.</li>
+        </ul>
+      </section>
+
       <section class="traffic-list" aria-label="traffic list">
-        <h2>Captured Requests</h2>
+        <div class="section-head">
+          <div>
+            <h2>Captured Requests</h2>
+            <p>Matched rules are shown on each request.</p>
+          </div>
+        </div>
         <ul id="request-list">
           <li class="placeholder">No traffic captured yet.</li>
         </ul>

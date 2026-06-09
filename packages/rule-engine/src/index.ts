@@ -2,6 +2,7 @@ import type { InterceptedRequest, Rule } from "@qa-interceptor/shared-types";
 
 export type MatchedRule = {
   ruleId: string;
+  ruleName: Rule["name"];
   type: Rule["type"];
   payload: Rule["payload"];
 };
@@ -21,6 +22,7 @@ export const evaluateRules = (
     .filter((rule) => matchesCondition(rule, request))
     .map((rule) => ({
       ruleId: rule.id,
+      ruleName: rule.name,
       type: rule.type,
       payload: rule.payload
     }));
