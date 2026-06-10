@@ -81,3 +81,20 @@ Goal: prioritize a complete product-like frontend experience now, inspired by th
 - Frontend Track is now the primary roadmap and should be executed top-down.
 - Technical integration items should not block visual/frontend completion.
 - Keep current runtime foundations stable while UI breadth is expanded.
+
+## Execution Queue - Phase 1 Completion
+
+| ID | Item | Priority | Status | Owner | Dependencies | Acceptance Criteria |
+| --- | --- | --- | --- | --- | --- | --- |
+| EXP-001 | Export rules as JSON | P0 | Done | Copilot | INT-001 | User can download all current rules as a valid JSON file |
+| IMP-001 | Import rules from JSON | P0 | Done | Copilot | INT-001 | User can upload a JSON file and rules are merged, skipping duplicate IDs |
+| NET-001 | Clear captured session | P1 | Done | Copilot | INT-002 | Network inspector can be reset to empty without reloading the extension |
+| NET-002 | Export HAR from Network inspector | P1 | Done | Copilot | INT-002 | User can download captured traffic as HAR 1.2 format JSON |
+| TEST-001 | Unit tests for rule-engine | P0 | Done | Copilot | None | 26 tests covering evaluateRules: conditions, priority, shape, edge cases |
+| RW-003 | Query parameter rewrite | P1 | Done | Copilot | RW-001 | Rule can add, replace, and remove query params via DNR queryTransform |
+| RW-004 | Response body rewrite | P1 | Done | Copilot | MK-001-A | Rule can replace response body via fetch bridge while preserving real status |
+| CAP-001 | Response body capture in Network inspector | P1 | Done | Copilot | INT-002 | Mocked and rewritten response bodies shown in Network detail panel |
+| RW-005 | Request body rewrite | P1 | Done | Copilot | RW-001 | Rule can replace outgoing fetch request body before dispatch |
+| HIST-001 | History export JSON | P1 | Done | Copilot | FE-006 | Selected session exported as structured JSON evidence package |
+| HIST-002 | History export Markdown | P1 | Done | Copilot | FE-006 | Selected session exported as readable QA evidence markdown report |
+| NET-003 | Copy request as cURL | P1 | Done | Copilot | INT-002 | Selected network request copied to clipboard as cURL command |

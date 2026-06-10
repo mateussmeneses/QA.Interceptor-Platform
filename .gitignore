@@ -9,6 +9,7 @@ packages/*/dist/
 
 # Test and coverage artifacts
 coverage/
+.nyc_output/
 
 # Logs
 *.log
@@ -20,3 +21,25 @@ pnpm-debug.log*
 # OS/editor local files
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# VS Code workspace settings (keep extensions/launch for team, ignore personal)
+.vscode/settings.json
+.vscode/*.code-workspace
+
+# JetBrains IDEs
+.idea/
+*.iml
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Packed extension artifacts
+*.crx
+*.zip
+*.xpi
+
+# Sourcemap files generated at dist (already under extension/dist/)
+extension/dist/

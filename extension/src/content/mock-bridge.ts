@@ -6,7 +6,7 @@ type RuleCondition = {
 type Rule = {
   id: string;
   name: string;
-  type: "rewrite-url" | "rewrite-header" | "mock-response" | "mock-status" | "redirect" | "block" | "delay";
+  type: "rewrite-url" | "rewrite-header" | "rewrite-query" | "rewrite-response" | "rewrite-request-body" | "mock-response" | "mock-status" | "redirect" | "block" | "delay";
   enabled: boolean;
   priority: number;
   createdAt: string;
@@ -27,6 +27,16 @@ type MockStatusPayload = {
 
 type DelayPayload = {
   delayMs: number;
+};
+
+type RewriteResponsePayload = {
+  body: string;
+  contentType?: string;
+};
+
+type RewriteRequestBodyPayload = {
+  body: string;
+  contentType?: string;
 };
 
 declare global {
@@ -64,13 +74,55 @@ if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
     const requestMethod = resolveMethod(input, init);
     const delayMs = resolveDelayMs(requestUrl, requestMethod);
     const match = findMockMatch(requestUrl, requestMethod);
+    const requestBodyRewrite = findRequestBodyRewrite(requestUrl, requestMethod);
+
+    let effectiveInit = init;
+
+    if (requestBodyRewrite) {
+      const rewrittenHeaders = new Headers(init?.headers);
+      rewrittenHeaders.set("content-type", requestBodyRewrite.contentType ?? "application/json");
+      effectiveInit = { ...init, body: requestBodyRewrite.body, headers: rewrittenHeaders };
+    }
 
     if (delayMs > 0) {
       await sleep(delayMs);
     }
 
     if (!match) {
-      return originalFetch(input, init);
+      const rewriteResponse = findRewriteResponseRule(requestUrl, requestMethod);
+
+      if (!rewriteResponse) {
+        return originalFetch(input, effectiveInit);
+      }
+
+      const realResponse = await originalFetch(input, effectiveInit);
+      const rewriteContentType = rewriteResponse.contentType ?? "application/json";
+
+      window.postMessage(
+        {
+          source: "qa-interceptor-page",
+          type: "MOCK_APPLIED",
+          payload: {
+            requestId: crypto.randomUUID(),
+            method: requestMethod,
+            url: requestUrl,
+            timestamp: new Date().toISOString(),
+            status: realResponse.status,
+            durationMs: delayMs,
+            responseBody: rewriteResponse.body,
+            matchedRules: rewriteResponse.matchedRules
+          }
+        },
+        "*"
+      );
+
+      return new Response(rewriteResponse.body, {
+        status: realResponse.status,
+        headers: {
+          "content-type": rewriteContentType,
+          "x-qa-interceptor": "rewrite-response"
+        }
+      });
     }
 
     const status = match.statusRule?.status ?? match.responseRule?.status ?? 200;
@@ -93,6 +145,7 @@ if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
           timestamp: new Date().toISOString(),
           status,
           durationMs: delayMs,
+          responseBody: body,
           matchedRules: match.matchedRules
         }
       },
@@ -261,6 +314,105 @@ const readDelayPayload = (payload: Record<string, unknown>): DelayPayload | null
 
   return {
     delayMs: normalized
+  };
+};
+
+const findRequestBodyRewrite = (url: string, method: string): RewriteRequestBodyPayload | null => {
+  const enabledRules = rules
+    .filter((rule) => rule.enabled)
+    .sort((a, b) => (a.priority !== b.priority ? a.priority - b.priority : Date.parse(a.createdAt) - Date.parse(b.createdAt)));
+
+  const matched = enabledRules.find(
+    (rule) => rule.type === "rewrite-request-body" && matchesCondition(rule.condition, url, method)
+  );
+
+  if (!matched) {
+    return null;
+  }
+
+  return readRewriteRequestBodyPayload(matched.payload);
+};
+
+const readRewriteRequestBodyPayload = (payload: Record<string, unknown>): RewriteRequestBodyPayload | null => {
+  if (!("body" in payload)) {
+    return null;
+  }
+
+  const rawBody = payload.body;
+
+  if (
+    typeof rawBody !== "string" &&
+    (typeof rawBody !== "object" || rawBody === null || Array.isArray(rawBody))
+  ) {
+    return null;
+  }
+
+  const body = typeof rawBody === "string" ? rawBody : JSON.stringify(rawBody);
+
+  return {
+    body,
+    contentType: typeof payload.contentType === "string"
+      ? payload.contentType
+      : typeof rawBody === "object"
+        ? "application/json"
+        : "text/plain"
+  };
+};
+
+const findRewriteResponseRule = (url: string, method: string) => {
+  const enabledRules = rules
+    .filter((rule) => rule.enabled)
+    .sort((a, b) => (a.priority !== b.priority ? a.priority - b.priority : Date.parse(a.createdAt) - Date.parse(b.createdAt)));
+
+  const matched = enabledRules.filter(
+    (rule) => rule.type === "rewrite-response" && matchesCondition(rule.condition, url, method)
+  );
+
+  if (matched.length === 0) {
+    return null;
+  }
+
+  const ruleEntry = matched[0];
+  const payload = readRewriteResponsePayload(ruleEntry.payload);
+
+  if (!payload) {
+    return null;
+  }
+
+  return {
+    ...payload,
+    matchedRules: matched.map((rule) => ({
+      ruleId: rule.id,
+      ruleName: rule.name,
+      type: rule.type,
+      payload: rule.payload
+    }))
+  };
+};
+
+const readRewriteResponsePayload = (payload: Record<string, unknown>): RewriteResponsePayload | null => {
+  if (!("body" in payload)) {
+    return null;
+  }
+
+  const rawBody = payload.body;
+
+  if (
+    typeof rawBody !== "string" &&
+    (typeof rawBody !== "object" || rawBody === null || Array.isArray(rawBody))
+  ) {
+    return null;
+  }
+
+  const body = typeof rawBody === "string" ? rawBody : JSON.stringify(rawBody);
+
+  return {
+    body,
+    contentType: typeof payload.contentType === "string"
+      ? payload.contentType
+      : typeof rawBody === "object"
+        ? "application/json"
+        : "text/plain"
   };
 };
 

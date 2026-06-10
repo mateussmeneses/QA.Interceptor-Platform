@@ -22,6 +22,7 @@ type CapturedResponse = {
   status: number;
   durationMs: number;
   timestamp: string;
+  body?: string;
 };
 
 type RewriteUrlPayload = {
@@ -36,6 +37,11 @@ type RewriteHeaderPayload = {
   }>;
 };
 
+type RewriteQueryPayload = {
+  addOrReplace?: Array<{ key: string; value: string }>;
+  remove?: string[];
+};
+
 type RedirectPayload = {
   redirectTo: string;
 };
@@ -47,6 +53,7 @@ type MockAppliedPayload = {
   timestamp: string;
   status: number;
   durationMs: number;
+  responseBody?: string;
   matchedRules: MatchedRule[];
 };
 
@@ -435,7 +442,8 @@ const appendMockedRequest = async (payload: MockAppliedPayload) => {
     response: {
       status: payload.status,
       durationMs: payload.durationMs,
-      timestamp: payload.timestamp
+      timestamp: payload.timestamp,
+      ...(payload.responseBody !== undefined ? { body: payload.responseBody } : {})
     }
   };
 
@@ -545,6 +553,39 @@ const toDynamicRule = (rule: Rule): Omit<chrome.declarativeNetRequest.Rule, "id"
     };
   }
 
+  if (rule.type === "rewrite-query") {
+    const payload = readRewriteQueryPayload(rule.payload);
+
+    if (!payload) {
+      return null;
+    }
+
+    const queryTransform: chrome.declarativeNetRequest.QueryTransform = {};
+
+    if (payload.addOrReplace && payload.addOrReplace.length > 0) {
+      queryTransform.addOrReplaceParams = payload.addOrReplace;
+    }
+
+    if (payload.remove && payload.remove.length > 0) {
+      queryTransform.removeParams = payload.remove;
+    }
+
+    if (!queryTransform.addOrReplaceParams && !queryTransform.removeParams) {
+      return null;
+    }
+
+    return {
+      priority: toDynamicPriority(rule.priority),
+      action: {
+        type: "redirect",
+        redirect: {
+          transform: { queryTransform }
+        }
+      },
+      condition: commonCondition
+    };
+  }
+
   return null;
 };
 
@@ -613,6 +654,37 @@ const readRedirectPayload = (payload: Rule["payload"]): RedirectPayload | null =
   };
 };
 
+const readRewriteQueryPayload = (payload: Rule["payload"]): RewriteQueryPayload | null => {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  const candidate = payload as Record<string, unknown>;
+  const result: RewriteQueryPayload = {};
+
+  if (Array.isArray(candidate.addOrReplace)) {
+    result.addOrReplace = candidate.addOrReplace.filter(
+      (item): item is { key: string; value: string } =>
+        Boolean(item) &&
+        typeof item === "object" &&
+        typeof (item as Record<string, unknown>).key === "string" &&
+        typeof (item as Record<string, unknown>).value === "string"
+    );
+  }
+
+  if (Array.isArray(candidate.remove)) {
+    result.remove = candidate.remove.filter(
+      (item): item is string => typeof item === "string"
+    );
+  }
+
+  if (!result.addOrReplace?.length && !result.remove?.length) {
+    return null;
+  }
+
+  return result;
+};
+
 const isRewriteHeaderOperation = (
   value: unknown
 ): value is RewriteHeaderPayload["operations"][number] => {
@@ -665,6 +737,7 @@ const readMockAppliedPayload = (value: unknown): MockAppliedPayload | null => {
     timestamp: candidate.timestamp,
     status: candidate.status,
     durationMs: candidate.durationMs,
+    ...(typeof candidate.responseBody === "string" ? { responseBody: candidate.responseBody } : {}),
     matchedRules
   };
 };

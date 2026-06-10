@@ -56,6 +56,9 @@
                     <option value="all">All types</option>
                     <option value="rewrite-url">Rewrite URL</option>
                     <option value="rewrite-header">Rewrite Header</option>
+                    <option value="rewrite-query">Rewrite Query</option>
+                    <option value="rewrite-response">Rewrite Response</option>
+                    <option value="rewrite-request-body">Rewrite Request Body</option>
                     <option value="block">Block</option>
                     <option value="redirect">Redirect</option>
                     <option value="delay">Delay</option>
@@ -76,8 +79,9 @@
 
               <div class="rules-actions-row" aria-label="rules actions">
                 <button id="rules-create-button" type="button" class="action-btn primary">Create Rule</button>
-                <button type="button" class="action-btn preview">Import (Preview)</button>
-                <button type="button" class="action-btn preview">Export (Preview)</button>
+                <button id="rules-import-button" type="button" class="action-btn">Import JSON</button>
+                <button id="rules-export-button" type="button" class="action-btn">Export JSON</button>
+                <input id="rules-import-input" type="file" accept=".json,application/json" class="hidden" aria-hidden="true" />
               </div>
 
               <div id="rules-validation" class="rules-validation" aria-live="polite"></div>
@@ -110,6 +114,9 @@
                     <select id="editor-rule-type" name="type" disabled>
                       <option value="rewrite-url">rewrite-url</option>
                       <option value="rewrite-header">rewrite-header</option>
+                      <option value="rewrite-query">rewrite-query</option>
+                      <option value="rewrite-response">rewrite-response</option>
+                      <option value="rewrite-request-body">rewrite-request-body</option>
                       <option value="block">block</option>
                       <option value="redirect">redirect</option>
                       <option value="delay">delay</option>
@@ -227,8 +234,8 @@
             </div>
 
             <div class="network-actions-row" aria-label="network actions">
-              <button type="button" class="action-btn preview">Clear Session (Preview)</button>
-              <button type="button" class="action-btn preview">Export HAR (Preview)</button>
+              <button id="network-clear-button" type="button" class="action-btn">Clear Session</button>
+              <button id="network-export-har-button" type="button" class="action-btn">Export HAR</button>
             </div>
 
             <div class="network-layout">
@@ -296,12 +303,14 @@
                     <div id="network-detail-rules" class="rule-chips"></div>
                   </section>
 
-                  <section>
-                    <h4>Preview</h4>
-                    <p class="preview-note">
-                      Headers and payload diff will be connected in integration phase.
-                    </p>
+                  <section id="network-detail-body-section" class="hidden">
+                    <h4>Response Body</h4>
+                    <pre id="network-detail-body" class="response-body-preview"></pre>
                   </section>
+
+                  <div class="network-detail-actions">
+                    <button id="network-copy-curl-button" type="button" class="action-btn">Copy as cURL</button>
+                  </div>
                 </div>
               </aside>
             </div>
@@ -526,8 +535,8 @@
                     <h4>Evidence Export</h4>
                     <p class="preview-note">Generate QA proof package with timeline and assertions.</p>
                     <div class="editor-actions">
-                      <button type="button" class="action-btn preview">Export JSON (Preview)</button>
-                      <button type="button" class="action-btn preview">Export Markdown (Preview)</button>
+                      <button id="history-export-json-button" type="button" class="action-btn">Export JSON</button>
+                      <button id="history-export-md-button" type="button" class="action-btn">Export Markdown</button>
                     </div>
                   </section>
                 </div>

@@ -12,6 +12,9 @@ type ViewMeta = {
 type RuleType =
   | "rewrite-url"
   | "rewrite-header"
+  | "rewrite-query"
+  | "rewrite-response"
+  | "rewrite-request-body"
   | "block"
   | "redirect"
   | "delay"
@@ -76,6 +79,7 @@ type RequestRow = {
     status: number;
     durationMs: number;
     timestamp: string;
+    body?: string;
   };
 };
 
@@ -146,6 +150,11 @@ const networkDetailTabEl = document.getElementById("network-detail-tab");
 const networkDetailRulesEl = document.getElementById("network-detail-rules");
 const networkTimelineBarEl = document.getElementById("network-timeline-bar");
 const networkTimelineCaptionEl = document.getElementById("network-timeline-caption");
+const networkDetailBodySectionEl = document.getElementById("network-detail-body-section");
+const networkDetailBodyEl = document.getElementById("network-detail-body");
+const networkCopyCurlButtonEl = document.getElementById("network-copy-curl-button") as HTMLButtonElement | null;
+const historyExportJsonButtonEl = document.getElementById("history-export-json-button") as HTMLButtonElement | null;
+const historyExportMdButtonEl = document.getElementById("history-export-md-button") as HTMLButtonElement | null;
 const mockRuleListEl = document.getElementById("mock-rule-list");
 const mockEmptyStateEl = document.getElementById("mock-empty-state");
 const mockSearchEl = document.getElementById("mock-search") as HTMLInputElement | null;
@@ -176,6 +185,11 @@ const historyKpiFailuresEl = document.getElementById("history-kpi-failures");
 const historyKpiDurationEl = document.getElementById("history-kpi-duration");
 const historyKpiRulesEl = document.getElementById("history-kpi-rules");
 const historyTimelineListEl = document.getElementById("history-timeline-list");
+const rulesImportButtonEl = document.getElementById("rules-import-button") as HTMLButtonElement | null;
+const rulesExportButtonEl = document.getElementById("rules-export-button") as HTMLButtonElement | null;
+const rulesImportInputEl = document.getElementById("rules-import-input") as HTMLInputElement | null;
+const networkClearButtonEl = document.getElementById("network-clear-button") as HTMLButtonElement | null;
+const networkExportHarButtonEl = document.getElementById("network-export-har-button") as HTMLButtonElement | null;
 
 if (!listEl) {
   throw new Error("Missing request list element");
@@ -223,6 +237,11 @@ if (
   !networkDetailRulesEl ||
   !networkTimelineBarEl ||
   !networkTimelineCaptionEl ||
+  !networkDetailBodySectionEl ||
+  !networkDetailBodyEl ||
+  !networkCopyCurlButtonEl ||
+  !historyExportJsonButtonEl ||
+  !historyExportMdButtonEl ||
   !mockRuleListEl ||
   !mockEmptyStateEl ||
   !mockSearchEl ||
@@ -252,7 +271,12 @@ if (
   !historyKpiFailuresEl ||
   !historyKpiDurationEl ||
   !historyKpiRulesEl ||
-  !historyTimelineListEl
+  !historyTimelineListEl ||
+  !rulesImportButtonEl ||
+  !rulesExportButtonEl ||
+  !rulesImportInputEl ||
+  !networkClearButtonEl ||
+  !networkExportHarButtonEl
 ) {
   throw new Error("Missing sidepanel UI element");
 }
@@ -455,6 +479,66 @@ rulesCreateButtonEl.addEventListener("click", async () => {
   setEditorSaveStatus("New rule created. Update fields and click Save Changes.", "ok");
 });
 
+rulesExportButtonEl.addEventListener("click", () => {
+  if (currentRules.length === 0) {
+    setEditorSaveStatus("No rules to export.", "neutral");
+    return;
+  }
+
+  triggerDownload(
+    `qa-interceptor-rules-${formatDateSlug()}.json`,
+    JSON.stringify(currentRules, null, 2),
+    "application/json"
+  );
+});
+
+rulesImportButtonEl.addEventListener("click", () => {
+  rulesImportInputEl.value = "";
+  rulesImportInputEl.click();
+});
+
+rulesImportInputEl.addEventListener("change", async () => {
+  const file = rulesImportInputEl.files?.[0];
+
+  if (!file) {
+    return;
+  }
+
+  const text = await file.text();
+
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    setEditorSaveStatus("Import failed: file is not valid JSON.", "error");
+    return;
+  }
+
+  if (!Array.isArray(parsed)) {
+    setEditorSaveStatus("Import failed: expected a JSON array of rules.", "error");
+    return;
+  }
+
+  const imported = parsed.filter(isRuleRow);
+
+  if (imported.length === 0) {
+    setEditorSaveStatus("Import failed: no valid rules found in file.", "error");
+    return;
+  }
+
+  const existingIds = new Set(currentRules.map((r) => r.id));
+  const newRules = imported.filter((r) => !existingIds.has(r.id));
+  const nextRules = [...currentRules, ...newRules];
+
+  currentRules = nextRules;
+  await chrome.storage.local.set({ [RULES_KEY]: nextRules });
+  setEditorSaveStatus(
+    `Imported ${newRules.length} rule(s). ${imported.length - newRules.length} skipped (duplicate IDs).`,
+    "ok"
+  );
+});
+
 editorDuplicateButtonEl.addEventListener("click", async () => {
   if (!selectedRuleId) {
     setEditorSaveStatus("Select a rule before duplicating.", "error");
@@ -516,6 +600,25 @@ networkStatusFilterEl.addEventListener("change", () => {
   const candidate = networkStatusFilterEl.value;
   networkStatusFilter = isNetworkStatusFilter(candidate) ? candidate : "all";
   renderNetworkInspector(currentRequests);
+});
+
+networkClearButtonEl.addEventListener("click", async () => {
+  currentRequests = [];
+  selectedNetworkRequestId = null;
+  await chrome.storage.local.set({ [CAPTURED_REQUESTS_KEY]: [] });
+  renderNetworkInspector(currentRequests);
+});
+
+networkExportHarButtonEl.addEventListener("click", () => {
+  if (currentRequests.length === 0) {
+    return;
+  }
+
+  triggerDownload(
+    `qa-interceptor-har-${formatDateSlug()}.json`,
+    JSON.stringify(buildHar(currentRequests), null, 2),
+    "application/json"
+  );
 });
 
 networkRequestListEl.addEventListener("click", (event) => {
@@ -585,6 +688,53 @@ historySessionListEl.addEventListener("click", (event) => {
 
   selectedHistorySessionId = sessionId;
   renderHistoryEvidence(currentRequests);
+});
+
+historyExportJsonButtonEl.addEventListener("click", () => {
+  const sessions = buildHistorySessions(currentRequests);
+  const session = sessions.find((s) => s.id === selectedHistorySessionId);
+
+  if (!session) {
+    return;
+  }
+
+  triggerDownload(
+    `qa-evidence-${formatDateSlug()}.json`,
+    JSON.stringify(session, null, 2),
+    "application/json"
+  );
+});
+
+historyExportMdButtonEl.addEventListener("click", () => {
+  const sessions = buildHistorySessions(currentRequests);
+  const session = sessions.find((s) => s.id === selectedHistorySessionId);
+
+  if (!session) {
+    return;
+  }
+
+  triggerDownload(
+    `qa-evidence-${formatDateSlug()}.md`,
+    buildEvidenceMarkdown(session),
+    "text/markdown"
+  );
+});
+
+networkCopyCurlButtonEl.addEventListener("click", () => {
+  const row = currentRequests.find((r) => r.id === selectedNetworkRequestId);
+
+  if (!row) {
+    return;
+  }
+
+  const curl = buildCurlCommand(row);
+  void navigator.clipboard.writeText(curl).then(() => {
+    const original = networkCopyCurlButtonEl.textContent;
+    networkCopyCurlButtonEl.textContent = "Copied!";
+    setTimeout(() => {
+      networkCopyCurlButtonEl.textContent = original;
+    }, 1800);
+  });
 });
 
 mockRuleListEl.addEventListener("click", async (event) => {
@@ -935,6 +1085,16 @@ const renderNetworkDetail = (row: RequestRow | null) => {
   networkTimelineCaptionEl.textContent = row.response
     ? `Response completed in ${formatDuration(row.response.durationMs)}.`
     : "No response timing yet.";
+
+  const body = row.response?.body;
+
+  if (body) {
+    networkDetailBodySectionEl.classList.remove("hidden");
+    networkDetailBodyEl.textContent = body;
+  } else {
+    networkDetailBodySectionEl.classList.add("hidden");
+    networkDetailBodyEl.textContent = "";
+  }
 };
 
 const renderMockPlayground = (rows: RuleRow[]) => {
@@ -1542,6 +1702,9 @@ const renderRulePayloadPreview = (rule: RuleRow): string => {
 const isRuleType = (value: unknown): value is RuleType =>
   value === "rewrite-url" ||
   value === "rewrite-header" ||
+  value === "rewrite-query" ||
+  value === "rewrite-response" ||
+  value === "rewrite-request-body" ||
   value === "block" ||
   value === "delay" ||
   value === "redirect" ||
@@ -1555,6 +1718,18 @@ const formatRuleType = (type: RuleType): string => {
 
   if (type === "rewrite-header") {
     return "Rewrite Header";
+  }
+
+  if (type === "rewrite-query") {
+    return "Rewrite Query";
+  }
+
+  if (type === "rewrite-response") {
+    return "Rewrite Response";
+  }
+
+  if (type === "rewrite-request-body") {
+    return "Rewrite Request Body";
   }
 
   if (type === "mock-response") {
@@ -1613,6 +1788,109 @@ const formatTimestamp = (timestamp: string): string => {
 };
 
 const formatDuration = (durationMs: number): string => `${durationMs} ms`;
+
+const formatDateSlug = (): string => {
+  const now = new Date();
+  return now.toISOString().replace(/[:.]/g, "-").replace("T", "_").slice(0, 19);
+};
+
+const triggerDownload = (filename: string, content: string, mimeType: string): void => {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+};
+
+const buildHar = (rows: RequestRow[]): object => {
+  const entries = rows.map((row) => ({
+    startedDateTime: row.timestamp,
+    time: row.response?.durationMs ?? 0,
+    request: {
+      method: row.method,
+      url: row.url,
+      httpVersion: "HTTP/1.1",
+      headers: [],
+      queryString: [],
+      cookies: [],
+      headersSize: -1,
+      bodySize: -1
+    },
+    response: {
+      status: row.response?.status ?? 0,
+      statusText: "",
+      httpVersion: "HTTP/1.1",
+      headers: [],
+      cookies: [],
+      content: { size: -1, mimeType: "application/json" },
+      redirectURL: "",
+      headersSize: -1,
+      bodySize: -1
+    },
+    cache: {},
+    timings: { send: 0, wait: row.response?.durationMs ?? 0, receive: 0 }
+  }));
+
+  return {
+    log: {
+      version: "1.2",
+      creator: { name: "QA.Interceptor", version: "0.1.0" },
+      entries
+    }
+  };
+};
+
+const buildEvidenceMarkdown = (session: HistorySession): string => {
+  const lines: string[] = [
+    `# QA Evidence — ${session.label}`,
+    ``,
+    `**Period:** ${formatTimestamp(session.startedAt)} → ${formatTimestamp(session.endedAt)}`,
+    `**Requests:** ${session.requests.length}  |  **Failures:** ${session.failedCount}  |  **Pending:** ${session.pendingCount}`,
+    ``,
+    `## Timeline`,
+    ``
+  ];
+
+  const sorted = session.requests
+    .slice()
+    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+  for (const row of sorted) {
+    const status = row.response ? String(row.response.status) : "Pending";
+    const duration = row.response ? formatDuration(row.response.durationMs) : "-";
+    const rules = row.matchedRules.map((r) => r.ruleName).join(", ") || "none";
+    lines.push(`### ${row.method} ${row.url}`);
+    lines.push(`- **Timestamp:** ${formatTimestamp(row.timestamp)}`);
+    lines.push(`- **Status:** ${status}  |  **Duration:** ${duration}`);
+    lines.push(`- **Matched rules:** ${rules}`);
+    if (row.response?.body) {
+      lines.push(`- **Response body:**`);
+      lines.push(`\`\`\`json`);
+      lines.push(row.response.body);
+      lines.push(`\`\`\``);
+    }
+    lines.push(``);
+  }
+
+  lines.push(`---`);
+  lines.push(`*Generated by QA.Interceptor on ${new Date().toISOString()}*`);
+
+  return lines.join("\n");
+};
+
+const buildCurlCommand = (row: RequestRow): string => {
+  const parts = [`curl -X ${row.method}`];
+
+  for (const [key, value] of Object.entries(row.headers ?? {})) {
+    parts.push(`  -H "${key}: ${value.replace(/"/g, '\\"')}"`);
+  }
+
+  parts.push(`  "${row.url}"`);
+
+  return parts.join(" \\\n");
+};
 
 const escapeHtml = (value: string): string =>
   value

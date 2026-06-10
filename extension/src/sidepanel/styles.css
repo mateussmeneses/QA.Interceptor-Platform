@@ -1075,6 +1075,27 @@ body {
   overflow-wrap: anywhere;
 }
 
+.response-body-preview {
+  margin: 6px 0 0;
+  padding: 8px;
+  border-radius: 6px;
+  background: #0f172a;
+  color: #d8e3ff;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.72rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.network-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 4px;
+}
+
 .rule-chips,
 .matched-rules {
   display: flex;

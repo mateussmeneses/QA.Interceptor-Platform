@@ -10,6 +10,9 @@ export type HttpMethod =
 export type RuleType =
   | "rewrite-url"
   | "rewrite-header"
+  | "rewrite-query"
+  | "rewrite-response"
+  | "rewrite-request-body"
   | "mock-response"
   | "mock-status"
   | "redirect"
