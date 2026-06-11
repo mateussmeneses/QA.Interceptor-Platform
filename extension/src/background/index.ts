@@ -57,6 +57,13 @@ type MockAppliedPayload = {
   matchedRules: MatchedRule[];
 };
 
+type RepeatRequestPayload = {
+  method: string;
+  url: string;
+  headers?: Record<string, string>;
+  body?: string;
+};
+
 type RuleValidation = {
   timestamp: string;
   passed: boolean;
@@ -192,12 +199,34 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   void queueSyncDynamicRules();
 });
 
-chrome.runtime.onMessage.addListener((message) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (!message || typeof message !== "object") {
     return;
   }
 
   const normalized = message as { type?: string; payload?: unknown };
+
+  if (normalized.type === "REPEAT_REQUEST") {
+    const payload = readRepeatRequestPayload(normalized.payload);
+
+    if (!payload) {
+      sendResponse({ ok: false, error: "Invalid repeat request payload" });
+      return;
+    }
+
+    void repeatRequest(payload)
+      .then((result) => {
+        sendResponse(result);
+      })
+      .catch((error: unknown) => {
+        sendResponse({
+          ok: false,
+          error: error instanceof Error ? error.message : "Unknown replay error"
+        });
+      });
+
+    return true;
+  }
 
   if (normalized.type !== "MOCK_APPLIED") {
     return;
@@ -450,6 +479,60 @@ const appendMockedRequest = async (payload: MockAppliedPayload) => {
   await chrome.storage.local.set({
     [CAPTURED_REQUESTS_KEY]: [mockedRequest, ...existing].slice(0, MAX_CAPTURED_REQUESTS)
   });
+};
+
+const repeatRequest = async (payload: RepeatRequestPayload): Promise<{ ok: boolean; status?: number; error?: string }> => {
+  const requestId = `repeat-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+  const startedAtMs = Date.now();
+  const timestamp = new Date(startedAtMs).toISOString();
+
+  const request: InterceptedRequest = {
+    id: requestId,
+    method: payload.method as InterceptedRequest["method"],
+    url: payload.url,
+    headers: payload.headers ?? {},
+    ...(payload.body !== undefined ? { body: payload.body } : {}),
+    timestamp
+  };
+
+  const rules = await loadRules();
+  const evaluation = evaluateRules(rules, request);
+
+  const response = await fetch(payload.url, {
+    method: payload.method,
+    headers: payload.headers,
+    ...(payload.body !== undefined ? { body: payload.body } : {})
+  });
+
+  const responseText = await response.text();
+  const finishedAt = Date.now();
+
+  const replayedRequest: CapturedRequest = {
+    ...request,
+    captureSource: "network",
+    resourceType: "xmlhttprequest",
+    tabId: -1,
+    startedAtMs,
+    matchedRules: evaluation.matchedRules,
+    response: {
+      status: response.status,
+      durationMs: Math.max(0, finishedAt - startedAtMs),
+      timestamp: new Date(finishedAt).toISOString(),
+      ...(responseText ? { body: responseText } : {})
+    }
+  };
+
+  const stored = await chrome.storage.local.get(CAPTURED_REQUESTS_KEY);
+  const existing = readCapturedRequests(stored[CAPTURED_REQUESTS_KEY]);
+
+  await chrome.storage.local.set({
+    [CAPTURED_REQUESTS_KEY]: [replayedRequest, ...existing].slice(0, MAX_CAPTURED_REQUESTS)
+  });
+
+  return {
+    ok: true,
+    status: response.status
+  };
 };
 
 const buildDynamicRules = (rules: Rule[]): chrome.declarativeNetRequest.Rule[] => {
@@ -836,4 +919,40 @@ const isCapturedResponse = (value: unknown): value is CapturedResponse => {
     typeof candidate.durationMs === "number" &&
     typeof candidate.timestamp === "string"
   );
+};
+
+const readRepeatRequestPayload = (value: unknown): RepeatRequestPayload | null => {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  if (typeof candidate.method !== "string" || typeof candidate.url !== "string") {
+    return null;
+  }
+
+  const normalizedMethod = candidate.method.toUpperCase();
+  const allowedMethods = new Set(["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]);
+
+  if (!allowedMethods.has(normalizedMethod)) {
+    return null;
+  }
+
+  const headers =
+    candidate.headers && typeof candidate.headers === "object" && !Array.isArray(candidate.headers)
+      ? Object.fromEntries(
+          Object.entries(candidate.headers as Record<string, unknown>).map(([key, headerValue]) => [
+            key,
+            String(headerValue)
+          ])
+        )
+      : {};
+
+  return {
+    method: normalizedMethod,
+    url: candidate.url,
+    ...(Object.keys(headers).length > 0 ? { headers } : {}),
+    ...(typeof candidate.body === "string" ? { body: candidate.body } : {})
+  };
 };

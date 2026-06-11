@@ -66,6 +66,8 @@ type RequestRow = {
   id: string;
   method: string;
   url: string;
+  headers: Record<string, string>;
+  body?: string;
   timestamp: string;
   captureSource?: "network" | "mock";
   resourceType?: string;
@@ -152,6 +154,7 @@ const networkTimelineBarEl = document.getElementById("network-timeline-bar");
 const networkTimelineCaptionEl = document.getElementById("network-timeline-caption");
 const networkDetailBodySectionEl = document.getElementById("network-detail-body-section");
 const networkDetailBodyEl = document.getElementById("network-detail-body");
+const networkRepeatRequestButtonEl = document.getElementById("network-repeat-request-button") as HTMLButtonElement | null;
 const networkCopyCurlButtonEl = document.getElementById("network-copy-curl-button") as HTMLButtonElement | null;
 const historyExportJsonButtonEl = document.getElementById("history-export-json-button") as HTMLButtonElement | null;
 const historyExportMdButtonEl = document.getElementById("history-export-md-button") as HTMLButtonElement | null;
@@ -189,6 +192,17 @@ const rulesImportButtonEl = document.getElementById("rules-import-button") as HT
 const rulesExportButtonEl = document.getElementById("rules-export-button") as HTMLButtonElement | null;
 const rulesImportInputEl = document.getElementById("rules-import-input") as HTMLInputElement | null;
 const networkClearButtonEl = document.getElementById("network-clear-button") as HTMLButtonElement | null;
+const networkComposeButtonEl = document.getElementById("network-compose-button") as HTMLButtonElement | null;
+const networkComposePanelEl = document.getElementById("network-compose-panel") as HTMLElement | null;
+const networkComposeMethodEl = document.getElementById("network-compose-method") as HTMLSelectElement | null;
+const networkComposeUrlEl = document.getElementById("network-compose-url") as HTMLInputElement | null;
+const networkComposeHeadersEl = document.getElementById("network-compose-headers") as HTMLTextAreaElement | null;
+const networkComposeBodyEl = document.getElementById("network-compose-body") as HTMLTextAreaElement | null;
+const networkComposeSendButtonEl = document.getElementById("network-compose-send-button") as HTMLButtonElement | null;
+const networkComposeCloseButtonEl = document.getElementById("network-compose-close-button") as HTMLButtonElement | null;
+const networkComposeStatusEl = document.getElementById("network-compose-status") as HTMLElement | null;
+const networkImportHarButtonEl = document.getElementById("network-import-har-button") as HTMLButtonElement | null;
+const networkImportHarInputEl = document.getElementById("network-import-har-input") as HTMLInputElement | null;
 const networkExportHarButtonEl = document.getElementById("network-export-har-button") as HTMLButtonElement | null;
 
 if (!listEl) {
@@ -239,6 +253,7 @@ if (
   !networkTimelineCaptionEl ||
   !networkDetailBodySectionEl ||
   !networkDetailBodyEl ||
+  !networkRepeatRequestButtonEl ||
   !networkCopyCurlButtonEl ||
   !historyExportJsonButtonEl ||
   !historyExportMdButtonEl ||
@@ -276,6 +291,17 @@ if (
   !rulesExportButtonEl ||
   !rulesImportInputEl ||
   !networkClearButtonEl ||
+  !networkComposeButtonEl ||
+  !networkComposePanelEl ||
+  !networkComposeMethodEl ||
+  !networkComposeUrlEl ||
+  !networkComposeHeadersEl ||
+  !networkComposeBodyEl ||
+  !networkComposeSendButtonEl ||
+  !networkComposeCloseButtonEl ||
+  !networkComposeStatusEl ||
+  !networkImportHarButtonEl ||
+  !networkImportHarInputEl ||
   !networkExportHarButtonEl
 ) {
   throw new Error("Missing sidepanel UI element");
@@ -609,6 +635,138 @@ networkClearButtonEl.addEventListener("click", async () => {
   renderNetworkInspector(currentRequests);
 });
 
+networkComposeButtonEl.addEventListener("click", () => {
+  const shouldOpen = networkComposePanelEl.classList.contains("hidden");
+
+  if (!shouldOpen) {
+    networkComposePanelEl.classList.add("hidden");
+    return;
+  }
+
+  const selectedRow = currentRequests.find((requestRow) => requestRow.id === selectedNetworkRequestId);
+
+  if (selectedRow) {
+    networkComposeMethodEl.value = selectedRow.method;
+    networkComposeUrlEl.value = selectedRow.url;
+    networkComposeHeadersEl.value = JSON.stringify(selectedRow.headers ?? {}, null, 2);
+    networkComposeBodyEl.value = selectedRow.body ?? "";
+    setNetworkComposeStatus("Compose pre-filled from selected request.", "ok");
+  } else {
+    networkComposeMethodEl.value = "GET";
+    networkComposeUrlEl.value = "";
+    networkComposeHeadersEl.value = "{}";
+    networkComposeBodyEl.value = "";
+    setNetworkComposeStatus("Compose panel ready.", "neutral");
+  }
+
+  networkComposePanelEl.classList.remove("hidden");
+});
+
+networkComposeCloseButtonEl.addEventListener("click", () => {
+  networkComposePanelEl.classList.add("hidden");
+  setNetworkComposeStatus("Compose panel closed.", "neutral");
+});
+
+networkComposeSendButtonEl.addEventListener("click", async () => {
+  const method = networkComposeMethodEl.value || "GET";
+  const url = networkComposeUrlEl.value.trim();
+
+  if (!url) {
+    setNetworkComposeStatus("URL is required.", "error");
+    return;
+  }
+
+  let headers: Record<string, string> = {};
+  const headersRaw = networkComposeHeadersEl.value.trim();
+
+  if (headersRaw) {
+    try {
+      const parsed = JSON.parse(headersRaw);
+
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        setNetworkComposeStatus("Headers must be a JSON object.", "error");
+        return;
+      }
+
+      headers = Object.fromEntries(
+        Object.entries(parsed as Record<string, unknown>).map(([key, value]) => [key, String(value)])
+      );
+    } catch {
+      setNetworkComposeStatus("Headers JSON is invalid.", "error");
+      return;
+    }
+  }
+
+  const body = networkComposeBodyEl.value;
+  const originalLabel = networkComposeSendButtonEl.textContent;
+  networkComposeSendButtonEl.textContent = "Sending...";
+  networkComposeSendButtonEl.disabled = true;
+
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: "REPEAT_REQUEST",
+      payload: {
+        method,
+        url,
+        ...(Object.keys(headers).length > 0 ? { headers } : {}),
+        ...(body.trim() ? { body } : {})
+      }
+    });
+
+    if (response?.ok) {
+      setNetworkComposeStatus(
+        `Request sent successfully${typeof response.status === "number" ? ` (status ${String(response.status)}).` : "."}`,
+        "ok"
+      );
+      networkComposePanelEl.classList.add("hidden");
+    } else {
+      setNetworkComposeStatus(response?.error ? `Request failed: ${String(response.error)}` : "Request failed.", "error");
+    }
+  } catch {
+    setNetworkComposeStatus("Request failed due to runtime error.", "error");
+  }
+
+  networkComposeSendButtonEl.textContent = originalLabel;
+  networkComposeSendButtonEl.disabled = false;
+});
+
+networkImportHarButtonEl.addEventListener("click", () => {
+  networkImportHarInputEl.value = "";
+  networkImportHarInputEl.click();
+});
+
+networkImportHarInputEl.addEventListener("change", async () => {
+  const file = networkImportHarInputEl.files?.[0];
+
+  if (!file) {
+    return;
+  }
+
+  const text = await file.text();
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return;
+  }
+
+  const importedRows = readHarAsRequestRows(parsed);
+
+  if (importedRows.length === 0) {
+    return;
+  }
+
+  const merged = [...importedRows, ...currentRequests]
+    .slice(0, 100)
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  currentRequests = merged;
+  selectedNetworkRequestId = merged[0]?.id ?? null;
+  await chrome.storage.local.set({ [CAPTURED_REQUESTS_KEY]: merged });
+  renderNetworkInspector(currentRequests);
+});
+
 networkExportHarButtonEl.addEventListener("click", () => {
   if (currentRequests.length === 0) {
     return;
@@ -637,6 +795,39 @@ networkRequestListEl.addEventListener("click", (event) => {
 
   selectedNetworkRequestId = requestId;
   renderNetworkInspector(currentRequests);
+});
+
+networkRepeatRequestButtonEl.addEventListener("click", async () => {
+  const row = currentRequests.find((requestRow) => requestRow.id === selectedNetworkRequestId);
+
+  if (!row) {
+    return;
+  }
+
+  const originalLabel = networkRepeatRequestButtonEl.textContent;
+  networkRepeatRequestButtonEl.textContent = "Replaying...";
+  networkRepeatRequestButtonEl.disabled = true;
+
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: "REPEAT_REQUEST",
+      payload: {
+        method: row.method,
+        url: row.url,
+        headers: row.headers,
+        body: row.body
+      }
+    });
+
+    networkRepeatRequestButtonEl.textContent = response?.ok ? "Repeated" : "Replay failed";
+  } catch {
+    networkRepeatRequestButtonEl.textContent = "Replay failed";
+  }
+
+  setTimeout(() => {
+    networkRepeatRequestButtonEl.textContent = originalLabel;
+    networkRepeatRequestButtonEl.disabled = false;
+  }, 1800);
 });
 
 mockSearchEl.addEventListener("input", () => {
@@ -1602,6 +1793,20 @@ const setEditorSaveStatus = (message: string, tone: "neutral" | "ok" | "error") 
   }
 };
 
+const setNetworkComposeStatus = (message: string, tone: "neutral" | "ok" | "error") => {
+  networkComposeStatusEl.textContent = message;
+  networkComposeStatusEl.classList.remove("ok", "error");
+
+  if (tone === "ok") {
+    networkComposeStatusEl.classList.add("ok");
+    return;
+  }
+
+  if (tone === "error") {
+    networkComposeStatusEl.classList.add("error");
+  }
+};
+
 const readRuleValidation = (value: unknown): RuleValidation | null => {
   if (!value || typeof value !== "object") {
     return null;
@@ -1646,6 +1851,9 @@ const isRequestRow = (value: unknown): value is RequestRow => {
     typeof candidate.id === "string" &&
     typeof candidate.method === "string" &&
     typeof candidate.url === "string" &&
+    typeof candidate.headers === "object" &&
+    candidate.headers !== null &&
+    (candidate.body === undefined || typeof candidate.body === "string") &&
     typeof candidate.timestamp === "string" &&
     Array.isArray(candidate.matchedRules) &&
     candidate.matchedRules.every(isMatchedRuleSummary)
@@ -1840,6 +2048,113 @@ const buildHar = (rows: RequestRow[]): object => {
       entries
     }
   };
+};
+
+const readHarAsRequestRows = (value: unknown): RequestRow[] => {
+  if (!value || typeof value !== "object") {
+    return [];
+  }
+
+  const root = value as Record<string, unknown>;
+  const log = root.log;
+
+  if (!log || typeof log !== "object") {
+    return [];
+  }
+
+  const entries = (log as Record<string, unknown>).entries;
+
+  if (!Array.isArray(entries)) {
+    return [];
+  }
+
+  return entries
+    .map((entry, index) => harEntryToRequestRow(entry, index))
+    .filter((row): row is RequestRow => Boolean(row));
+};
+
+const harEntryToRequestRow = (entry: unknown, index: number): RequestRow | null => {
+  if (!entry || typeof entry !== "object") {
+    return null;
+  }
+
+  const candidate = entry as Record<string, unknown>;
+  const request = candidate.request as Record<string, unknown> | undefined;
+  const response = candidate.response as Record<string, unknown> | undefined;
+
+  if (!request || typeof request !== "object") {
+    return null;
+  }
+
+  const method = typeof request.method === "string" ? request.method.toUpperCase() : "GET";
+  const url = typeof request.url === "string" ? request.url : "";
+
+  if (!url) {
+    return null;
+  }
+
+  const started =
+    typeof candidate.startedDateTime === "string" ? candidate.startedDateTime : new Date().toISOString();
+  const time = typeof candidate.time === "number" && Number.isFinite(candidate.time) ? candidate.time : 0;
+
+  const headers = readHarHeaders(request.headers);
+  const responseBody = readHarResponseBody(response);
+  const status = response && typeof response.status === "number" ? response.status : 0;
+
+  return {
+    id: `har-${Date.now()}-${index}`,
+    method,
+    url,
+    headers,
+    timestamp: started,
+    captureSource: "network",
+    resourceType: "xmlhttprequest",
+    tabId: -1,
+    matchedRules: [],
+    response: {
+      status,
+      durationMs: Math.max(0, Math.round(time)),
+      timestamp: started,
+      ...(responseBody ? { body: responseBody } : {})
+    }
+  };
+};
+
+const readHarHeaders = (value: unknown): Record<string, string> => {
+  if (!Array.isArray(value)) {
+    return {};
+  }
+
+  const pairs = value
+    .map((item) => {
+      if (!item || typeof item !== "object") {
+        return null;
+      }
+
+      const header = item as Record<string, unknown>;
+      if (typeof header.name !== "string" || typeof header.value !== "string") {
+        return null;
+      }
+
+      return [header.name.toLowerCase(), header.value] as const;
+    })
+    .filter((entry): entry is readonly [string, string] => Boolean(entry));
+
+  return Object.fromEntries(pairs);
+};
+
+const readHarResponseBody = (response: Record<string, unknown> | undefined): string | undefined => {
+  if (!response) {
+    return undefined;
+  }
+
+  const content = response.content;
+  if (!content || typeof content !== "object") {
+    return undefined;
+  }
+
+  const text = (content as Record<string, unknown>).text;
+  return typeof text === "string" ? text : undefined;
 };
 
 const buildEvidenceMarkdown = (session: HistorySession): string => {

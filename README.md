@@ -26,6 +26,7 @@ Help QA professionals validate frontend behavior, backend integrations, API cont
 - Milestones and phases: `ROADMAP.md`
 - Prioritized work items: `BACKLOG.md`
 - Contribution workflow: `CONTRIBUTING.md`
+- Versioning policy: `VERSIONING.md`
 - Project principles manifesto: `MANIFEST.md`
 - Document ownership and anti-duplication guide: `DOCUMENTATION_STRUCTURE.md`
 

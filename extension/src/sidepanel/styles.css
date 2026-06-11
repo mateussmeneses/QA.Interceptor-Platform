@@ -101,6 +101,10 @@ body {
   display: none;
 }
 
+.hidden {
+  display: none !important;
+}
+
 .workspace-header {
   display: flex;
   justify-content: space-between;
@@ -1211,4 +1215,29 @@ summary:focus-visible {
 
 .placeholder {
   color: #667085;
+}
+
+.section-head.compact {
+  margin-bottom: 8px;
+}
+
+.section-head.compact h4 {
+  margin: 0;
+  font-size: 0.86rem;
+}
+
+.section-head.compact p {
+  margin: 4px 0 0;
+  color: #667085;
+  font-size: 0.76rem;
+}
+
+.network-compose-panel {
+  border: 1px dashed #cfdaeb;
+  border-radius: 10px;
+  background: #f9fbff;
+  padding: 10px;
+  margin-bottom: 10px;
+  display: grid;
+  gap: 8px;
 }

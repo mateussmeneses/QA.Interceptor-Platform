@@ -235,8 +235,54 @@
 
             <div class="network-actions-row" aria-label="network actions">
               <button id="network-clear-button" type="button" class="action-btn">Clear Session</button>
+              <button id="network-compose-button" type="button" class="action-btn">Compose Request</button>
+              <button id="network-import-har-button" type="button" class="action-btn">Import HAR</button>
               <button id="network-export-har-button" type="button" class="action-btn">Export HAR</button>
+              <input id="network-import-har-input" type="file" accept=".har,.json,application/json" class="hidden" aria-hidden="true" />
             </div>
+
+            <section id="network-compose-panel" class="network-compose-panel hidden" aria-label="compose request panel">
+              <div class="section-head compact">
+                <div>
+                  <h4>Compose Request</h4>
+                  <p>Build and send a custom HTTP request directly from the inspector.</p>
+                </div>
+              </div>
+
+              <div class="editor-grid">
+                <label class="field-block" for="network-compose-method">
+                  <span>Method</span>
+                  <select id="network-compose-method">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="PATCH">PATCH</option>
+                    <option value="DELETE">DELETE</option>
+                  </select>
+                </label>
+
+                <label class="field-block" for="network-compose-url">
+                  <span>URL</span>
+                  <input id="network-compose-url" type="url" placeholder="https://api.example.com/orders" />
+                </label>
+              </div>
+
+              <label class="field-block" for="network-compose-headers">
+                <span>Headers (JSON object)</span>
+                <textarea id="network-compose-headers" rows="4" placeholder='{"content-type":"application/json"}'></textarea>
+              </label>
+
+              <label class="field-block" for="network-compose-body">
+                <span>Body (optional)</span>
+                <textarea id="network-compose-body" rows="6" placeholder='{"example": true}'></textarea>
+              </label>
+
+              <div class="editor-actions">
+                <button id="network-compose-send-button" type="button" class="action-btn primary">Send Request</button>
+                <button id="network-compose-close-button" type="button" class="action-btn">Close</button>
+              </div>
+              <p id="network-compose-status" class="editor-save-status">Compose panel ready.</p>
+            </section>
 
             <div class="network-layout">
               <section class="network-table-panel" aria-label="network request table">
@@ -309,6 +355,7 @@
                   </section>
 
                   <div class="network-detail-actions">
+                    <button id="network-repeat-request-button" type="button" class="action-btn primary">Repeat Request</button>
                     <button id="network-copy-curl-button" type="button" class="action-btn">Copy as cURL</button>
                   </div>
                 </div>

@@ -45,10 +45,10 @@ declare global {
   }
 }
 
+let rules: Rule[] = [];
+
 if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
   window.__QA_INTERCEPTOR_MOCK_BRIDGE__ = true;
-
-  let rules: Rule[] = [];
   const originalFetch = window.fetch.bind(window);
 
   window.addEventListener("message", (event: MessageEvent<unknown>) => {

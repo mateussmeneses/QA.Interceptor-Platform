@@ -98,3 +98,21 @@ Goal: prioritize a complete product-like frontend experience now, inspired by th
 | HIST-001 | History export JSON | P1 | Done | Copilot | FE-006 | Selected session exported as structured JSON evidence package |
 | HIST-002 | History export Markdown | P1 | Done | Copilot | FE-006 | Selected session exported as readable QA evidence markdown report |
 | NET-003 | Copy request as cURL | P1 | Done | Copilot | INT-002 | Selected network request copied to clipboard as cURL command |
+| NET-004 | Import HAR into Network inspector | P1 | Done | Copilot | NET-002 | User can upload HAR and merge entries into captured traffic list |
+
+## Execution Queue - Phase 2 Request Tools
+
+| ID | Item | Priority | Status | Owner | Dependencies | Acceptance Criteria |
+| --- | --- | --- | --- | --- | --- | --- |
+| NET-005 | Repeat request from Network inspector | P1 | Done | Copilot | INT-002 | User can replay selected request and see new captured entry with response status/body |
+| NET-006 | Compose request from Network inspector | P1 | Done | Copilot | NET-005 | User can build and send custom request (method/url/headers/body) and capture result in inspector |
+| NET-007 | Clone selected request | P1 | Todo | Copilot | NET-006 | User can clone selected request into compose form with one action |
+| NET-008 | Edit and resend request | P1 | Todo | Copilot | NET-006 | User can edit selected request fields and resend preserving workflow context |
+
+## Execution Queue - Engineering Standards
+
+| ID | Item | Priority | Status | Owner | Dependencies | Acceptance Criteria |
+| --- | --- | --- | --- | --- | --- | --- |
+| ENG-001 | Define Semantic Versioning policy | P1 | Done | Copilot | None | Project documents SemVer pattern (MAJOR.MINOR.PATCH) and bump rules for breaking/feature/fix changes |
+| ENG-002 | Enforce Conventional Commits with Husky | P1 | Done | Copilot | ENG-001 | commit-msg hook validates commit format using commitlint conventional config |
+| ENG-003 | Enforce code quality on pre-commit | P1 | Done | Copilot | ENG-002 | pre-commit runs lint-staged to apply ESLint/Prettier checks on staged files |
