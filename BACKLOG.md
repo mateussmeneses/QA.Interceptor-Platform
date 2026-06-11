@@ -115,7 +115,7 @@ Goal: prioritize a complete product-like frontend experience now, inspired by th
 | --- | --- | --- | --- | --- | --- | --- |
 | MK-003 | Dynamic variables in mock templates | P1 | Done | Copilot | MK-001 | Mock/rewrite response bodies support tokens like {{timestamp}}, {{uuid}}, {{method}}, {{url}} |
 | MK-004 | Template responses library | P1 | Done | Copilot | MK-003 | User can select and apply reusable response templates from UI |
-| MK-005 | Environment variables for mock payloads | P1 | Todo | Copilot | MK-003 | User can define scoped env vars and reference them in mock payload templates |
+| MK-005 | Environment variables for mock payloads | P1 | Done | Copilot | MK-003 | User can define scoped env vars and reference them in mock payload templates |
 
 ## Execution Queue - Engineering Standards
 
@@ -124,6 +124,7 @@ Goal: prioritize a complete product-like frontend experience now, inspired by th
 | ENG-001 | Define Semantic Versioning policy | P1 | Done | Copilot | None | Project documents SemVer pattern (MAJOR.MINOR.PATCH) and bump rules for breaking/feature/fix changes |
 | ENG-002 | Enforce Conventional Commits with Husky | P1 | Done | Copilot | ENG-001 | commit-msg hook validates commit format using commitlint conventional config |
 | ENG-003 | Enforce code quality on pre-commit | P1 | Done | Copilot | ENG-002 | pre-commit runs lint-staged to apply ESLint/Prettier checks on staged files |
+| ENG-004 | Enforce zero-warning and latest-deps discipline | P1 | Done | Copilot | ENG-003 | Project rules require no warnings/deprecations and dependency freshness policy with backlog tracking for deferred updates |
 
 ## Requestly Benchmark Coverage Snapshot
 
@@ -147,11 +148,11 @@ Reference analysis: docs/requestly-benchmark-analysis.md
 | RQ-002 | Group enable/disable and ordering | P1 | Done | Copilot | RQ-001 | Group toggle and priority order deterministically affect member rule execution |
 | RQ-003 | Execution log timeline panel | P1 | Done | Copilot | INT-002, RQ-002 | User can inspect which rule matched each request with timestamp and action summary |
 | RQ-004 | Template responses library | P1 | Done | Copilot | MK-003 | User can pick preset response templates and apply them in Mock editor |
-| RQ-005 | Mock environment variables | P1 | Todo | Copilot | MK-003 | User can define env variables and reference them in mock/rewrite templates |
-| RQ-006 | Collections and folders for assets | P1 | Todo | Copilot | RQ-001 | Rules, mocks, and composed requests can be organized in folders/collections |
-| RQ-007 | Tags and quick filters | P2 | Todo | Copilot | RQ-006 | User can label assets and filter quickly by tag in Rules/Network/Mocks |
-| RQ-008 | Minimal API client (QA scope) | P1 | Todo | Copilot | NET-006 | User can send saved requests, inspect response body/headers, and export evidence |
-| RQ-009 | Response assertions presets | P1 | Todo | Copilot | RQ-008 | QA user can define assertions for status, headers, and JSON path values |
+| RQ-005 | Mock environment variables | P1 | Done | Copilot | MK-003 | User can define env variables and reference them in mock/rewrite templates |
+| RQ-006 | Collections and folders for assets | P1 | Done | Copilot | RQ-001 | Rules, mocks, and composed requests can be organized in folders/collections |
+| RQ-007 | Tags and quick filters | P2 | Done | Copilot | RQ-006 | User can label assets and filter quickly by tag in Rules/Network/Mocks |
+| RQ-008 | Minimal API client (QA scope) | P1 | Done | Copilot | NET-006 | User can send saved requests, inspect response body/headers, and export evidence |
+| RQ-009 | Response assertions presets | P1 | Done | Copilot | RQ-008 | QA user can define assertions for status, headers, and JSON path values |
 | RQ-010 | Error simulation profiles | P1 | Todo | Copilot | NS-001, MK-002 | One-click profiles for 400/401/403/404/500 and network failure behavior |
 
 ## Execution Queue - Architecture Hardening

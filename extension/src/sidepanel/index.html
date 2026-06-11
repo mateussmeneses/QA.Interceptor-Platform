@@ -77,6 +77,13 @@
                 </label>
               </div>
 
+              <div class="tags-filter-bar" aria-label="tag quick filters">
+                <span>Quick tag filters:</span>
+                <ul id="rules-tag-filters" class="tag-pills">
+                  <li class="placeholder">No tags yet.</li>
+                </ul>
+              </div>
+
               <div class="rules-actions-row" aria-label="rules actions">
                 <button id="rules-create-button" type="button" class="action-btn primary">Create Rule</button>
                 <button id="rules-import-button" type="button" class="action-btn">Import JSON</button>
@@ -94,6 +101,19 @@
                 </div>
                 <ul id="rules-groups-list" class="rules-groups-list">
                   <li class="placeholder">No groups yet.</li>
+                </ul>
+              </section>
+
+              <section class="rules-collections-manager" aria-label="asset collections manager">
+                <div class="rules-groups-toolbar">
+                  <label class="field-inline" for="asset-collection-name-input">
+                    <span>New Collection</span>
+                    <input id="asset-collection-name-input" type="text" placeholder="Checkout Scenarios" />
+                  </label>
+                  <button id="asset-collection-create-button" type="button" class="action-btn">Create Collection</button>
+                </div>
+                <ul id="asset-collections-list" class="rules-groups-list">
+                  <li class="placeholder">No collections yet.</li>
                 </ul>
               </section>
 
@@ -172,6 +192,23 @@
                     <option value="">Ungrouped</option>
                   </select>
                 </label>
+
+                <label class="field-block" for="editor-rule-collection">
+                  <span>Collection</span>
+                  <select id="editor-rule-collection" name="collection">
+                    <option value="">Unassigned</option>
+                  </select>
+                </label>
+
+                <section class="editor-tags-section">
+                  <label class="field-block" for="editor-rule-tags-input">
+                    <span>Tags (comma-separated)</span>
+                    <input id="editor-rule-tags-input" type="text" placeholder="auth, critical, smoke-test" />
+                  </label>
+                  <ul id="editor-rule-tags-list" class="tags-list">
+                    <li class="placeholder">No tags assigned.</li>
+                  </ul>
+                </section>
 
                 <label class="field-block" for="editor-rule-url">
                   <span>URL contains</span>
@@ -297,11 +334,53 @@
                 <textarea id="network-compose-body" rows="6" placeholder='{"example": true}'></textarea>
               </label>
 
+              <div class="editor-grid">
+                <label class="field-block" for="network-compose-name">
+                  <span>Saved Request Name</span>
+                  <input id="network-compose-name" type="text" placeholder="Create order smoke" />
+                </label>
+
+                <label class="field-block" for="network-compose-collection">
+               label class="field-block" for="network-compose-tags-input">
+                <span>Tags (comma-separated)</span>
+                <input id="network-compose-tags-input" type="text" placeholder="smoke-test, checkout" />
+              </label>
+              <ul id="network-compose-tags-list" class="tags-list">
+                <li class="placeholder">No tags assigned.</li>
+              </ul>
+
+              <   <span>Collection</span>
+                  <select id="network-compose-collection">
+                    <option value="">Unassigned</option>
+                  </select>
+                </label>
+              </div>
+
               <div class="editor-actions">
                 <button id="network-compose-send-button" type="button" class="action-btn primary">Send Request</button>
+                <button id="network-compose-save-button" type="button" class="action-btn">Save Composed</button>
                 <button id="network-compose-close-button" type="button" class="action-btn">Close</button>
               </div>
               <p id="network-compose-status" class="editor-save-status">Compose panel ready.</p>
+
+              <section class="network-composed-library" aria-label="saved composed requests">
+                <div class="section-head compact">
+                  <h4>Saved Composed Requests</h4>
+                </div>
+                <ul id="network-composed-list" class="network-composed-list">
+                  <li class="placeholder">No composed requests saved.</li>
+                </ul>
+              </section>
+
+                <section class="response-assertions-library" aria-label="response assertions">
+                  <div class="section-head compact">
+                    <h4>Response Assertions</h4>
+                    <button id="assertions-add-button" type="button" class="action-btn" title="Add assertion">+</button>
+                  </div>
+                  <ul id="response-assertions-list" class="response-assertions-list">
+                    <li class="placeholder">No assertions added. Add one to validate responses.</li>
+                  </ul>
+                </section>
             </section>
 
             <div class="network-layout">
@@ -367,6 +446,11 @@
                   <section>
                     <h4>Matched Rules</h4>
                     <div id="network-detail-rules" class="rule-chips"></div>
+                  </section>
+
+                  <section id="network-detail-headers-section" class="hidden">
+                    <h4>Response Headers</h4>
+                    <ul id="network-detail-headers" class="response-headers-list"></ul>
                   </section>
 
                   <section>
@@ -492,6 +576,36 @@
                       </div>
                     </div>
                     <p id="mock-template-description" class="preview-note">Choose a template to auto-fill mock fields.</p>
+                  </section>
+
+                  <section class="mock-env-manager" aria-label="mock environment variables">
+                    <div class="section-head compact">
+                      <h4>Environment Variables</h4>
+                    </div>
+                    <div class="editor-grid">
+                      <label class="field-block" for="mock-env-name-input">
+                        <span>Name</span>
+                        <input id="mock-env-name-input" type="text" placeholder="tenantId" />
+                      </label>
+                      <label class="field-block" for="mock-env-value-input">
+                        <span>Value</span>
+                        <input id="mock-env-value-input" type="text" placeholder="qa-tenant-01" />
+                      </label>
+                    </div>
+                    <div class="editor-grid">
+                      <label class="field-block" for="mock-env-scope-url-input">
+                        <span>Scope URL Contains (optional)</span>
+                        <input id="mock-env-scope-url-input" type="text" placeholder="/api/orders" />
+                      </label>
+                      <div class="field-block mock-template-actions">
+                        <span>Manage</span>
+                        <button id="mock-env-add-button" type="button" class="action-btn">Add Variable</button>
+                      </div>
+                    </div>
+                    <ul id="mock-env-list" class="mock-env-list">
+                      <li class="placeholder">No environment variables defined.</li>
+                    </ul>
+                    <p class="preview-note">Use tokens like {{env.tenantId}} or {{tenantId}} in mock/rewrite response templates.</p>
                   </section>
 
                   <div class="editor-grid">

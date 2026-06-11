@@ -7,6 +7,7 @@ Map Requestly Interceptor capabilities and architecture to guide QA.Interceptor 
 ## Functional Map (Requestly)
 
 Core capabilities identified:
+
 - Request interception and rewriting (URL, headers, query params, redirect, block)
 - Client-side interception for request body/response body/delay
 - Rule authoring and management at scale
@@ -20,6 +21,7 @@ Core capabilities identified:
 ## Frontend Map (Requestly)
 
 Main frontend shape:
+
 - React application reused across web, desktop, and extension surfaces
 - Feature-based modules (rules, mocks, networkInspector, apiClient, sessionBook, workspaces)
 - Mixed state strategy:
@@ -29,6 +31,7 @@ Main frontend shape:
 - Platform-aware rendering via runtime mode flags
 
 Frontend patterns relevant for QA.Interceptor:
+
 - Strong feature boundaries per domain
 - UI actions linked to clear runtime paths
 - Context-aware UX (extension mode vs desktop/web mode)
@@ -37,6 +40,7 @@ Frontend patterns relevant for QA.Interceptor:
 ## Architecture Map (Requestly)
 
 Key architectural patterns:
+
 - Modular monorepo split: app, extension, shared, rule processor
 - MV3 dual strategy:
   - DNR for declarative interception
@@ -49,6 +53,7 @@ Key architectural patterns:
 ## Gap Analysis vs QA.Interceptor
 
 Already aligned in QA.Interceptor:
+
 - MV3 extension shell and sidepanel UX
 - Core rewrite/mock/network simulation rules
 - HAR and cURL import/export basics
@@ -56,6 +61,7 @@ Already aligned in QA.Interceptor:
 - Dynamic variables in mock/rewrite templates
 
 Primary gaps to prioritize:
+
 - Rule groups and grouped enable/disable execution
 - Execution observability and dedicated debugging surfaces
 - Mock template library and environment-variable substitution
@@ -65,15 +71,18 @@ Primary gaps to prioritize:
 ## Recommended Backlog Direction
 
 Near-term (P1):
+
 - Rule Groups, Execution Log, Mock Template Library, Mock Environment Variables
 - Collections/Folders/Tags for rule and request organization
 
 Mid-term (P1/P2):
+
 - Minimal API Client scoped for QA verification scenarios
 - Response assertion presets and contract checks
 - Error simulation profiles for common QA cases
 
 Guardrails:
+
 - Keep local-first defaults and avoid mandatory cloud dependencies
 - Preserve extension performance and deterministic rule behavior
 - Prefer modular feature directories and typed message contracts

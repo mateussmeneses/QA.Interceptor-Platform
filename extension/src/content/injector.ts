@@ -1,3 +1,5 @@
+export {};
+
 const BRIDGE_SCRIPT_ID = "qa-interceptor-mock-bridge";
 
 type RuleCondition = {
@@ -14,6 +16,15 @@ type Rule = {
   createdAt: string;
   condition: RuleCondition;
   payload: Record<string, unknown>;
+};
+
+type MockEnvVar = {
+  id: string;
+  name: string;
+  value: string;
+  scopeUrlContains?: string;
+  enabled: boolean;
+  createdAt: string;
 };
 
 type MockAppliedMessage = {
@@ -78,14 +89,41 @@ const readRules = async (): Promise<Rule[]> => {
   });
 };
 
+const readMockEnvVars = async (): Promise<MockEnvVar[]> => {
+  const stored = await chrome.storage.local.get("mockEnvVars");
+  const value = stored.mockEnvVars;
+
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((candidate): candidate is MockEnvVar => {
+    if (!candidate || typeof candidate !== "object") {
+      return false;
+    }
+
+    const normalized = candidate as Record<string, unknown>;
+
+    return (
+      typeof normalized.id === "string" &&
+      typeof normalized.name === "string" &&
+      typeof normalized.value === "string" &&
+      (normalized.scopeUrlContains === undefined || typeof normalized.scopeUrlContains === "string") &&
+      typeof normalized.enabled === "boolean" &&
+      typeof normalized.createdAt === "string"
+    );
+  });
+};
+
 const publishRules = async () => {
-  const rules = await readRules();
+  const [rules, envVars] = await Promise.all([readRules(), readMockEnvVars()]);
 
   window.postMessage(
     {
       source: "qa-interceptor-content",
       type: "RULES_UPDATE",
-      rules
+      rules,
+      envVars
     },
     "*"
   );
@@ -109,7 +147,7 @@ window.addEventListener("message", (event: MessageEvent<unknown>) => {
 });
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName !== "local" || !changes.rules) {
+  if (areaName !== "local" || (!changes.rules && !changes.mockEnvVars)) {
     return;
   }
 

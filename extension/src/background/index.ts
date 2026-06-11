@@ -25,6 +25,7 @@ type CapturedResponse = {
   durationMs: number;
   timestamp: string;
   body?: string;
+  headers?: Record<string, string>;
 };
 
 type RewriteUrlPayload = {
@@ -300,6 +301,12 @@ chrome.webRequest.onCompleted.addListener(
 
     const stored = await chrome.storage.local.get(CAPTURED_REQUESTS_KEY);
     const existing = readCapturedRequests(stored[CAPTURED_REQUESTS_KEY]);
+    const responseHeaders = Object.fromEntries(
+      Object.entries(details.responseHeaders ?? {}).map(([key, values]) => [
+        key,
+        Array.isArray(values) ? values.join(",") : values
+      ])
+    );
     const updated = existing.map((request) =>
       request.id === details.requestId
         ? {
@@ -307,7 +314,8 @@ chrome.webRequest.onCompleted.addListener(
             response: {
               status: details.statusCode,
               durationMs: Math.max(0, Math.round(details.timeStamp - request.startedAtMs)),
-              timestamp: new Date(details.timeStamp).toISOString()
+              timestamp: new Date(details.timeStamp).toISOString(),
+              headers: responseHeaders
             }
           }
         : request

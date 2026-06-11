@@ -59,3 +59,27 @@ export type InterceptedResponse = {
   durationMs: number;
   timestamp: string;
 };
+export type ResponseAssertionType =
+  | "status"
+  | "header"
+  | "json-path"
+  | "body-contains";
+
+export type ResponseAssertion = {
+  id: string;
+  type: ResponseAssertionType;
+  enabled: boolean;
+  actual?: string | number;
+  expected: string | number;
+  path?: string;
+  error?: string;
+};
+
+export type ResponseAssertionPreset = {
+  id: string;
+  name: string;
+  description?: string;
+  enabled: boolean;
+  assertions: ResponseAssertion[];
+  createdAt: string;
+};

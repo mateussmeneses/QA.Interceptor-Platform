@@ -2,6 +2,7 @@ const CAPTURED_REQUESTS_KEY = "capturedRequests";
 const RULES_KEY = "rules";
 const RULE_GROUPS_KEY = "ruleGroups";
 const RULE_VALIDATION_KEY = "ruleValidation";
+const RESPONSE_ASSERTIONS_KEY = "responseAssertions";
 
 type ViewId = "rules" | "network" | "mocks" | "history" | "settings";
 
@@ -130,6 +131,17 @@ type RuleValidation = {
   }>;
 };
 
+type ResponseAssertionRow = {
+  id: string;
+  type: string;
+  enabled: boolean;
+  expected: unknown;
+  path?: string;
+  actual?: unknown;
+  error?: string;
+  createdAt: string;
+};
+
 const listEl = document.getElementById("request-list");
 const rulesStatsEl = document.getElementById("rules-stats");
 const rulesValidationEl = document.getElementById("rules-validation");
@@ -187,6 +199,8 @@ const networkRepeatRequestButtonEl = document.getElementById("network-repeat-req
 const networkCopyCurlButtonEl = document.getElementById("network-copy-curl-button") as HTMLButtonElement | null;
 const historyExportJsonButtonEl = document.getElementById("history-export-json-button") as HTMLButtonElement | null;
 const historyExportMdButtonEl = document.getElementById("history-export-md-button") as HTMLButtonElement | null;
+const assertionsAddButtonEl = document.getElementById("assertions-add-button") as HTMLButtonElement | null;
+const responseAssertionsListEl = document.getElementById("response-assertions-list");
 const mockRuleListEl = document.getElementById("mock-rule-list");
 const mockEmptyStateEl = document.getElementById("mock-empty-state");
 const mockSearchEl = document.getElementById("mock-search") as HTMLInputElement | null;
@@ -296,6 +310,8 @@ if (
   !networkCopyCurlButtonEl ||
   !historyExportJsonButtonEl ||
   !historyExportMdButtonEl ||
+  !assertionsAddButtonEl ||
+  !responseAssertionsListEl ||
   !mockRuleListEl ||
   !mockEmptyStateEl ||
   !mockSearchEl ||
@@ -374,6 +390,8 @@ let historySearchQuery = "";
 let historyOutcomeFilter: HistoryOutcomeFilter = "all";
 let historySortOrder: HistorySortOrder = "recent";
 
+let currentResponseAssertions: ResponseAssertionRow[] = [];
+
 const MOCK_TEMPLATES: MockTemplate[] = [
   {
     id: "auth-401",
@@ -433,6 +451,7 @@ const render = () => {
   renderRequests(currentRequests);
   renderNetworkInspector(currentRequests);
   renderMockPlayground(currentRules);
+  renderResponseAssertions(currentResponseAssertions);
   renderHistoryEvidence(currentRequests);
 };
 
@@ -540,6 +559,10 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 
   if (changes[RULE_VALIDATION_KEY]) {
     currentValidation = readRuleValidation(changes[RULE_VALIDATION_KEY].newValue);
+  }
+
+  if (changes[RESPONSE_ASSERTIONS_KEY]) {
+    currentResponseAssertions = readResponseAssertionRows(changes[RESPONSE_ASSERTIONS_KEY].newValue);
   }
 
   render();
@@ -1447,6 +1470,60 @@ for (const button of navButtons) {
   });
 }
 
+// Response Assertions Event Listeners
+assertionsAddButtonEl.addEventListener("click", () => {
+  const newAssertion: ResponseAssertionRow = {
+    id: `assertion-${Date.now()}`,
+    type: "status",
+    enabled: true,
+    expected: 200,
+    createdAt: new Date().toISOString(),
+  };
+
+  currentResponseAssertions = [newAssertion, ...currentResponseAssertions];
+  renderResponseAssertions(currentResponseAssertions);
+  chrome.storage.local.set({ RESPONSE_ASSERTIONS_KEY: currentResponseAssertions });
+});
+
+responseAssertionsListEl.addEventListener("click", async (event) => {
+  const target = event.target as HTMLElement | null;
+  const toggleButton = target?.closest("[data-assertion-toggle]") as HTMLButtonElement | null;
+  const deleteButton = target?.closest("[data-assertion-delete]") as HTMLButtonElement | null;
+
+  if (toggleButton) {
+    const assertionId = toggleButton.dataset.assertionToggle;
+
+    if (!assertionId) {
+      return;
+    }
+
+    const assertion = currentResponseAssertions.find((row) => row.id === assertionId);
+
+    if (assertion) {
+      assertion.enabled = !assertion.enabled;
+      renderResponseAssertions(currentResponseAssertions);
+      await chrome.storage.local.set({ RESPONSE_ASSERTIONS_KEY: currentResponseAssertions });
+    }
+
+    return;
+  }
+
+  if (!deleteButton) {
+    return;
+  }
+
+  const assertionId = deleteButton.dataset.assertionDelete;
+
+  if (!assertionId) {
+    return;
+  }
+
+  const nextRows = currentResponseAssertions.filter((row) => row.id !== assertionId);
+  currentResponseAssertions = nextRows;
+  await chrome.storage.local.set({ RESPONSE_ASSERTIONS_KEY: nextRows });
+  renderResponseAssertions(currentResponseAssertions);
+});
+
 function setActiveView(view: ViewId) {
   activeView = view;
 
@@ -2206,6 +2283,44 @@ const renderRuleGroupsManager = (groups: RuleGroupRow[]) => {
     .join("");
 };
 
+const renderResponseAssertions = (assertions: ResponseAssertionRow[]): void => {
+  if (assertions.length === 0) {
+    responseAssertionsListEl.innerHTML = '<li class="placeholder">No assertions added. Add one to validate responses.</li>';
+    return;
+  }
+
+  responseAssertionsListEl.innerHTML = assertions
+    .map((assertion) => {
+      const statusClass = assertion.error ? "error" : assertion.actual !== undefined ? "ok" : "pending";
+      const statusIcon = assertion.error ? "❌" : assertion.actual !== undefined ? "✓" : "○";
+      const typeLabel = `${assertion.type}${assertion.path ? ` (${assertion.path})` : ""}`;
+      const expectedText = `Expected: ${String(assertion.expected)}`;
+      const actualText = assertion.actual !== undefined ? `Actual: ${String(assertion.actual)}` : "Not validated yet";
+      const errorText = assertion.error ? `Error: ${assertion.error}` : "";
+
+      return `<li class="response-assertion-item ${statusClass}">
+        <div class="assertion-header">
+          <span class="status-icon">${statusIcon}</span>
+          <span class="assertion-type">${escapeHtml(typeLabel)}</span>
+        </div>
+        <div class="assertion-values">
+          <small>${escapeHtml(expectedText)}</small>
+          ${actualText ? `<small>${escapeHtml(actualText)}</small>` : ""}
+          ${errorText ? `<small class="error-text">${escapeHtml(errorText)}</small>` : ""}
+        </div>
+        <div class="assertion-actions">
+          <button type="button" class="icon-btn" data-assertion-toggle="${escapeHtml(assertion.id)}" title="Toggle assertion">
+            ${assertion.enabled ? "✓" : "○"}
+          </button>
+          <button type="button" class="icon-btn danger" data-assertion-delete="${escapeHtml(assertion.id)}" title="Delete assertion">
+            ✕
+          </button>
+        </div>
+      </li>`;
+    })
+    .join("");
+};
+
 const populateEditor = (rule: RuleRow | null) => {
   if (!rule) {
     setEditorFieldsDisabled(true);
@@ -2378,6 +2493,33 @@ const isRuleGroupRow = (value: unknown): value is RuleGroupRow => {
     typeof candidate.priority === "number" &&
     typeof candidate.createdAt === "string"
   );
+};
+
+const isResponseAssertionRow = (value: unknown): value is ResponseAssertionRow => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    typeof candidate.id === "string" &&
+    (candidate.type === "status" || candidate.type === "header" || candidate.type === "json-path" || candidate.type === "body-contains") &&
+    typeof candidate.enabled === "boolean" &&
+    candidate.expected !== undefined &&
+    (candidate.path === undefined || typeof candidate.path === "string") &&
+    (candidate.actual === undefined || typeof candidate.actual === "string" || typeof candidate.actual === "number") &&
+    (candidate.error === undefined || typeof candidate.error === "string") &&
+    typeof candidate.createdAt === "string"
+  );
+};
+
+const readResponseAssertionRows = (value: unknown): ResponseAssertionRow[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter(isResponseAssertionRow);
 };
 
 const isMockRule = (rule: RuleRow): rule is RuleRow & { type: "mock-response" | "mock-status" } =>

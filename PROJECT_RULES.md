@@ -32,3 +32,5 @@
 - Avoid `any` unless a documented exception exists.
 - Follow SOLID and clean code principles.
 - New behavior should include test coverage whenever practical.
+- Zero-warning quality bar: warnings, deprecated APIs/options, and known static-analysis advisories must be treated as issues to fix, not to ignore.
+- Keep dependencies on latest stable versions whenever practical; if an update is intentionally deferred, document the reason and create a backlog item.

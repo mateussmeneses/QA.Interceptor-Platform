@@ -1,3 +1,5 @@
+export {};
+
 type RuleCondition = {
   urlContains?: string;
   method?: string;
@@ -12,6 +14,15 @@ type Rule = {
   createdAt: string;
   condition: RuleCondition;
   payload: Record<string, unknown>;
+};
+
+type MockEnvVar = {
+  id: string;
+  name: string;
+  value: string;
+  scopeUrlContains?: string;
+  enabled: boolean;
+  createdAt: string;
 };
 
 type MockResponsePayload = {
@@ -46,6 +57,7 @@ declare global {
 }
 
 let rules: Rule[] = [];
+let envVars: MockEnvVar[] = [];
 
 if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
   window.__QA_INTERCEPTOR_MOCK_BRIDGE__ = true;
@@ -60,6 +72,7 @@ if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
       source?: string;
       type?: string;
       rules?: Rule[];
+      envVars?: MockEnvVar[];
     };
 
     if (payload.source !== "qa-interceptor-content" || payload.type !== "RULES_UPDATE" || !Array.isArray(payload.rules)) {
@@ -67,6 +80,10 @@ if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
     }
 
     rules = payload.rules;
+
+    if (Array.isArray(payload.envVars)) {
+      envVars = payload.envVars.filter(isMockEnvVar);
+    }
   });
 
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
@@ -99,7 +116,8 @@ if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
       const rewriteContentType = rewriteResponse.contentType ?? "application/json";
       const rewrittenBody = applyDynamicVariables(rewriteResponse.body, {
         method: requestMethod,
-        url: requestUrl
+        url: requestUrl,
+        envVars: resolveScopedEnvVars(requestUrl)
       });
 
       window.postMessage(
@@ -132,7 +150,8 @@ if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
     const status = match.statusRule?.status ?? match.responseRule?.status ?? 200;
     const body = applyDynamicVariables(match.responseRule?.body ?? "", {
       method: requestMethod,
-      url: requestUrl
+      url: requestUrl,
+      envVars: resolveScopedEnvVars(requestUrl)
     });
     const contentType = match.responseRule?.contentType ?? "application/json";
     const responseHeaders = {
@@ -433,17 +452,57 @@ const applyDynamicVariables = (
   context: {
     method: string;
     url: string;
+    envVars: Record<string, string>;
   }
 ): string => {
   const replacements: Record<string, string> = {
     timestamp: new Date().toISOString(),
     uuid: typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.floor(Math.random() * 100000)}`,
     method: context.method,
-    url: context.url
+    url: context.url,
+    ...context.envVars
   };
 
-  return template.replace(/\{\{\s*([a-zA-Z0-9_-]+)\s*\}\}/g, (full, token: string) => {
+  return template.replace(/\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g, (full, token: string) => {
     const normalized = token.toLowerCase();
+
+    if (normalized.startsWith("env.")) {
+      const envKey = normalized.slice(4);
+      return envKey in replacements ? replacements[envKey] : full;
+    }
+
     return normalized in replacements ? replacements[normalized] : full;
   });
+};
+
+const resolveScopedEnvVars = (url: string): Record<string, string> => {
+  const scoped = envVars
+    .filter((row) => row.enabled)
+    .filter((row) => !row.scopeUrlContains || url.includes(row.scopeUrlContains))
+    .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
+
+  const map: Record<string, string> = {};
+
+  for (const row of scoped) {
+    map[row.name.toLowerCase()] = row.value;
+  }
+
+  return map;
+};
+
+const isMockEnvVar = (value: unknown): value is MockEnvVar => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.name === "string" &&
+    typeof candidate.value === "string" &&
+    (candidate.scopeUrlContains === undefined || typeof candidate.scopeUrlContains === "string") &&
+    typeof candidate.enabled === "boolean" &&
+    typeof candidate.createdAt === "string"
+  );
 };

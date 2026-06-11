@@ -57,6 +57,8 @@ All pull requests must:
 
 - Build successfully
 - Pass relevant tests
+- Introduce no warnings (lint/build/editor diagnostics)
+- Introduce no deprecated APIs/options or unresolved deprecation advisories
 - Follow architecture and project rules
 - Include clear scope and rationale in description
 - Avoid unrelated changes in the same PR
@@ -71,6 +73,11 @@ All pull requests must:
 - Small modules and explicit boundaries
 
 Pre-commit quality gate is enforced with Husky + lint-staged (ESLint and Prettier on staged files).
+
+## Dependency Freshness Policy
+
+- Keep libraries/packages on latest stable versions whenever practical.
+- When updates are postponed (e.g., upstream breakage), document rationale in the PR and track remediation in `BACKLOG.md`.
 
 ## Before Starting Work
 
