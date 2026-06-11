@@ -84,6 +84,19 @@
                 <input id="rules-import-input" type="file" accept=".json,application/json" class="hidden" aria-hidden="true" />
               </div>
 
+              <section class="rules-groups-manager" aria-label="rule groups manager">
+                <div class="rules-groups-toolbar">
+                  <label class="field-inline" for="rules-group-name-input">
+                    <span>New Group</span>
+                    <input id="rules-group-name-input" type="text" placeholder="Core QA" />
+                  </label>
+                  <button id="rules-group-create-button" type="button" class="action-btn">Create Group</button>
+                </div>
+                <ul id="rules-groups-list" class="rules-groups-list">
+                  <li class="placeholder">No groups yet.</li>
+                </ul>
+              </section>
+
               <div id="rules-validation" class="rules-validation" aria-live="polite"></div>
 
               <div id="rules-empty-state" class="placeholder hidden">
@@ -152,6 +165,13 @@
                     </select>
                   </label>
                 </div>
+
+                <label class="field-block" for="editor-rule-group">
+                  <span>Group</span>
+                  <select id="editor-rule-group" name="group">
+                    <option value="">Ungrouped</option>
+                  </select>
+                </label>
 
                 <label class="field-block" for="editor-rule-url">
                   <span>URL contains</span>
@@ -349,12 +369,21 @@
                     <div id="network-detail-rules" class="rule-chips"></div>
                   </section>
 
+                  <section>
+                    <h4>Execution Timeline</h4>
+                    <ul id="network-execution-log" class="network-execution-log">
+                      <li class="placeholder">Select a request to inspect execution timeline.</li>
+                    </ul>
+                  </section>
+
                   <section id="network-detail-body-section" class="hidden">
                     <h4>Response Body</h4>
                     <pre id="network-detail-body" class="response-body-preview"></pre>
                   </section>
 
                   <div class="network-detail-actions">
+                    <button id="network-clone-request-button" type="button" class="action-btn">Clone Request</button>
+                    <button id="network-edit-resend-button" type="button" class="action-btn">Edit &amp; Resend</button>
                     <button id="network-repeat-request-button" type="button" class="action-btn primary">Repeat Request</button>
                     <button id="network-copy-curl-button" type="button" class="action-btn">Copy as cURL</button>
                   </div>
@@ -445,6 +474,25 @@
                     <span>URL contains</span>
                     <input id="mock-editor-url" type="text" placeholder="/api/orders" />
                   </label>
+
+                  <section class="mock-template-library" aria-label="mock template library">
+                    <div class="section-head compact">
+                      <h4>Template Library</h4>
+                    </div>
+                    <div class="editor-grid">
+                      <label class="field-block" for="mock-template-select">
+                        <span>Preset</span>
+                        <select id="mock-template-select">
+                          <option value="">Select a template</option>
+                        </select>
+                      </label>
+                      <div class="field-block mock-template-actions">
+                        <span>Apply</span>
+                        <button id="mock-template-apply-button" type="button" class="action-btn">Apply Template</button>
+                      </div>
+                    </div>
+                    <p id="mock-template-description" class="preview-note">Choose a template to auto-fill mock fields.</p>
+                  </section>
 
                   <div class="editor-grid">
                     <label class="field-block" for="mock-editor-http-status">

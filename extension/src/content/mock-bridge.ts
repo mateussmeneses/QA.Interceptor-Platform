@@ -97,6 +97,10 @@ if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
 
       const realResponse = await originalFetch(input, effectiveInit);
       const rewriteContentType = rewriteResponse.contentType ?? "application/json";
+      const rewrittenBody = applyDynamicVariables(rewriteResponse.body, {
+        method: requestMethod,
+        url: requestUrl
+      });
 
       window.postMessage(
         {
@@ -109,14 +113,14 @@ if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
             timestamp: new Date().toISOString(),
             status: realResponse.status,
             durationMs: delayMs,
-            responseBody: rewriteResponse.body,
+            responseBody: rewrittenBody,
             matchedRules: rewriteResponse.matchedRules
           }
         },
         "*"
       );
 
-      return new Response(rewriteResponse.body, {
+      return new Response(rewrittenBody, {
         status: realResponse.status,
         headers: {
           "content-type": rewriteContentType,
@@ -126,7 +130,10 @@ if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
     }
 
     const status = match.statusRule?.status ?? match.responseRule?.status ?? 200;
-    const body = match.responseRule?.body ?? "";
+    const body = applyDynamicVariables(match.responseRule?.body ?? "", {
+      method: requestMethod,
+      url: requestUrl
+    });
     const contentType = match.responseRule?.contentType ?? "application/json";
     const responseHeaders = {
       ...(match.responseRule?.headers ?? {}),
@@ -420,3 +427,23 @@ const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+
+const applyDynamicVariables = (
+  template: string,
+  context: {
+    method: string;
+    url: string;
+  }
+): string => {
+  const replacements: Record<string, string> = {
+    timestamp: new Date().toISOString(),
+    uuid: typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+    method: context.method,
+    url: context.url
+  };
+
+  return template.replace(/\{\{\s*([a-zA-Z0-9_-]+)\s*\}\}/g, (full, token: string) => {
+    const normalized = token.toLowerCase();
+    return normalized in replacements ? replacements[normalized] : full;
+  });
+};

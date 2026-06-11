@@ -25,12 +25,21 @@ export type Rule = {
   type: RuleType;
   enabled: boolean;
   priority: number;
+  groupId?: string;
   createdAt: string;
   condition: {
     urlContains?: string;
     method?: HttpMethod;
   };
   payload: Record<string, unknown>;
+};
+
+export type RuleGroup = {
+  id: string;
+  name: string;
+  enabled: boolean;
+  priority: number;
+  createdAt: string;
 };
 
 export type InterceptedRequest = {

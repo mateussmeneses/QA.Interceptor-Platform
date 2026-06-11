@@ -106,8 +106,16 @@ Goal: prioritize a complete product-like frontend experience now, inspired by th
 | --- | --- | --- | --- | --- | --- | --- |
 | NET-005 | Repeat request from Network inspector | P1 | Done | Copilot | INT-002 | User can replay selected request and see new captured entry with response status/body |
 | NET-006 | Compose request from Network inspector | P1 | Done | Copilot | NET-005 | User can build and send custom request (method/url/headers/body) and capture result in inspector |
-| NET-007 | Clone selected request | P1 | Todo | Copilot | NET-006 | User can clone selected request into compose form with one action |
-| NET-008 | Edit and resend request | P1 | Todo | Copilot | NET-006 | User can edit selected request fields and resend preserving workflow context |
+| NET-007 | Clone selected request | P1 | Done | Copilot | NET-006 | User can clone selected request into compose form with one action |
+| NET-008 | Edit and resend request | P1 | Done | Copilot | NET-006 | User can edit selected request fields and resend preserving workflow context |
+
+## Execution Queue - Phase 2 Advanced Mocking
+
+| ID | Item | Priority | Status | Owner | Dependencies | Acceptance Criteria |
+| --- | --- | --- | --- | --- | --- | --- |
+| MK-003 | Dynamic variables in mock templates | P1 | Done | Copilot | MK-001 | Mock/rewrite response bodies support tokens like {{timestamp}}, {{uuid}}, {{method}}, {{url}} |
+| MK-004 | Template responses library | P1 | Done | Copilot | MK-003 | User can select and apply reusable response templates from UI |
+| MK-005 | Environment variables for mock payloads | P1 | Todo | Copilot | MK-003 | User can define scoped env vars and reference them in mock payload templates |
 
 ## Execution Queue - Engineering Standards
 
@@ -116,3 +124,40 @@ Goal: prioritize a complete product-like frontend experience now, inspired by th
 | ENG-001 | Define Semantic Versioning policy | P1 | Done | Copilot | None | Project documents SemVer pattern (MAJOR.MINOR.PATCH) and bump rules for breaking/feature/fix changes |
 | ENG-002 | Enforce Conventional Commits with Husky | P1 | Done | Copilot | ENG-001 | commit-msg hook validates commit format using commitlint conventional config |
 | ENG-003 | Enforce code quality on pre-commit | P1 | Done | Copilot | ENG-002 | pre-commit runs lint-staged to apply ESLint/Prettier checks on staged files |
+
+## Requestly Benchmark Coverage Snapshot
+
+Reference analysis: docs/requestly-benchmark-analysis.md
+
+| Capability | Requestly State | QA.Interceptor State | Notes |
+| --- | --- | --- | --- |
+| Core rewrite/mock/simulation rules | Mature | Partial parity | Foundation delivered with URL/header/query/request-body/response-body, mock status/body, delay/block/redirect |
+| Request tools (repeat/compose/clone/edit-resend) | Mature | Baseline delivered | NET-005 to NET-008 completed |
+| HAR/cURL import-export | Mature | Baseline delivered | HAR import/export and cURL export delivered |
+| Rule groups and grouped execution control | Mature | Missing | Needed for scale and QA workflow organization |
+| Mock template library and env variables | Mature | Partial | Dynamic variables delivered; templates and env vars pending |
+| Execution observability (devtools-level) | Mature | Partial | Sidepanel has matched rules; dedicated execution log panel pending |
+| API client and QA assertions | Mature | Missing | Important for QA-centric contract and scenario validation |
+
+## Execution Queue - Requestly Alignment (QA-First)
+
+| ID | Item | Priority | Status | Owner | Dependencies | Acceptance Criteria |
+| --- | --- | --- | --- | --- | --- | --- |
+| RQ-001 | Rule groups CRUD in Rules view | P1 | Done | Copilot | INT-001 | User can create, rename, delete, and assign rules to groups |
+| RQ-002 | Group enable/disable and ordering | P1 | Done | Copilot | RQ-001 | Group toggle and priority order deterministically affect member rule execution |
+| RQ-003 | Execution log timeline panel | P1 | Done | Copilot | INT-002, RQ-002 | User can inspect which rule matched each request with timestamp and action summary |
+| RQ-004 | Template responses library | P1 | Done | Copilot | MK-003 | User can pick preset response templates and apply them in Mock editor |
+| RQ-005 | Mock environment variables | P1 | Todo | Copilot | MK-003 | User can define env variables and reference them in mock/rewrite templates |
+| RQ-006 | Collections and folders for assets | P1 | Todo | Copilot | RQ-001 | Rules, mocks, and composed requests can be organized in folders/collections |
+| RQ-007 | Tags and quick filters | P2 | Todo | Copilot | RQ-006 | User can label assets and filter quickly by tag in Rules/Network/Mocks |
+| RQ-008 | Minimal API client (QA scope) | P1 | Todo | Copilot | NET-006 | User can send saved requests, inspect response body/headers, and export evidence |
+| RQ-009 | Response assertions presets | P1 | Todo | Copilot | RQ-008 | QA user can define assertions for status, headers, and JSON path values |
+| RQ-010 | Error simulation profiles | P1 | Todo | Copilot | NS-001, MK-002 | One-click profiles for 400/401/403/404/500 and network failure behavior |
+
+## Execution Queue - Architecture Hardening
+
+| ID | Item | Priority | Status | Owner | Dependencies | Acceptance Criteria |
+| --- | --- | --- | --- | --- | --- | --- |
+| ARC-001 | Feature-based sidepanel modules | P1 | Todo | Copilot | FE-008 | Sidepanel code is split into feature folders (rules/network/mocks/history/settings) with bounded responsibilities |
+| ARC-002 | Typed runtime message contracts | P1 | Todo | Copilot | ARC-001 | Background/content/sidepanel message payloads share typed contracts and runtime validation |
+| ARC-003 | Storage abstraction layer | P2 | Todo | Copilot | ARC-002 | Storage access is centralized in one module to simplify future migration and testing |

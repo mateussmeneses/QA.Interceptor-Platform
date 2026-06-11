@@ -1,5 +1,6 @@
 const CAPTURED_REQUESTS_KEY = "capturedRequests";
 const RULES_KEY = "rules";
+const RULE_GROUPS_KEY = "ruleGroups";
 const RULE_VALIDATION_KEY = "ruleValidation";
 
 type ViewId = "rules" | "network" | "mocks" | "history" | "settings";
@@ -91,11 +92,32 @@ type RuleRow = {
   type: RuleType;
   enabled: boolean;
   priority: number;
+  groupId?: string;
   condition: {
     urlContains?: string;
     method?: string;
   };
   payload: Record<string, unknown>;
+};
+
+type RuleGroupRow = {
+  id: string;
+  name: string;
+  enabled: boolean;
+  priority: number;
+  createdAt: string;
+};
+
+type MockTemplate = {
+  id: string;
+  name: string;
+  description: string;
+  method?: string;
+  urlContains?: string;
+  status?: number;
+  delayMs?: number;
+  headers?: Record<string, string>;
+  body?: string;
 };
 
 type RuleValidation = {
@@ -128,10 +150,14 @@ const editorTypeEl = document.getElementById("editor-rule-type") as HTMLSelectEl
 const editorPriorityEl = document.getElementById("editor-rule-priority") as HTMLInputElement | null;
 const editorMethodEl = document.getElementById("editor-rule-method") as HTMLSelectElement | null;
 const editorEnabledEl = document.getElementById("editor-rule-enabled") as HTMLSelectElement | null;
+const editorGroupEl = document.getElementById("editor-rule-group") as HTMLSelectElement | null;
 const editorUrlEl = document.getElementById("editor-rule-url") as HTMLInputElement | null;
 const editorPayloadEl = document.getElementById("editor-rule-payload") as HTMLTextAreaElement | null;
 const editorSaveButtonEl = document.getElementById("editor-save-button") as HTMLButtonElement | null;
 const rulesCreateButtonEl = document.getElementById("rules-create-button") as HTMLButtonElement | null;
+const rulesGroupNameInputEl = document.getElementById("rules-group-name-input") as HTMLInputElement | null;
+const rulesGroupCreateButtonEl = document.getElementById("rules-group-create-button") as HTMLButtonElement | null;
+const rulesGroupsListEl = document.getElementById("rules-groups-list");
 const editorDuplicateButtonEl = document.getElementById("editor-duplicate-button") as HTMLButtonElement | null;
 const editorDeleteButtonEl = document.getElementById("editor-delete-button") as HTMLButtonElement | null;
 const networkRequestListEl = document.getElementById("network-request-list");
@@ -154,6 +180,9 @@ const networkTimelineBarEl = document.getElementById("network-timeline-bar");
 const networkTimelineCaptionEl = document.getElementById("network-timeline-caption");
 const networkDetailBodySectionEl = document.getElementById("network-detail-body-section");
 const networkDetailBodyEl = document.getElementById("network-detail-body");
+const networkExecutionLogEl = document.getElementById("network-execution-log");
+const networkCloneRequestButtonEl = document.getElementById("network-clone-request-button") as HTMLButtonElement | null;
+const networkEditResendButtonEl = document.getElementById("network-edit-resend-button") as HTMLButtonElement | null;
 const networkRepeatRequestButtonEl = document.getElementById("network-repeat-request-button") as HTMLButtonElement | null;
 const networkCopyCurlButtonEl = document.getElementById("network-copy-curl-button") as HTMLButtonElement | null;
 const historyExportJsonButtonEl = document.getElementById("history-export-json-button") as HTMLButtonElement | null;
@@ -173,6 +202,9 @@ const mockEditorHttpStatusEl = document.getElementById("mock-editor-http-status"
 const mockEditorDelayMsEl = document.getElementById("mock-editor-delay-ms") as HTMLInputElement | null;
 const mockEditorHeadersEl = document.getElementById("mock-editor-headers") as HTMLTextAreaElement | null;
 const mockEditorBodyEl = document.getElementById("mock-editor-body") as HTMLTextAreaElement | null;
+const mockTemplateSelectEl = document.getElementById("mock-template-select") as HTMLSelectElement | null;
+const mockTemplateApplyButtonEl = document.getElementById("mock-template-apply-button") as HTMLButtonElement | null;
+const mockTemplateDescriptionEl = document.getElementById("mock-template-description");
 const mockSaveButtonEl = document.getElementById("mock-save-button") as HTMLButtonElement | null;
 const historySessionListEl = document.getElementById("history-session-list");
 const historyEmptyStateEl = document.getElementById("history-empty-state");
@@ -227,10 +259,14 @@ if (
   !editorPriorityEl ||
   !editorMethodEl ||
   !editorEnabledEl ||
+  !editorGroupEl ||
   !editorUrlEl ||
   !editorPayloadEl ||
   !editorSaveButtonEl ||
   !rulesCreateButtonEl ||
+  !rulesGroupNameInputEl ||
+  !rulesGroupCreateButtonEl ||
+  !rulesGroupsListEl ||
   !editorDuplicateButtonEl ||
   !editorDeleteButtonEl ||
   !networkRequestListEl ||
@@ -253,6 +289,9 @@ if (
   !networkTimelineCaptionEl ||
   !networkDetailBodySectionEl ||
   !networkDetailBodyEl ||
+  !networkExecutionLogEl ||
+  !networkCloneRequestButtonEl ||
+  !networkEditResendButtonEl ||
   !networkRepeatRequestButtonEl ||
   !networkCopyCurlButtonEl ||
   !historyExportJsonButtonEl ||
@@ -272,6 +311,9 @@ if (
   !mockEditorDelayMsEl ||
   !mockEditorHeadersEl ||
   !mockEditorBodyEl ||
+  !mockTemplateSelectEl ||
+  !mockTemplateApplyButtonEl ||
+  !mockTemplateDescriptionEl ||
   !mockSaveButtonEl ||
   !historySessionListEl ||
   !historyEmptyStateEl ||
@@ -312,6 +354,7 @@ const workspaceSubtitle = workspaceSubtitleEl!;
 
 let currentRequests: RequestRow[] = [];
 let currentRules: RuleRow[] = [];
+let currentRuleGroups: RuleGroupRow[] = [];
 let currentValidation: RuleValidation | null = null;
 let activeView: ViewId = "rules";
 let selectedRuleId: string | null = null;
@@ -331,7 +374,61 @@ let historySearchQuery = "";
 let historyOutcomeFilter: HistoryOutcomeFilter = "all";
 let historySortOrder: HistorySortOrder = "recent";
 
+const MOCK_TEMPLATES: MockTemplate[] = [
+  {
+    id: "auth-401",
+    name: "Auth 401 Unauthorized",
+    description: "Simulate expired session/token and verify auth fallback UI.",
+    method: "GET",
+    urlContains: "/api",
+    status: 401,
+    headers: {
+      "content-type": "application/json"
+    },
+    body: '{"error":"unauthorized","message":"Session expired"}'
+  },
+  {
+    id: "server-500",
+    name: "Server 500 with Retry Hint",
+    description: "Simulate server failure path with retry guidance.",
+    method: "POST",
+    urlContains: "/api",
+    status: 500,
+    delayMs: 800,
+    headers: {
+      "content-type": "application/json"
+    },
+    body: '{"error":"internal_error","message":"Temporary failure"}'
+  },
+  {
+    id: "validation-422",
+    name: "Validation 422 Error",
+    description: "Return field-level validation errors for form QA.",
+    method: "POST",
+    urlContains: "/api/orders",
+    status: 422,
+    headers: {
+      "content-type": "application/json"
+    },
+    body: '{"error":"validation_failed","fields":{"email":"invalid format"}}'
+  },
+  {
+    id: "slow-success",
+    name: "Slow 200 Success",
+    description: "Keep 200 response with latency to validate loading states.",
+    method: "GET",
+    urlContains: "/api",
+    status: 200,
+    delayMs: 1500,
+    headers: {
+      "content-type": "application/json"
+    },
+    body: '{"ok":true,"source":"template","items":[]}'
+  }
+];
+
 const render = () => {
+  renderRuleGroupsManager(currentRuleGroups);
   renderRules(currentRules);
   renderRequests(currentRequests);
   renderNetworkInspector(currentRequests);
@@ -416,9 +513,10 @@ const renderValidationStatus = (validation: RuleValidation | null) => {
 };
 
 const loadCapturedRequests = async () => {
-  const stored = await chrome.storage.local.get([CAPTURED_REQUESTS_KEY, RULES_KEY, RULE_VALIDATION_KEY]);
+  const stored = await chrome.storage.local.get([CAPTURED_REQUESTS_KEY, RULES_KEY, RULE_GROUPS_KEY, RULE_VALIDATION_KEY]);
   currentRequests = readRequestRows(stored[CAPTURED_REQUESTS_KEY]);
   currentRules = readRuleRows(stored[RULES_KEY]);
+  currentRuleGroups = readRuleGroupRows(stored[RULE_GROUPS_KEY]);
   currentValidation = readRuleValidation(stored[RULE_VALIDATION_KEY]);
   render();
 };
@@ -434,6 +532,10 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 
   if (changes[RULES_KEY]) {
     currentRules = readRuleRows(changes[RULES_KEY].newValue);
+  }
+
+  if (changes[RULE_GROUPS_KEY]) {
+    currentRuleGroups = readRuleGroupRows(changes[RULE_GROUPS_KEY].newValue);
   }
 
   if (changes[RULE_VALIDATION_KEY]) {
@@ -503,6 +605,133 @@ rulesCreateButtonEl.addEventListener("click", async () => {
   selectedRuleId = nextRule.id;
   await chrome.storage.local.set({ [RULES_KEY]: nextRules });
   setEditorSaveStatus("New rule created. Update fields and click Save Changes.", "ok");
+});
+
+rulesGroupCreateButtonEl.addEventListener("click", async () => {
+  const name = rulesGroupNameInputEl.value.trim();
+
+  if (!name) {
+    setEditorSaveStatus("Group name is required.", "error");
+    return;
+  }
+
+  const nextPriority =
+    currentRuleGroups.length > 0 ? Math.max(...currentRuleGroups.map((group) => group.priority)) + 1 : 0;
+
+  const nextGroup: RuleGroupRow = {
+    id: createRuleGroupId(),
+    name,
+    enabled: true,
+    priority: nextPriority,
+    createdAt: new Date().toISOString()
+  };
+
+  const nextGroups = [...currentRuleGroups, nextGroup];
+  currentRuleGroups = nextGroups;
+  rulesGroupNameInputEl.value = "";
+  await chrome.storage.local.set({ [RULE_GROUPS_KEY]: nextGroups });
+  setEditorSaveStatus("Rule group created.", "ok");
+});
+
+rulesGroupsListEl.addEventListener("click", async (event) => {
+  const target = event.target as HTMLElement | null;
+  const toggleButton = target?.closest("[data-group-toggle]") as HTMLButtonElement | null;
+  const upButton = target?.closest("[data-group-up]") as HTMLButtonElement | null;
+  const downButton = target?.closest("[data-group-down]") as HTMLButtonElement | null;
+  const renameButton = target?.closest("[data-group-rename]") as HTMLButtonElement | null;
+  const deleteButton = target?.closest("[data-group-delete]") as HTMLButtonElement | null;
+
+  if (toggleButton) {
+    const groupId = toggleButton.dataset.groupToggle;
+
+    if (!groupId) {
+      return;
+    }
+
+    const nextGroups = currentRuleGroups.map((group) =>
+      group.id === groupId ? { ...group, enabled: !group.enabled } : group
+    );
+    currentRuleGroups = nextGroups;
+    await chrome.storage.local.set({ [RULE_GROUPS_KEY]: nextGroups });
+    return;
+  }
+
+  if (upButton || downButton) {
+    const groupId = upButton?.dataset.groupUp ?? downButton?.dataset.groupDown;
+
+    if (!groupId) {
+      return;
+    }
+
+    const sorted = [...currentRuleGroups].sort((a, b) => a.priority - b.priority);
+    const index = sorted.findIndex((group) => group.id === groupId);
+
+    if (index < 0) {
+      return;
+    }
+
+    const targetIndex = upButton ? index - 1 : index + 1;
+
+    if (targetIndex < 0 || targetIndex >= sorted.length) {
+      return;
+    }
+
+    const [moved] = sorted.splice(index, 1);
+    sorted.splice(targetIndex, 0, moved);
+
+    const nextGroups = sorted.map((group, order) => ({ ...group, priority: order }));
+    currentRuleGroups = nextGroups;
+    await chrome.storage.local.set({ [RULE_GROUPS_KEY]: nextGroups });
+    return;
+  }
+
+  if (renameButton) {
+    const groupId = renameButton.dataset.groupRename;
+
+    if (!groupId) {
+      return;
+    }
+
+    const current = currentRuleGroups.find((group) => group.id === groupId);
+
+    if (!current) {
+      return;
+    }
+
+    const renamed = window.prompt("Rename group", current.name)?.trim();
+
+    if (!renamed) {
+      return;
+    }
+
+    const nextGroups = currentRuleGroups.map((group) =>
+      group.id === groupId ? { ...group, name: renamed } : group
+    );
+    currentRuleGroups = nextGroups;
+    await chrome.storage.local.set({ [RULE_GROUPS_KEY]: nextGroups });
+    return;
+  }
+
+  if (!deleteButton) {
+    return;
+  }
+
+  const groupId = deleteButton.dataset.groupDelete;
+
+  if (!groupId) {
+    return;
+  }
+
+  const inUseCount = currentRules.filter((rule) => rule.groupId === groupId).length;
+
+  if (inUseCount > 0) {
+    setEditorSaveStatus("Cannot delete a group that still has rules assigned.", "error");
+    return;
+  }
+
+  const nextGroups = currentRuleGroups.filter((group) => group.id !== groupId);
+  currentRuleGroups = nextGroups.map((group, order) => ({ ...group, priority: order }));
+  await chrome.storage.local.set({ [RULE_GROUPS_KEY]: currentRuleGroups });
 });
 
 rulesExportButtonEl.addEventListener("click", () => {
@@ -646,11 +875,7 @@ networkComposeButtonEl.addEventListener("click", () => {
   const selectedRow = currentRequests.find((requestRow) => requestRow.id === selectedNetworkRequestId);
 
   if (selectedRow) {
-    networkComposeMethodEl.value = selectedRow.method;
-    networkComposeUrlEl.value = selectedRow.url;
-    networkComposeHeadersEl.value = JSON.stringify(selectedRow.headers ?? {}, null, 2);
-    networkComposeBodyEl.value = selectedRow.body ?? "";
-    setNetworkComposeStatus("Compose pre-filled from selected request.", "ok");
+    fillComposeFromRequest(selectedRow);
   } else {
     networkComposeMethodEl.value = "GET";
     networkComposeUrlEl.value = "";
@@ -659,6 +884,31 @@ networkComposeButtonEl.addEventListener("click", () => {
     setNetworkComposeStatus("Compose panel ready.", "neutral");
   }
 
+  networkComposePanelEl.classList.remove("hidden");
+});
+
+networkCloneRequestButtonEl.addEventListener("click", () => {
+  const selectedRow = currentRequests.find((requestRow) => requestRow.id === selectedNetworkRequestId);
+
+  if (!selectedRow) {
+    setNetworkComposeStatus("Select a request before cloning.", "error");
+    return;
+  }
+
+  fillComposeFromRequest(selectedRow);
+  networkComposePanelEl.classList.remove("hidden");
+});
+
+networkEditResendButtonEl.addEventListener("click", () => {
+  const selectedRow = currentRequests.find((requestRow) => requestRow.id === selectedNetworkRequestId);
+
+  if (!selectedRow) {
+    setNetworkComposeStatus("Select a request before editing/resending.", "error");
+    return;
+  }
+
+  fillComposeFromRequest(selectedRow);
+  setNetworkComposeStatus("Editing cloned request. Update fields and click Send Request.", "ok");
   networkComposePanelEl.classList.remove("hidden");
 });
 
@@ -845,6 +1095,53 @@ mockStatusFilterEl.addEventListener("change", () => {
   const candidate = mockStatusFilterEl.value;
   mockStatusFilter = candidate === "enabled" || candidate === "disabled" ? candidate : "all";
   renderMockPlayground(currentRules);
+});
+
+mockTemplateSelectEl.addEventListener("change", () => {
+  const template = MOCK_TEMPLATES.find((item) => item.id === mockTemplateSelectEl.value);
+  mockTemplateDescriptionEl.textContent = template
+    ? template.description
+    : "Choose a template to auto-fill mock fields.";
+});
+
+mockTemplateApplyButtonEl.addEventListener("click", () => {
+  const template = MOCK_TEMPLATES.find((item) => item.id === mockTemplateSelectEl.value);
+
+  if (!template) {
+    setMockSaveStatus("Select a template before applying.", "error");
+    return;
+  }
+
+  if (!selectedMockRuleId) {
+    setMockSaveStatus("Select a mock rule before applying a template.", "error");
+    return;
+  }
+
+  if (template.method !== undefined) {
+    mockEditorMethodEl.value = template.method;
+  }
+
+  if (template.urlContains !== undefined) {
+    mockEditorUrlEl.value = template.urlContains;
+  }
+
+  if (template.status !== undefined) {
+    mockEditorHttpStatusEl.value = String(template.status);
+  }
+
+  if (template.delayMs !== undefined) {
+    mockEditorDelayMsEl.value = String(template.delayMs);
+  }
+
+  if (template.headers) {
+    mockEditorHeadersEl.value = JSON.stringify(template.headers, null, 2);
+  }
+
+  if (!mockEditorBodyEl.disabled && template.body !== undefined) {
+    mockEditorBodyEl.value = template.body;
+  }
+
+  setMockSaveStatus(`Template applied: ${template.name}. Save to persist.`, "ok");
 });
 
 historySearchEl.addEventListener("input", () => {
@@ -1069,7 +1366,7 @@ mockEditorFormEl.addEventListener("submit", async (event) => {
   setMockSaveStatus("Mock rule saved to local storage.", "ok");
 });
 
-for (const field of [editorNameEl, editorPriorityEl, editorMethodEl, editorEnabledEl, editorUrlEl, editorPayloadEl]) {
+for (const field of [editorNameEl, editorPriorityEl, editorMethodEl, editorEnabledEl, editorGroupEl, editorUrlEl, editorPayloadEl]) {
   field.addEventListener("input", () => {
     if (selectedRuleId) {
       setEditorSaveStatus("Unsaved changes.", "neutral");
@@ -1111,6 +1408,7 @@ ruleEditorFormEl.addEventListener("submit", async (event) => {
   const nextPriority = Number.parseInt(editorPriorityEl.value, 10);
   const normalizedPriority = Number.isFinite(nextPriority) && nextPriority > 0 ? nextPriority : 1;
   const methodValue = editorMethodEl.value.trim().toUpperCase();
+  const groupValue = editorGroupEl.value.trim();
   const urlContainsValue = editorUrlEl.value.trim();
 
   const nextRules = currentRules.map((rule) => {
@@ -1123,6 +1421,7 @@ ruleEditorFormEl.addEventListener("submit", async (event) => {
       name: editorNameEl.value.trim() || rule.name,
       enabled: editorEnabledEl.value === "true",
       priority: normalizedPriority,
+      ...(groupValue ? { groupId: groupValue } : { groupId: undefined }),
       condition: {
         ...(methodValue ? { method: methodValue } : {}),
         ...(urlContainsValue ? { urlContains: urlContainsValue } : {})
@@ -1164,6 +1463,7 @@ function setActiveView(view: ViewId) {
 }
 
 setActiveView(activeView);
+initializeMockTemplates();
 
 void loadCapturedRequests();
 
@@ -1188,6 +1488,14 @@ const readRuleRows = (value: unknown): RuleRow[] => {
   }
 
   return value.filter(isRuleRow);
+};
+
+const readRuleGroupRows = (value: unknown): RuleGroupRow[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter(isRuleGroupRow);
 };
 
 const applyRuleFilters = (rows: RuleRow[]): RuleRow[] =>
@@ -1251,6 +1559,7 @@ const renderNetworkDetail = (row: RequestRow | null) => {
   if (!row) {
     networkDetailEmptyEl.classList.remove("hidden");
     networkDetailContentEl.classList.add("hidden");
+    networkExecutionLogEl.innerHTML = '<li class="placeholder">Select a request to inspect execution timeline.</li>';
     return;
   }
 
@@ -1272,6 +1581,7 @@ const renderNetworkDetail = (row: RequestRow | null) => {
   networkDetailMethodEl.className = "status-chip";
 
   networkDetailRulesEl.innerHTML = renderRuleChips(row.matchedRules);
+  networkExecutionLogEl.innerHTML = renderNetworkExecutionTimeline(row);
   networkTimelineBarEl.style.width = `${String(getTimelineWidthPercent(row.response?.durationMs))}%`;
   networkTimelineCaptionEl.textContent = row.response
     ? `Response completed in ${formatDuration(row.response.durationMs)}.`
@@ -1596,6 +1906,14 @@ const createDefaultRule = (): RuleRow => ({
   }
 });
 
+const createRuleGroupId = (): string => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return `grp-${crypto.randomUUID()}`;
+  }
+
+  return `grp-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+};
+
 const createRuleId = (): string => {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return `rule-${crypto.randomUUID()}`;
@@ -1612,8 +1930,25 @@ const setMockEditorFieldsDisabled = (disabled: boolean) => {
   mockEditorDelayMsEl.disabled = disabled;
   mockEditorHeadersEl.disabled = disabled;
   mockEditorBodyEl.disabled = disabled;
+  mockTemplateSelectEl.disabled = disabled;
+  mockTemplateApplyButtonEl.disabled = disabled;
   mockSaveButtonEl.disabled = disabled;
 };
+
+function initializeMockTemplates() {
+  const templateSelect = mockTemplateSelectEl!;
+  const templateDescription = mockTemplateDescriptionEl!;
+
+  templateSelect.innerHTML = ['<option value="">Select a template</option>']
+    .concat(
+      MOCK_TEMPLATES.map(
+        (template) => `<option value="${escapeHtml(template.id)}">${escapeHtml(template.name)}</option>`
+      )
+    )
+    .join("");
+
+  templateDescription.textContent = "Choose a template to auto-fill mock fields.";
+}
 
 const setMockSaveStatus = (message: string, tone: "neutral" | "ok" | "error") => {
   mockSaveStatusEl.textContent = message;
@@ -1707,6 +2042,89 @@ const getTimelineWidthPercent = (durationMs: number | undefined): number => {
   return Math.max(4, Math.min(100, Math.round((durationMs / 2000) * 100)));
 };
 
+const renderNetworkExecutionTimeline = (row: RequestRow): string => {
+  const entries: Array<{ title: string; details: string; timestamp: string }> = [
+    {
+      title: `${row.method} request captured`,
+      details: row.url,
+      timestamp: row.timestamp
+    }
+  ];
+
+  for (const matched of row.matchedRules) {
+    entries.push({
+      title: `Matched rule: ${matched.ruleName}`,
+      details: summarizeRuleAction(matched.type),
+      timestamp: row.timestamp
+    });
+  }
+
+  if (row.response) {
+    entries.push({
+      title: `Response completed (${row.response.status})`,
+      details: `Finished in ${formatDuration(row.response.durationMs)}`,
+      timestamp: row.response.timestamp
+    });
+  } else {
+    entries.push({
+      title: "Response pending",
+      details: "Waiting for completion from browser runtime.",
+      timestamp: row.timestamp
+    });
+  }
+
+  return entries
+    .map(
+      (entry) =>
+        `<li class="network-execution-item"><strong>${escapeHtml(entry.title)}</strong><small>${escapeHtml(formatTimestamp(entry.timestamp))}</small><small>${escapeHtml(entry.details)}</small></li>`
+    )
+    .join("");
+};
+
+const summarizeRuleAction = (type: string): string => {
+  if (type === "rewrite-url") {
+    return "Action: URL rewritten before request dispatch.";
+  }
+
+  if (type === "rewrite-header") {
+    return "Action: request headers adjusted by rewrite operations.";
+  }
+
+  if (type === "rewrite-query") {
+    return "Action: query string modified by rule operations.";
+  }
+
+  if (type === "rewrite-response") {
+    return "Action: synthetic response body returned for matched request.";
+  }
+
+  if (type === "rewrite-request-body") {
+    return "Action: request body transformed before fetch execution.";
+  }
+
+  if (type === "mock-response") {
+    return "Action: mocked response payload served to caller.";
+  }
+
+  if (type === "mock-status") {
+    return "Action: mocked HTTP status code applied.";
+  }
+
+  if (type === "delay") {
+    return "Action: request delayed to simulate network latency.";
+  }
+
+  if (type === "redirect") {
+    return "Action: request redirected to configured destination.";
+  }
+
+  if (type === "block") {
+    return "Action: request blocked by interception rule.";
+  }
+
+  return "Action: rule matched and applied in runtime pipeline.";
+};
+
 const isNetworkStatusFilter = (value: string): value is NetworkStatusFilter =>
   value === "all" ||
   value === "pending" ||
@@ -1716,7 +2134,7 @@ const isNetworkStatusFilter = (value: string): value is NetworkStatusFilter =>
   value === "5xx";
 
 const renderRuleGroups = (rows: RuleRow[]): string => {
-  const groups = groupRulesByType(rows);
+  const groups = groupRulesByGroup(rows, currentRuleGroups);
 
   return Object.entries(groups)
     .map(([groupType, groupRows]) => {
@@ -1728,23 +2146,64 @@ const renderRuleGroups = (rows: RuleRow[]): string => {
         })
         .join("");
 
-      return `<section class="rule-group"><div class="rule-group-head"><h4>${escapeHtml(formatRuleType(groupType as RuleType))}</h4><span class="group-count">${escapeHtml(String(groupRows.length))}</span></div><ul class="rule-group-list">${items}</ul></section>`;
+      return `<section class="rule-group"><div class="rule-group-head"><h4>${escapeHtml(groupType)}</h4><span class="group-count">${escapeHtml(String(groupRows.length))}</span></div><ul class="rule-group-list">${items}</ul></section>`;
     })
     .join("");
 };
 
-const groupRulesByType = (rows: RuleRow[]): Record<string, RuleRow[]> => {
+const groupRulesByGroup = (rows: RuleRow[], groups: RuleGroupRow[]): Record<string, RuleRow[]> => {
+  const labels = new Map(groups.map((group) => [group.id, group.name] as const));
+  const priorities = new Map(groups.map((group) => [group.id, group.priority] as const));
   const grouped: Record<string, RuleRow[]> = {};
 
-  for (const row of rows) {
-    if (!grouped[row.type]) {
-      grouped[row.type] = [];
+  const sortedRows = [...rows].sort((a, b) => {
+    const left = a.groupId ? priorities.get(a.groupId) ?? Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
+    const right = b.groupId ? priorities.get(b.groupId) ?? Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
+
+    if (left !== right) {
+      return left - right;
     }
 
-    grouped[row.type].push(row);
+    return a.priority - b.priority;
+  });
+
+  for (const row of sortedRows) {
+    const key = row.groupId ? labels.get(row.groupId) ?? "Ungrouped" : "Ungrouped";
+
+    if (!grouped[key]) {
+      grouped[key] = [];
+    }
+
+    grouped[key].push(row);
   }
 
   return grouped;
+};
+
+const renderRuleGroupsManager = (groups: RuleGroupRow[]) => {
+  if (groups.length === 0) {
+    rulesGroupsListEl.innerHTML = '<li class="placeholder">No groups yet.</li>';
+    editorGroupEl.innerHTML = '<option value="">Ungrouped</option>';
+    return;
+  }
+
+  const ordered = [...groups].sort((a, b) => a.priority - b.priority);
+
+  rulesGroupsListEl.innerHTML = ordered
+    .map(
+      (group, index) =>
+        `<li class="rules-group-row"><div><strong>${escapeHtml(group.name)}</strong><small class="pill muted">Priority ${escapeHtml(String(group.priority))}</small>${group.enabled ? "" : '<small class="pill muted">Disabled</small>'}</div><div class="rules-group-actions"><button type="button" class="action-btn" data-group-up="${escapeHtml(group.id)}" ${index === 0 ? "disabled" : ""}>Up</button><button type="button" class="action-btn" data-group-down="${escapeHtml(group.id)}" ${index === ordered.length - 1 ? "disabled" : ""}>Down</button><button type="button" class="action-btn" data-group-toggle="${escapeHtml(group.id)}">${group.enabled ? "Disable" : "Enable"}</button><button type="button" class="action-btn" data-group-rename="${escapeHtml(group.id)}">Rename</button><button type="button" class="action-btn danger" data-group-delete="${escapeHtml(group.id)}">Delete</button></div></li>`
+    )
+    .join("");
+
+  editorGroupEl.innerHTML = ['<option value="">Ungrouped</option>']
+    .concat(
+      ordered.map(
+        (group) =>
+          `<option value="${escapeHtml(group.id)}">${escapeHtml(group.name)}${group.enabled ? "" : " (Disabled)"}</option>`
+      )
+    )
+    .join("");
 };
 
 const populateEditor = (rule: RuleRow | null) => {
@@ -1763,6 +2222,7 @@ const populateEditor = (rule: RuleRow | null) => {
   editorPriorityEl.value = String(rule.priority);
   editorMethodEl.value = rule.condition.method ?? "";
   editorEnabledEl.value = String(rule.enabled);
+  editorGroupEl.value = rule.groupId ?? "";
   editorUrlEl.value = rule.condition.urlContains ?? "";
   editorPayloadEl.value = JSON.stringify(rule.payload, null, 2);
 
@@ -1774,6 +2234,7 @@ const setEditorFieldsDisabled = (disabled: boolean) => {
   editorPriorityEl.disabled = disabled;
   editorMethodEl.disabled = disabled;
   editorEnabledEl.disabled = disabled;
+  editorGroupEl.disabled = disabled;
   editorUrlEl.disabled = disabled;
   editorPayloadEl.disabled = disabled;
   editorSaveButtonEl.disabled = disabled;
@@ -1805,6 +2266,14 @@ const setNetworkComposeStatus = (message: string, tone: "neutral" | "ok" | "erro
   if (tone === "error") {
     networkComposeStatusEl.classList.add("error");
   }
+};
+
+const fillComposeFromRequest = (row: RequestRow) => {
+  networkComposeMethodEl.value = row.method;
+  networkComposeUrlEl.value = row.url;
+  networkComposeHeadersEl.value = JSON.stringify(row.headers ?? {}, null, 2);
+  networkComposeBodyEl.value = row.body ?? "";
+  setNetworkComposeStatus("Compose pre-filled from selected request.", "ok");
 };
 
 const readRuleValidation = (value: unknown): RuleValidation | null => {
@@ -1887,10 +2356,27 @@ const isRuleRow = (value: unknown): value is RuleRow => {
     isRuleType(candidate.type) &&
     typeof candidate.enabled === "boolean" &&
     typeof candidate.priority === "number" &&
+    (candidate.groupId === undefined || typeof candidate.groupId === "string") &&
     typeof candidate.condition === "object" &&
     candidate.condition !== null &&
     typeof candidate.payload === "object" &&
     candidate.payload !== null
+  );
+};
+
+const isRuleGroupRow = (value: unknown): value is RuleGroupRow => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.name === "string" &&
+    typeof candidate.enabled === "boolean" &&
+    typeof candidate.priority === "number" &&
+    typeof candidate.createdAt === "string"
   );
 };
 

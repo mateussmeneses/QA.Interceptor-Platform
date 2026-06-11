@@ -1,11 +1,13 @@
 import { evaluateRules, type MatchedRule } from "../../../packages/rule-engine/src/index";
-import type { InterceptedRequest, Rule } from "../../../packages/shared-types/src/index";
+import type { InterceptedRequest, Rule, RuleGroup } from "../../../packages/shared-types/src/index";
 
 const CAPTURED_REQUESTS_KEY = "capturedRequests";
 const RULES_KEY = "rules";
+const RULE_GROUPS_KEY = "ruleGroups";
 const RULE_VALIDATION_KEY = "ruleValidation";
 const MAX_CAPTURED_REQUESTS = 100;
 const DYNAMIC_RULE_ID_BASE = 1;
+const GROUP_PRIORITY_MULTIPLIER = 100000;
 
 let syncDynamicRulesInFlight: Promise<void> = Promise.resolve();
 
@@ -81,6 +83,7 @@ const DEFAULT_RULES: Rule[] = [
     type: "mock-response",
     enabled: true,
     priority: 0,
+    groupId: "grp-core",
     createdAt: "2026-06-09T00:00:00.000Z",
     condition: {
       urlContains: "/api/users"
@@ -95,6 +98,7 @@ const DEFAULT_RULES: Rule[] = [
     type: "mock-status",
     enabled: true,
     priority: 1,
+    groupId: "grp-core",
     createdAt: "2026-06-09T00:00:01.000Z",
     condition: {
       urlContains: "/api/users"
@@ -109,6 +113,7 @@ const DEFAULT_RULES: Rule[] = [
     type: "rewrite-url",
     enabled: true,
     priority: 10,
+    groupId: "grp-core",
     createdAt: "2026-06-09T00:00:10.000Z",
     condition: {
       urlContains: "/api"
@@ -123,6 +128,7 @@ const DEFAULT_RULES: Rule[] = [
     type: "rewrite-header",
     enabled: true,
     priority: 11,
+    groupId: "grp-core",
     createdAt: "2026-06-09T00:00:11.000Z",
     condition: {
       urlContains: "/api"
@@ -143,6 +149,7 @@ const DEFAULT_RULES: Rule[] = [
     type: "block",
     enabled: false,
     priority: 90,
+    groupId: "grp-experiments",
     createdAt: "2026-06-09T00:00:55.000Z",
     condition: {
       urlContains: "/tracking"
@@ -155,6 +162,7 @@ const DEFAULT_RULES: Rule[] = [
     type: "redirect",
     enabled: false,
     priority: 91,
+    groupId: "grp-experiments",
     createdAt: "2026-06-09T00:00:56.000Z",
     condition: {
       urlContains: "/admin"
@@ -169,6 +177,7 @@ const DEFAULT_RULES: Rule[] = [
     type: "delay",
     enabled: false,
     priority: 92,
+    groupId: "grp-experiments",
     createdAt: "2026-06-09T00:00:57.000Z",
     condition: {
       urlContains: "/checkout"
@@ -182,6 +191,7 @@ const DEFAULT_RULES: Rule[] = [
 chrome.runtime.onInstalled.addListener(() => {
   console.log("QA.Interceptor installed");
   void (async () => {
+    await seedDefaultRuleGroups();
     await seedDefaultRules();
     await queueSyncDynamicRules();
   })();
@@ -192,7 +202,7 @@ chrome.runtime.onStartup.addListener(() => {
 });
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName !== "local" || !changes[RULES_KEY]) {
+  if (areaName !== "local" || (!changes[RULES_KEY] && !changes[RULE_GROUPS_KEY])) {
     return;
   }
 
@@ -261,7 +271,7 @@ chrome.webRequest.onBeforeRequest.addListener(
       matchedRules: []
     };
 
-    const rules = await loadRules();
+    const rules = await loadRulesForRuntime();
     const evaluation = evaluateRules(rules, request);
 
     const stored = await chrome.storage.local.get(CAPTURED_REQUESTS_KEY);
@@ -343,6 +353,45 @@ const loadRules = async (): Promise<Rule[]> => {
   return rules.length > 0 ? rules : DEFAULT_RULES;
 };
 
+const loadRuleGroups = async (): Promise<RuleGroup[]> => {
+  const stored = await chrome.storage.local.get(RULE_GROUPS_KEY);
+  const groups = readRuleGroups(stored[RULE_GROUPS_KEY]);
+
+  return groups.length > 0 ? groups : DEFAULT_RULE_GROUPS;
+};
+
+const loadRulesForRuntime = async (): Promise<Rule[]> => {
+  const [rules, groups] = await Promise.all([loadRules(), loadRuleGroups()]);
+  const enabledGroups = new Map(
+    groups.filter((group) => group.enabled).map((group) => [group.id, group] as const)
+  );
+
+  return rules
+    .filter((rule) => {
+      if (!rule.groupId) {
+        return true;
+      }
+
+      return enabledGroups.has(rule.groupId);
+    })
+    .map((rule) => {
+      if (!rule.groupId) {
+        return rule;
+      }
+
+      const group = enabledGroups.get(rule.groupId);
+
+      if (!group) {
+        return rule;
+      }
+
+      return {
+        ...rule,
+        priority: group.priority * GROUP_PRIORITY_MULTIPLIER + rule.priority
+      };
+    });
+};
+
 const queueSyncDynamicRules = (): Promise<void> => {
   syncDynamicRulesInFlight = syncDynamicRulesInFlight
     .catch(() => {
@@ -354,7 +403,7 @@ const queueSyncDynamicRules = (): Promise<void> => {
 };
 
 const syncDynamicRules = async () => {
-  const rules = await loadRules();
+  const rules = await loadRulesForRuntime();
   const nextDynamicRules = dedupeDynamicRuleIds(buildDynamicRules(rules));
   const existingDynamicRules = await chrome.declarativeNetRequest.getDynamicRules();
   const validation = buildRuleValidation(rules, nextDynamicRules);
@@ -495,7 +544,7 @@ const repeatRequest = async (payload: RepeatRequestPayload): Promise<{ ok: boole
     timestamp
   };
 
-  const rules = await loadRules();
+  const rules = await loadRulesForRuntime();
   const evaluation = evaluateRules(rules, request);
 
   const response = await fetch(payload.url, {
@@ -841,12 +890,32 @@ const seedDefaultRules = async () => {
   });
 };
 
+const seedDefaultRuleGroups = async () => {
+  const stored = await chrome.storage.local.get(RULE_GROUPS_KEY);
+
+  if (Array.isArray(stored[RULE_GROUPS_KEY])) {
+    return;
+  }
+
+  await chrome.storage.local.set({
+    [RULE_GROUPS_KEY]: DEFAULT_RULE_GROUPS
+  });
+};
+
 const readRules = (value: unknown): Rule[] => {
   if (!Array.isArray(value)) {
     return [];
   }
 
   return value.filter(isRule);
+};
+
+const readRuleGroups = (value: unknown): RuleGroup[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter(isRuleGroup);
 };
 
 const isRule = (value: unknown): value is Rule => {
@@ -862,11 +931,28 @@ const isRule = (value: unknown): value is Rule => {
     typeof candidate.type === "string" &&
     typeof candidate.enabled === "boolean" &&
     typeof candidate.priority === "number" &&
+    (candidate.groupId === undefined || typeof candidate.groupId === "string") &&
     typeof candidate.createdAt === "string" &&
     typeof candidate.condition === "object" &&
     candidate.condition !== null &&
     typeof candidate.payload === "object" &&
     candidate.payload !== null
+  );
+};
+
+const isRuleGroup = (value: unknown): value is RuleGroup => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.name === "string" &&
+    typeof candidate.enabled === "boolean" &&
+    typeof candidate.priority === "number" &&
+    typeof candidate.createdAt === "string"
   );
 };
 
@@ -956,3 +1042,20 @@ const readRepeatRequestPayload = (value: unknown): RepeatRequestPayload | null =
     ...(typeof candidate.body === "string" ? { body: candidate.body } : {})
   };
 };
+
+const DEFAULT_RULE_GROUPS: RuleGroup[] = [
+  {
+    id: "grp-core",
+    name: "Core",
+    enabled: true,
+    priority: 0,
+    createdAt: "2026-06-09T00:00:00.000Z"
+  },
+  {
+    id: "grp-experiments",
+    name: "Experiments",
+    enabled: false,
+    priority: 1,
+    createdAt: "2026-06-09T00:00:01.000Z"
+  }
+];
