@@ -772,10 +772,123 @@ body {
 .network-execution-item {
   border: 1px solid #e4e9f2;
   border-radius: 8px;
-  padding: 7px;
+  padding: 6px 8px;
   background: #fff;
-  display: grid;
-  gap: 3px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.network-execution-item.conflict {
+  border-color: #f0d090;
+  background: #fffcf0;
+}
+
+.network-execution-item.warning {
+  border-color: #f0c060;
+  background: #fffbe8;
+}
+
+.exec-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.exec-badge.capture {
+  background: #e3edf8;
+  color: #1d5fa6;
+}
+
+.exec-badge.rule {
+  background: #e8f3e8;
+  color: #1e7a3e;
+}
+
+.exec-badge.rule.conflict {
+  background: #fff3d9;
+  color: #8a5a00;
+}
+
+.exec-badge.warning {
+  background: #fff0c0;
+  color: #7a5000;
+}
+
+.exec-badge.response {
+  background: #f0f3f8;
+  color: #44556a;
+}
+
+.exec-badge.response.ok {
+  background: #e8f9ef;
+  color: #1e7a3e;
+}
+
+.exec-badge.response.client {
+  background: #fff0f0;
+  color: #8a1c1c;
+}
+
+.exec-badge.response.server {
+  background: #fff3e0;
+  color: #8a4400;
+}
+
+.exec-badge.pending {
+  background: #f2f4f8;
+  color: #8090a8;
+}
+
+.exec-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.exec-body strong {
+  font-size: 0.76rem;
+  color: #1f2c3f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exec-body small {
+  color: #607085;
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+}
+
+.exec-body .exec-time {
+  color: #8090a8;
+}
+
+.exec-body .exec-type-pill {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #eef2f9;
+  color: #3a5070;
+  font-size: 0.68rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.exec-body .exec-conflict-hint {
+  color: #8a5a00;
+  font-weight: 600;
 }
 
 .network-execution-item strong {
@@ -1124,6 +1237,127 @@ body {
   margin: 0 0 6px;
   font-size: 0.8rem;
   color: #243246;
+}
+
+/* QP-007: Session replay panel */
+.history-replay-card {
+  border-top: 1px dashed #d7deea;
+  padding-top: 10px;
+  margin-top: 8px;
+}
+
+.history-replay-card h4 {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  color: #243246;
+}
+
+.history-replay-panel {
+  margin-top: 10px;
+  border: 1px solid #d7e0ec;
+  border-radius: 8px;
+  padding: 10px;
+  background: #f7f9fc;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-replay-progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.history-replay-status {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #44556a;
+}
+
+.history-replay-status.running {
+  color: #1d6fca;
+}
+
+.history-replay-status.done {
+  color: #1e8a56;
+}
+
+.history-replay-status.cancelled {
+  color: #c0392b;
+}
+
+.history-replay-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 180px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.history-replay-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  padding: 4px 6px;
+  border-radius: 5px;
+  background: #fff;
+  border: 1px solid #e5ecf5;
+}
+
+.history-replay-item .replay-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c0c9d6;
+  flex-shrink: 0;
+}
+
+.history-replay-item.pending .replay-indicator {
+  background: #c0c9d6;
+}
+
+.history-replay-item.running .replay-indicator {
+  background: #1d6fca;
+  animation: pulse-indicator 0.8s ease-in-out infinite;
+}
+
+.history-replay-item.done .replay-indicator {
+  background: #1e8a56;
+}
+
+.history-replay-item.error .replay-indicator {
+  background: #c0392b;
+}
+
+.history-replay-item .replay-method {
+  font-weight: 700;
+  color: #243246;
+  min-width: 36px;
+}
+
+.history-replay-item .replay-url {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #44556a;
+}
+
+.history-replay-item .replay-result {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: #6d7e94;
+}
+
+@keyframes pulse-indicator {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
 }
 
 .settings-panel {
@@ -1774,4 +2008,112 @@ summary:focus-visible {
 .assertion-result-body small {
   color: #607085;
   font-size: 0.72rem;
+}
+
+/* ── Response Diff Panel (OBS-001) ────────────────────────────────────────── */
+
+.network-diff-section {
+  border-top: 1px dashed #d7deea;
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+.network-diff-section .section-head.compact {
+  margin-bottom: 6px;
+}
+
+.network-diff-pin-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.network-diff-actions {
+  margin-top: 6px;
+}
+
+.network-diff-result {
+  margin-top: 6px;
+}
+
+.network-diff-header {
+  margin-bottom: 6px;
+}
+
+.network-diff-stats {
+  font-size: 0.75rem;
+  color: #44556a;
+  font-weight: 600;
+}
+
+.network-diff-panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.network-diff-pane {
+  border: 1px solid #d7e0ec;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.network-diff-pane-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #44556a;
+  padding: 4px 8px;
+  background: #f0f4fa;
+  border-bottom: 1px solid #d7e0ec;
+}
+
+.network-diff-body {
+  margin: 0;
+  padding: 6px 8px;
+  font-size: 0.71rem;
+  font-family: "Fira Mono", "Consolas", monospace;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  max-height: 260px;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.diff-line-equal {
+  display: block;
+  color: #3a4a5c;
+}
+
+.diff-line-added {
+  display: block;
+  background: #ebfff2;
+  color: #1a6337;
+}
+
+.diff-line-removed {
+  display: block;
+  background: #fff4f4;
+  color: #8a1c1c;
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.diff-line-empty {
+  display: block;
+  background: #f8fafc;
+  min-height: 1.55em;
+}
+
+.action-btn.xs {
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  border-radius: 5px;
+}
+
+.action-btn.muted {
+  background: transparent;
+  color: #607085;
+  border-color: #d7e0ec;
 }

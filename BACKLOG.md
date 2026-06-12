@@ -171,3 +171,80 @@ Reference analysis: docs/requestly-benchmark-analysis.md
 | QP-002 | JSON Schema validation engine | P1 | Done | Copilot | QP-001 | Pure schema validator with subset of JSON Schema draft-07 (type, properties, required, enum, etc.) — 49 tests |
 | QP-003 | Contract snapshot comparison | P1 | Done | Copilot | QP-002 | Structural diff between expected and actual JSON response detects missing/extra keys and type changes |
 | TEST-002 | Unit tests for storage parse layer | P1 | Done | Copilot | ARC-003 | 50 tests covering parseRules, parseRuleGroups, parseCapturedRequests, parseResponseAssertions, parseMockEnvVars, parseRuleValidation |
+
+---
+
+## Strategic Documentation
+
+This backlog is now aligned with comprehensive strategic analysis and roadmap planning.
+
+### Project Status Documents (Read in Order)
+
+1. **ANALYSIS_STATE_OF_PROJECT.md** — Current state analysis with 7 identified gaps, product vision alignment, and metrics
+2. **BACKLOG_EXPANDED.md** — 71 prioritized backlog items organized by phase (3.5, 4, 5, Future), effort, and role assignment (Architect vs Developer)
+3. **EXECUTIVE_SUMMARY.md** — 12-week roadmap with resource recommendations, risks, and success metrics
+
+### Key Findings
+
+**Phase Status**:
+- ✅ Phase 1-2: 100% complete
+- ⚠️ Phase 3: 40% complete (evidence export and session playback missing)
+- ❌ Phase 4-5: Not started
+
+**Critical Path (Next 12 Weeks)**:
+1. **Weeks 1-6**: Phase 3.5 (Reporting & Observability) — 17 items
+2. **Weeks 7-12**: Phase 4 Alpha (Desktop/Proxy) — 20 items
+
+**Recommended Team**:
+- 1 Architect (20% Phase 3.5, 50% Phase 4, 30% planning/infra)
+- 2 Developers (70% Phase 3.5, 20% Phase 4, 10% bug fixes)
+
+---
+
+## Next Execution Queue - Phase 3.5 (Reporting & Observability)
+
+**Scope**: Complete QA-first pillar with evidence export, session replay, and debugging tools.
+
+| ID | Item | Priority | Status | Owner | Role | Effort | Acceptance Criteria |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| QP-004 | Export test evidence as JSON | P0 | Todo | TBD | Developer | M | Evidence schema: test name, assertions, results, timestamp, traffic snapshot |
+| QP-005 | Export test evidence as Markdown | P0 | Todo | TBD | Developer | M | Include tables, collapsed traffic details, assertion results summary |
+| QP-007 | Session replay/playback UI | P0 | Todo | TBD | Developer | L | Timeline scrubber, request replay, state inspection |
+| OBS-001 | Request/response diff UI | P1 | Todo | TBD | Developer | L | Visual side-by-side diff (added/removed/changed) with syntax highlighting |
+| OBS-004 | Execution trace visualizer | P1 | Todo | TBD | Developer | M | Show which rules matched, execution order, execution time per rule |
+| OBS-005 | Rule conflict detector | P1 | Todo | TBD | Architect | M | Identify conflicting rules (same URL pattern, overlap), suggest ordering |
+
+**Remaining Phase 3.5 items**: See BACKLOG_EXPANDED.md (17 total items)
+
+---
+
+## Upcoming Phases (Planning)
+
+- **Phase 4**: Desktop/Proxy engine (20 items) — HTTP proxy, HTTPS interception, device routing
+- **Phase 5**: Team & Enterprise (10 items) — Cloud sync, access control, audit logs
+- **Future**: AI & Advanced Features (10 items) — Contract discovery, rule generation, security analysis
+- **Technical Debt**: Maintenance (14 items) — Code quality, documentation, infrastructure
+
+**Total Backlog**: 71 items across all phases
+
+---
+
+## How to Use This Backlog
+
+1. **Weekly Planning**: Use Phase 3.5 queue for sprint planning (Weeks 1-6)
+2. **Architecture Design**: Architect reviews Phase 4 requirements in BACKLOG_EXPANDED.md
+3. **Progress Tracking**: Update status column as items move (Todo → In Progress → Done)
+4. **Scope Management**: Lock Phase 3.5 scope to 17 items; defer scope creep to Phase 3.6
+5. **Role Assignment**: Before starting, assign Owner and Role (Architect vs Developer) from BACKLOG_EXPANDED.md
+
+---
+
+## Success Criteria (End of Phase 3.5)
+
+- [ ] Evidence export (JSON + Markdown + HTML) shipped
+- [ ] Session playback working for 100% of traffic scenarios
+- [ ] Request/response diff visible for all comparison pairs
+- [ ] Execution trace shows rule conflicts with recommendations
+- [ ] 250+ unit tests passing (up from 198)
+- [ ] 0 TypeScript errors, 0 build warnings
+- [ ] Phase 4 architecture design document finalized

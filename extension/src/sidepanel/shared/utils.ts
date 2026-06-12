@@ -3,7 +3,7 @@
  * No DOM access, no chrome API calls.
  */
 
-import type { RequestRow, HistorySession } from "./types";
+import type { RequestRow, HistorySession, ResponseAssertionRow, EvidenceReport, EvidenceAssertionEntry, EvidenceTrafficEntry } from "./types";
 
 // ---------------------------------------------------------------------------
 // String / DOM helpers
@@ -223,16 +223,111 @@ export const getUniqueMatchedRulesCount = (rows: RequestRow[]): number => {
   return ids.size;
 };
 
-export const buildEvidenceMarkdown = (session: HistorySession): string => {
+// ---------------------------------------------------------------------------
+// Evidence builders (QP-004, QP-005)
+// ---------------------------------------------------------------------------
+
+const buildEvidenceTraffic = (session: HistorySession): EvidenceTrafficEntry[] =>
+  session.requests
+    .slice()
+    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+    .map((row) => ({
+      id: row.id,
+      method: row.method,
+      url: row.url,
+      timestamp: row.timestamp,
+      matchedRules: row.matchedRules,
+      ...(row.response
+        ? {
+            response: {
+              status: row.response.status,
+              durationMs: row.response.durationMs,
+              ...(row.response.headers ? { headers: row.response.headers } : {}),
+              ...(row.response.body ? { body: row.response.body } : {}),
+            },
+          }
+        : {}),
+    }));
+
+const buildAssertionEntries = (assertions: ResponseAssertionRow[]): EvidenceAssertionEntry[] =>
+  assertions.map((a) => ({
+    id: a.id,
+    type: a.type,
+    enabled: a.enabled,
+    expected: a.expected,
+    ...(a.path !== undefined ? { path: a.path } : {}),
+    ...(a.actual !== undefined ? { actual: a.actual } : {}),
+    ...(a.error !== undefined ? { error: a.error } : {}),
+    passed: a.error === undefined && a.actual !== undefined
+      ? a.actual === a.expected
+      : undefined,
+  }));
+
+export const buildEvidenceJson = (
+  session: HistorySession,
+  assertions: ResponseAssertionRow[]
+): EvidenceReport => {
+  const assertionEntries = buildAssertionEntries(assertions);
+  const assertionsEnabled = assertionEntries.filter((a) => a.enabled);
+  const assertionsPassed = assertionsEnabled.filter((a) => a.passed === true).length;
+  const assertionsFailed = assertionsEnabled.filter((a) => a.passed === false).length;
+
+  return {
+    id: `evidence-${Date.now()}`,
+    label: session.label,
+    generatedAt: new Date().toISOString(),
+    period: { startedAt: session.startedAt, endedAt: session.endedAt },
+    summary: {
+      totalRequests: session.requests.length,
+      failedRequests: session.failedCount,
+      pendingRequests: session.pendingCount,
+      averageDurationMs: computeAverageDuration(session.requests),
+      assertionsPassed,
+      assertionsFailed,
+      assertionsTotal: assertionsEnabled.length,
+      uniqueRulesTriggered: getUniqueMatchedRulesCount(session.requests),
+    },
+    assertions: assertionEntries,
+    traffic: buildEvidenceTraffic(session),
+  };
+};
+
+export const buildEvidenceMarkdown = (
+  session: HistorySession,
+  assertions: ResponseAssertionRow[] = []
+): string => {
+  const assertionEntries = buildAssertionEntries(assertions.filter((a) => a.enabled));
+  const assertionsPassed = assertionEntries.filter((a) => a.passed === true).length;
+  const assertionsFailed = assertionEntries.filter((a) => a.passed === false).length;
+
   const lines: string[] = [
     `# QA Evidence — ${session.label}`,
     ``,
     `**Period:** ${formatTimestamp(session.startedAt)} → ${formatTimestamp(session.endedAt)}`,
     `**Requests:** ${session.requests.length}  |  **Failures:** ${session.failedCount}  |  **Pending:** ${session.pendingCount}`,
     ``,
-    `## Timeline`,
-    ``,
   ];
+
+  if (assertionEntries.length > 0) {
+    lines.push(`## Assertions`);
+    lines.push(``);
+    lines.push(`| # | Type | Expected | Path | Result |`);
+    lines.push(`|---|------|----------|------|--------|`);
+
+    assertionEntries.forEach((assertion, i) => {
+      const result = assertion.passed === true ? "✅ Pass" : assertion.passed === false ? "❌ Fail" : "⏳ N/A";
+      const path = assertion.path ?? "-";
+      const expected = String(assertion.expected ?? "");
+      lines.push(`| ${i + 1} | ${assertion.type} | ${expected} | ${path} | ${result} |`);
+    });
+
+    lines.push(``);
+    lines.push(`**Assertions:** ${assertionEntries.length} total  |  ✅ ${assertionsPassed} passed  |  ❌ ${assertionsFailed} failed`);
+    lines.push(``);
+  }
+
+  lines.push(`## Traffic Timeline`);
+  lines.push(``);
 
   const sorted = session.requests
     .slice()

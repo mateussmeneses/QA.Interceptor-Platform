@@ -92,3 +92,51 @@ export {
   type SnapshotDiffEntry,
   type SnapshotComparisonResult,
 } from "./contract-comparator.js";
+
+export {
+  buildRuleIndex,
+  evaluateRulesFromIndex,
+  matchesCondition,
+  computeRuleFingerprint,
+  type RuleIndex,
+} from "./rule-index.js";
+
+export {
+  detectConflicts,
+  groupConflictsByRule,
+  sortConflictsBySeverity,
+  type RuleConflict,
+  type ConflictReport,
+  type ConflictKind,
+  type ConflictSeverity,
+} from "./conflict-detector.js";
+
+export {
+  diffText,
+  normalizeDiffText,
+  type DiffResult,
+  type DiffLine,
+  type DiffLineStatus,
+} from "./diff-engine.js";
+
+export {
+  evaluateConditionalMock,
+  createMockState,
+  resetMockCallCount,
+  getMockCallCount,
+  type ConditionalMockRule,
+  type ConditionalMockBranch,
+  type MockCondition,
+  type MockConditionKind,
+  type MockCallContext,
+  type MockState,
+  type MockEvalResult,
+} from "./conditional-mock-evaluator.js";
+
+export {
+  inferSchema,
+  inferSchemaFromString,
+  inferSchemaFromSamples,
+  mergeSchemas,
+  type InferenceOptions,
+} from "./schema-inference.js";

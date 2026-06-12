@@ -20,6 +20,7 @@ import {
 } from "../shared/utils";
 import { saveCapturedRequests } from "../../storage/index";
 import { evaluateAssertions, type AssertionResult } from "../../../../packages/rule-engine/src/assertion-evaluator";
+import { diffText, normalizeDiffText } from "../../../../packages/rule-engine/src/diff-engine";
 
 // ---------------------------------------------------------------------------
 // DOM references
@@ -64,6 +65,17 @@ let networkImportHarButtonEl: HTMLButtonElement;
 let networkImportHarInputEl: HTMLInputElement;
 let networkExportHarButtonEl: HTMLButtonElement;
 let networkAssertionResultsEl: HTMLElement | null = null;
+// OBS-001: Diff elements
+let networkDiffPinButtonEl: HTMLButtonElement | null = null;
+let networkDiffCompareButtonEl: HTMLButtonElement | null = null;
+let networkDiffClearButtonEl: HTMLButtonElement | null = null;
+let networkDiffPinRowEl: HTMLElement | null = null;
+let networkDiffPinLabelEl: HTMLElement | null = null;
+let networkDiffHintEl: HTMLElement | null = null;
+let networkDiffResultEl: HTMLElement | null = null;
+let networkDiffStatsEl: HTMLElement | null = null;
+let networkDiffLeftEl: HTMLElement | null = null;
+let networkDiffRightEl: HTMLElement | null = null;
 
 // ---------------------------------------------------------------------------
 // Assertion result rendering (QP-001)
@@ -119,6 +131,8 @@ let selectedNetworkRequestId: string | null = null;
 let networkSearchQuery = "";
 let networkMethodFilter = "all";
 let networkStatusFilter: NetworkStatusFilter = "all";
+// OBS-001: Pinned request for diff
+let pinnedRequestId: string | null = null;
 
 // ---------------------------------------------------------------------------
 // Init
@@ -174,6 +188,17 @@ export function initNetwork(): void {
   networkImportHarInputEl = getEl("network-import-har-input") as HTMLInputElement;
   networkExportHarButtonEl = getEl("network-export-har-button") as HTMLButtonElement;
   networkAssertionResultsEl = document.getElementById("network-assertion-results");
+  // OBS-001: Diff elements (optional — degrade gracefully)
+  networkDiffPinButtonEl = document.getElementById("network-diff-pin-button") as HTMLButtonElement | null;
+  networkDiffCompareButtonEl = document.getElementById("network-diff-compare-button") as HTMLButtonElement | null;
+  networkDiffClearButtonEl = document.getElementById("network-diff-clear-button") as HTMLButtonElement | null;
+  networkDiffPinRowEl = document.getElementById("network-diff-pin-row");
+  networkDiffPinLabelEl = document.getElementById("network-diff-pin-label");
+  networkDiffHintEl = document.getElementById("network-diff-hint");
+  networkDiffResultEl = document.getElementById("network-diff-result");
+  networkDiffStatsEl = document.getElementById("network-diff-stats");
+  networkDiffLeftEl = document.getElementById("network-diff-left");
+  networkDiffRightEl = document.getElementById("network-diff-right");
 
   bindEvents();
 }
@@ -293,38 +318,86 @@ const renderNetworkDetail = (row: RequestRow | null): void => {
 };
 
 const renderNetworkExecutionTimeline = (row: RequestRow): string => {
-  const entries: Array<{ title: string; details: string; timestamp: string }> = [
-    { title: `${row.method} request captured`, details: row.url, timestamp: row.timestamp },
-  ];
+  // OBS-004: Detect rule type conflicts
+  const typeCounts = new Map<string, number>();
 
-  for (const matched of row.matchedRules) {
-    entries.push({
-      title: `Matched rule: ${matched.ruleName}`,
-      details: summarizeRuleAction(matched.type),
-      timestamp: row.timestamp,
-    });
+  for (const rule of row.matchedRules) {
+    typeCounts.set(rule.type, (typeCounts.get(rule.type) ?? 0) + 1);
   }
 
+  const conflicts = [...typeCounts.entries()].filter(([, count]) => count > 1);
+  const hasConflicts = conflicts.length > 0;
+
+  const parts: string[] = [];
+
+  // Entry: request captured
+  parts.push(
+    `<li class="network-execution-item capture">` +
+    `<span class="exec-badge capture">CAPTURE</span>` +
+    `<div class="exec-body"><strong>${escapeHtml(`${row.method} request captured`)}</strong>` +
+    `<small>${escapeHtml(row.url)}</small>` +
+    `<small class="exec-time">${escapeHtml(formatTimestamp(row.timestamp))}</small></div></li>`
+  );
+
+  // Entries: matched rules
+  for (let i = 0; i < row.matchedRules.length; i++) {
+    const matched = row.matchedRules[i];
+
+    if (!matched) {
+      continue;
+    }
+
+    const conflictCount = typeCounts.get(matched.type) ?? 1;
+    const isConflicting = conflictCount > 1;
+    const badgeClass = isConflicting ? "rule conflict" : "rule";
+
+    parts.push(
+      `<li class="network-execution-item rule${isConflicting ? " conflict" : ""}">` +
+      `<span class="exec-badge ${escapeHtml(badgeClass)}">#${String(i + 1)}</span>` +
+      `<div class="exec-body">` +
+      `<strong>${escapeHtml(matched.ruleName)}</strong>` +
+      `<small>${escapeHtml(summarizeRuleAction(matched.type))}</small>` +
+      `<small class="exec-type-pill">${escapeHtml(matched.type)}</small>` +
+      `${isConflicting ? `<small class="exec-conflict-hint">⚠ ${escapeHtml(String(conflictCount))} rules of type "${escapeHtml(matched.type)}" matched — last one wins</small>` : ""}` +
+      `</div></li>`
+    );
+  }
+
+  // Conflict summary
+  if (hasConflicts) {
+    const conflictList = conflicts.map(([type, count]) => `${type} ×${count}`).join(", ");
+    parts.push(
+      `<li class="network-execution-item warning">` +
+      `<span class="exec-badge warning">⚠</span>` +
+      `<div class="exec-body"><strong>Rule conflicts detected</strong>` +
+      `<small>${escapeHtml(conflictList)}</small>` +
+      `<small>Multiple rules of the same type matched. Only the last rule's effect is applied.</small>` +
+      `</div></li>`
+    );
+  }
+
+  // Entry: response
   if (row.response) {
-    entries.push({
-      title: `Response completed (${row.response.status})`,
-      details: `Finished in ${formatDuration(row.response.durationMs)}`,
-      timestamp: row.response.timestamp,
-    });
+    const statusTone = getStatusToneClass(row.response.status);
+    parts.push(
+      `<li class="network-execution-item response ${escapeHtml(statusTone)}">` +
+      `<span class="exec-badge response ${escapeHtml(statusTone)}">${escapeHtml(String(row.response.status))}</span>` +
+      `<div class="exec-body"><strong>${escapeHtml(`Response completed (${row.response.status})`)}</strong>` +
+      `<small>${escapeHtml(`Finished in ${formatDuration(row.response.durationMs)}`)}</small>` +
+      `<small class="exec-time">${escapeHtml(formatTimestamp(row.response.timestamp))}</small>` +
+      `</div></li>`
+    );
   } else {
-    entries.push({
-      title: "Response pending",
-      details: "Waiting for completion from browser runtime.",
-      timestamp: row.timestamp,
-    });
+    parts.push(
+      `<li class="network-execution-item pending">` +
+      `<span class="exec-badge pending">…</span>` +
+      `<div class="exec-body"><strong>Response pending</strong>` +
+      `<small>Waiting for completion from browser runtime.</small>` +
+      `</div></li>`
+    );
   }
 
-  return entries
-    .map(
-      (entry) =>
-        `<li class="network-execution-item"><strong>${escapeHtml(entry.title)}</strong><small>${escapeHtml(formatTimestamp(entry.timestamp))}</small><small>${escapeHtml(entry.details)}</small></li>`
-    )
-    .join("");
+  return parts.join("");
 };
 
 const summarizeRuleAction = (type: string): string => {
@@ -682,6 +755,86 @@ const bindEvents = (): void => {
       JSON.stringify(buildHar(_state.requests), null, 2),
       "application/json"
     );
+  });
+
+  // OBS-001: Diff pin and compare actions
+  networkDiffPinButtonEl?.addEventListener("click", () => {
+    if (!selectedNetworkRequestId) {
+      return;
+    }
+
+    pinnedRequestId = selectedNetworkRequestId;
+    const pinned = _state.requests.find((r) => r.id === pinnedRequestId);
+
+    if (!pinned || !networkDiffPinRowEl || !networkDiffPinLabelEl || !networkDiffHintEl) {
+      return;
+    }
+
+    networkDiffHintEl.classList.add("hidden");
+    networkDiffPinRowEl.classList.remove("hidden");
+    networkDiffPinLabelEl.textContent = `Pinned: ${pinned.method} ${pinned.url}`;
+    networkDiffResultEl?.classList.add("hidden");
+    networkDiffClearButtonEl?.classList.remove("hidden");
+  });
+
+  networkDiffCompareButtonEl?.addEventListener("click", () => {
+    if (!pinnedRequestId || !selectedNetworkRequestId) {
+      return;
+    }
+
+    const left = _state.requests.find((r) => r.id === pinnedRequestId);
+    const right = _state.requests.find((r) => r.id === selectedNetworkRequestId);
+
+    if (!left || !right) {
+      return;
+    }
+
+    const leftBody = normalizeDiffText(left.response?.body ?? "");
+    const rightBody = normalizeDiffText(right.response?.body ?? "");
+    const result = diffText(leftBody, rightBody);
+
+    if (!networkDiffResultEl || !networkDiffLeftEl || !networkDiffRightEl || !networkDiffStatsEl) {
+      return;
+    }
+
+    networkDiffStatsEl.textContent = result.hasChanges
+      ? `+${result.addedCount} added · -${result.removedCount} removed`
+      : "No differences found";
+
+    networkDiffLeftEl.innerHTML = result.leftLines
+      .map((line) => {
+        if (line.lineNumber === -1) {
+          return `<span class="diff-line-empty"> </span>`;
+        }
+
+        const cls = line.status === "removed" ? "diff-line-removed" : "diff-line-equal";
+        return `<span class="${cls}">${escapeHtml(line.content) || " "}</span>`;
+      })
+      .join("");
+
+    networkDiffRightEl.innerHTML = result.rightLines
+      .map((line) => {
+        if (line.lineNumber === -1) {
+          return `<span class="diff-line-empty"> </span>`;
+        }
+
+        const cls = line.status === "added" ? "diff-line-added" : "diff-line-equal";
+        return `<span class="${cls}">${escapeHtml(line.content) || " "}</span>`;
+      })
+      .join("");
+
+    networkDiffResultEl.classList.remove("hidden");
+  });
+
+  networkDiffClearButtonEl?.addEventListener("click", () => {
+    pinnedRequestId = null;
+    networkDiffPinRowEl?.classList.add("hidden");
+    networkDiffResultEl?.classList.add("hidden");
+    networkDiffClearButtonEl?.classList.add("hidden");
+
+    if (networkDiffHintEl) {
+      networkDiffHintEl.classList.remove("hidden");
+    }
   });
 };
 

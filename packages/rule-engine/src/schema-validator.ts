@@ -41,6 +41,8 @@ export type JsonSchema = {
   $schema?: string;
   title?: string;
   description?: string;
+  /** Informational format hint (date-time, date, uuid, uri, email). Not validated, only annotated. */
+  format?: string;
 };
 
 // ---------------------------------------------------------------------------

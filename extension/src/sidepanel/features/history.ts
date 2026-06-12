@@ -21,6 +21,7 @@ import {
   buildHistorySessions,
   computeAverageDuration,
   getUniqueMatchedRulesCount,
+  buildEvidenceJson,
   buildEvidenceMarkdown,
 } from "../shared/utils";
 
@@ -44,6 +45,15 @@ let historyKpiRulesEl: HTMLElement;
 let historyTimelineListEl: HTMLElement;
 let historyExportJsonButtonEl: HTMLButtonElement;
 let historyExportMdButtonEl: HTMLButtonElement;
+// QP-007: Replay elements
+let historyReplayButtonEl: HTMLButtonElement;
+let historyReplayPanelEl: HTMLElement;
+let historyReplayStatusEl: HTMLElement;
+let historyReplayCounterEl: HTMLElement;
+let historyReplayListEl: HTMLElement;
+let historyReplayStartButtonEl: HTMLButtonElement;
+let historyReplayCancelButtonEl: HTMLButtonElement;
+let historyReplayCloseButtonEl: HTMLButtonElement;
 
 // ---------------------------------------------------------------------------
 // Local state
@@ -54,6 +64,8 @@ let selectedHistorySessionId: string | null = null;
 let historySearchQuery = "";
 let historyOutcomeFilter: HistoryOutcomeFilter = "all";
 let historySortOrder: HistorySortOrder = "recent";
+// QP-007: Replay state
+let replayAbortController: AbortController | null = null;
 
 // ---------------------------------------------------------------------------
 // Init
@@ -86,6 +98,15 @@ export function initHistory(): void {
   historyTimelineListEl = getEl("history-timeline-list");
   historyExportJsonButtonEl = getEl("history-export-json-button") as HTMLButtonElement;
   historyExportMdButtonEl = getEl("history-export-md-button") as HTMLButtonElement;
+  // QP-007: Replay elements
+  historyReplayButtonEl = getEl("history-replay-button") as HTMLButtonElement;
+  historyReplayPanelEl = getEl("history-replay-panel");
+  historyReplayStatusEl = getEl("history-replay-status");
+  historyReplayCounterEl = getEl("history-replay-counter");
+  historyReplayListEl = getEl("history-replay-list");
+  historyReplayStartButtonEl = getEl("history-replay-start-button") as HTMLButtonElement;
+  historyReplayCancelButtonEl = getEl("history-replay-cancel-button") as HTMLButtonElement;
+  historyReplayCloseButtonEl = getEl("history-replay-close-button") as HTMLButtonElement;
 
   bindEvents();
 }
@@ -269,9 +290,11 @@ const bindEvents = (): void => {
       return;
     }
 
+    const report = buildEvidenceJson(session, _state.assertions);
+
     triggerDownload(
       `qa-evidence-${formatDateSlug()}.json`,
-      JSON.stringify(session, null, 2),
+      JSON.stringify(report, null, 2),
       "application/json"
     );
   });
@@ -286,8 +309,179 @@ const bindEvents = (): void => {
 
     triggerDownload(
       `qa-evidence-${formatDateSlug()}.md`,
-      buildEvidenceMarkdown(session),
+      buildEvidenceMarkdown(session, _state.assertions),
       "text/markdown"
     );
   });
+
+  // QP-007: Show/hide replay panel
+  historyReplayButtonEl.addEventListener("click", () => {
+    const sessions = buildHistorySessions(_state.requests);
+    const session = sessions.find((s) => s.id === selectedHistorySessionId);
+
+    if (!session) {
+      return;
+    }
+
+    historyReplayPanelEl.classList.remove("hidden");
+    renderReplayList(session.requests, []);
+    setReplayStatus("ready");
+  });
+
+  historyReplayCloseButtonEl.addEventListener("click", () => {
+    replayAbortController?.abort();
+    replayAbortController = null;
+    historyReplayPanelEl.classList.add("hidden");
+  });
+
+  historyReplayStartButtonEl.addEventListener("click", () => {
+    const sessions = buildHistorySessions(_state.requests);
+    const session = sessions.find((s) => s.id === selectedHistorySessionId);
+
+    if (!session) {
+      return;
+    }
+
+    void startReplay(session.requests);
+  });
+
+  historyReplayCancelButtonEl.addEventListener("click", () => {
+    replayAbortController?.abort();
+    replayAbortController = null;
+    setReplayStatus("cancelled");
+    historyReplayStartButtonEl.classList.remove("hidden");
+    historyReplayCancelButtonEl.classList.add("hidden");
+  });
+};
+
+// ---------------------------------------------------------------------------
+// Replay helpers (QP-007)
+// ---------------------------------------------------------------------------
+
+type ReplayItemStatus = "pending" | "running" | "done" | "error";
+
+type ReplayResult = {
+  index: number;
+  status: ReplayItemStatus;
+  responseStatus?: number;
+  error?: string;
+};
+
+const setReplayStatus = (state: "ready" | "running" | "done" | "cancelled"): void => {
+  historyReplayStatusEl.className = `history-replay-status ${state}`;
+
+  const labels: Record<string, string> = {
+    ready: "Ready",
+    running: "Replaying...",
+    done: "Completed",
+    cancelled: "Cancelled",
+  };
+
+  historyReplayStatusEl.textContent = labels[state] ?? state;
+};
+
+const renderReplayList = (rows: RequestRow[], results: ReplayResult[]): void => {
+  historyReplayCounterEl.textContent = `${results.filter((r) => r.status !== "pending").length} / ${rows.length}`;
+
+  historyReplayListEl.innerHTML = rows
+    .map((row, index) => {
+      const result = results[index];
+      const itemStatus: ReplayItemStatus = result?.status ?? "pending";
+      const responseLabel =
+        result?.responseStatus != null
+          ? String(result.responseStatus)
+          : result?.error != null
+          ? "Error"
+          : "";
+
+      return `<li class="history-replay-item ${escapeHtml(itemStatus)}">
+        <span class="replay-indicator"></span>
+        <span class="replay-method">${escapeHtml(row.method)}</span>
+        <span class="replay-url">${escapeHtml(row.url)}</span>
+        ${responseLabel ? `<span class="replay-result">${escapeHtml(responseLabel)}</span>` : ""}
+      </li>`;
+    })
+    .join("");
+};
+
+const delay = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+const startReplay = async (rows: RequestRow[]): Promise<void> => {
+  replayAbortController = new AbortController();
+  const { signal } = replayAbortController;
+
+  historyReplayStartButtonEl.classList.add("hidden");
+  historyReplayCancelButtonEl.classList.remove("hidden");
+  setReplayStatus("running");
+
+  const results: ReplayResult[] = rows.map((_, index) => ({
+    index,
+    status: "pending",
+  }));
+
+  renderReplayList(rows, results);
+
+  for (let i = 0; i < rows.length; i++) {
+    if (signal.aborted) {
+      break;
+    }
+
+    results[i] = { index: i, status: "running" };
+    renderReplayList(rows, results);
+
+    try {
+      const row = rows[i];
+
+      if (!row) {
+        results[i] = { index: i, status: "error", error: "Missing row" };
+        continue;
+      }
+
+      const response = await chrome.runtime.sendMessage({
+        type: "repeat-request",
+        requestId: row.id,
+        method: row.method,
+        url: row.url,
+        headers: row.headers ?? {},
+        body: undefined,
+      });
+
+      if (signal.aborted) {
+        break;
+      }
+
+      const ok = response && typeof response === "object" && "ok" in response && response.ok === true;
+      const responseStatus = ok && "status" in response && typeof response.status === "number"
+        ? response.status
+        : undefined;
+
+      results[i] = {
+        index: i,
+        status: "done",
+        ...(responseStatus != null ? { responseStatus } : {}),
+      };
+    } catch {
+      if (signal.aborted) {
+        break;
+      }
+
+      results[i] = { index: i, status: "error", error: "Request failed" };
+    }
+
+    renderReplayList(rows, results);
+
+    // Small delay between requests to avoid overwhelming the server
+    if (i < rows.length - 1 && !signal.aborted) {
+      await delay(120);
+    }
+  }
+
+  if (!signal.aborted) {
+    setReplayStatus("done");
+    historyReplayCancelButtonEl.classList.add("hidden");
+    historyReplayStartButtonEl.classList.remove("hidden");
+  }
+
+  replayAbortController = null;
 };

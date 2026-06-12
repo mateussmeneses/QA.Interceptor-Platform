@@ -475,6 +475,39 @@
                     </ul>
                   </section>
 
+                  <!-- OBS-001: Response diff section -->
+                  <section class="network-diff-section" aria-label="response diff">
+                    <div class="section-head compact">
+                      <h4>Compare Response</h4>
+                      <button id="network-diff-clear-button" type="button" class="action-btn muted xs hidden">Clear</button>
+                    </div>
+                    <p id="network-diff-hint" class="placeholder">
+                      Pin a response to compare, then select another request to diff bodies.
+                    </p>
+                    <div id="network-diff-pin-row" class="network-diff-pin-row hidden">
+                      <span id="network-diff-pin-label" class="pill muted">Pinned: —</span>
+                      <button id="network-diff-compare-button" type="button" class="action-btn xs">Compare with selected</button>
+                    </div>
+                    <div id="network-diff-result" class="network-diff-result hidden">
+                      <div class="network-diff-header">
+                        <span id="network-diff-stats" class="network-diff-stats">—</span>
+                      </div>
+                      <div class="network-diff-panes">
+                        <div class="network-diff-pane">
+                          <div class="network-diff-pane-label">Pinned (original)</div>
+                          <pre id="network-diff-left" class="network-diff-body"></pre>
+                        </div>
+                        <div class="network-diff-pane">
+                          <div class="network-diff-pane-label">Selected (current)</div>
+                          <pre id="network-diff-right" class="network-diff-body"></pre>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="editor-actions network-diff-actions">
+                      <button id="network-diff-pin-button" type="button" class="action-btn xs">Pin selected as baseline</button>
+                    </div>
+                  </section>
+
                   <div class="network-detail-actions">
                     <button id="network-clone-request-button" type="button" class="action-btn">Clone Request</button>
                     <button id="network-edit-resend-button" type="button" class="action-btn">Edit &amp; Resend</button>
@@ -756,6 +789,26 @@
                     <div class="editor-actions">
                       <button id="history-export-json-button" type="button" class="action-btn">Export JSON</button>
                       <button id="history-export-md-button" type="button" class="action-btn">Export Markdown</button>
+                    </div>
+                  </section>
+
+                  <section class="history-replay-card">
+                    <h4>Session Replay</h4>
+                    <p class="preview-note">Re-send all captured requests from this session in sequence.</p>
+                    <div class="editor-actions">
+                      <button id="history-replay-button" type="button" class="action-btn">Replay Session</button>
+                    </div>
+                    <div id="history-replay-panel" class="history-replay-panel hidden">
+                      <div class="history-replay-progress">
+                        <span id="history-replay-status" class="history-replay-status">Ready</span>
+                        <span id="history-replay-counter" class="pill muted">0 / 0</span>
+                      </div>
+                      <ul id="history-replay-list" class="history-replay-list"></ul>
+                      <div class="editor-actions">
+                        <button id="history-replay-start-button" type="button" class="action-btn ok">Start</button>
+                        <button id="history-replay-cancel-button" type="button" class="action-btn client hidden">Cancel</button>
+                        <button id="history-replay-close-button" type="button" class="action-btn muted">Close</button>
+                      </div>
                     </div>
                   </section>
                 </div>

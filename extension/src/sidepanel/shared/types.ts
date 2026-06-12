@@ -102,6 +102,54 @@ export type HistorySession = {
 export type ResponseAssertionRow = StoredResponseAssertion;
 
 // ---------------------------------------------------------------------------
+// Evidence report (QP-004)
+// ---------------------------------------------------------------------------
+
+export type EvidenceAssertionEntry = {
+  id: string;
+  type: string;
+  enabled: boolean;
+  expected: unknown;
+  path?: string;
+  actual?: unknown;
+  passed?: boolean;
+  error?: string;
+};
+
+export type EvidenceTrafficEntry = {
+  id: string;
+  method: string;
+  url: string;
+  timestamp: string;
+  matchedRules: Array<{ ruleId: string; ruleName: string; type: string }>;
+  response?: {
+    status: number;
+    durationMs: number;
+    headers?: Record<string, string>;
+    body?: string;
+  };
+};
+
+export type EvidenceReport = {
+  id: string;
+  label: string;
+  generatedAt: string;
+  period: { startedAt: string; endedAt: string };
+  summary: {
+    totalRequests: number;
+    failedRequests: number;
+    pendingRequests: number;
+    averageDurationMs: number;
+    assertionsPassed: number;
+    assertionsFailed: number;
+    assertionsTotal: number;
+    uniqueRulesTriggered: number;
+  };
+  assertions: EvidenceAssertionEntry[];
+  traffic: EvidenceTrafficEntry[];
+};
+
+// ---------------------------------------------------------------------------
 // Rule validation view-model
 // ---------------------------------------------------------------------------
 
