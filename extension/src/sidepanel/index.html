@@ -465,6 +465,16 @@
                     <pre id="network-detail-body" class="response-body-preview"></pre>
                   </section>
 
+                  <section class="network-assertions-section" aria-label="assertion results">
+                    <div class="section-head compact">
+                      <h4>Assertion Results</h4>
+                      <span id="network-assertion-summary" class="assertion-summary">—</span>
+                    </div>
+                    <ul id="network-assertion-results" class="assertion-results-list">
+                      <li class="placeholder">Select a request with a response to evaluate assertions.</li>
+                    </ul>
+                  </section>
+
                   <div class="network-detail-actions">
                     <button id="network-clone-request-button" type="button" class="action-btn">Clone Request</button>
                     <button id="network-edit-resend-button" type="button" class="action-btn">Edit &amp; Resend</button>
@@ -823,6 +833,18 @@
                 </div>
               </section>
             </div>
+
+            <section class="settings-card error-profiles-section" aria-label="error simulation profiles">
+              <div class="section-head">
+                <div>
+                  <h4>QA Error Simulation Profiles</h4>
+                  <p>One-click profiles to simulate common error scenarios. Activating a profile creates an intercept rule that returns the configured response for all <code>/api</code> requests.</p>
+                </div>
+              </div>
+              <ul id="error-profiles-list" class="error-profiles-list">
+                <li class="placeholder">Loading profiles...</li>
+              </ul>
+            </section>
           </section>
         </section>
       </section>

@@ -253,7 +253,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 chrome.webRequest.onBeforeRequest.addListener(
-  (details) => {
+  (details): undefined => {
     void (async () => {
     if (!isCapturableRequest(details)) {
       return;
@@ -538,7 +538,7 @@ const appendMockedRequest = async (payload: MockAppliedPayload) => {
   });
 };
 
-const repeatRequest = async (payload: RepeatRequestPayload): Promise<{ ok: boolean; status?: number; error?: string }> => {
+const repeatRequest = async (payload: RepeatRequestPayload): Promise<{ ok: boolean; status?: number; headers?: Record<string, string>; body?: string; error?: string }> => {
   const requestId = `repeat-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
   const startedAtMs = Date.now();
   const timestamp = new Date(startedAtMs).toISOString();
@@ -564,6 +564,11 @@ const repeatRequest = async (payload: RepeatRequestPayload): Promise<{ ok: boole
   const responseText = await response.text();
   const finishedAt = Date.now();
 
+  const responseHeaders: Record<string, string> = {};
+  response.headers.forEach((value, key) => {
+    responseHeaders[key.toLowerCase()] = value;
+  });
+
   const replayedRequest: CapturedRequest = {
     ...request,
     captureSource: "network",
@@ -575,6 +580,7 @@ const repeatRequest = async (payload: RepeatRequestPayload): Promise<{ ok: boole
       status: response.status,
       durationMs: Math.max(0, finishedAt - startedAtMs),
       timestamp: new Date(finishedAt).toISOString(),
+      headers: responseHeaders,
       ...(responseText ? { body: responseText } : {})
     }
   };
@@ -588,7 +594,9 @@ const repeatRequest = async (payload: RepeatRequestPayload): Promise<{ ok: boole
 
   return {
     ok: true,
-    status: response.status
+    status: response.status,
+    headers: responseHeaders,
+    ...(responseText ? { body: responseText } : {})
   };
 };
 

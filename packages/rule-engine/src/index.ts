@@ -54,3 +54,41 @@ const matchesCondition = (rule: Rule, request: InterceptedRequest): boolean => {
 
   return true;
 };
+
+export {
+  evaluateAssertions,
+  type AssertionInput,
+  type AssertionResult,
+  type ResponseContext,
+  type AssertionType,
+} from "./assertion-evaluator.js";
+
+export {
+  validateJsonSchema,
+  validateJsonString,
+  type JsonSchema,
+  type JsonSchemaValidationError,
+  type JsonSchemaValidationResult,
+} from "./schema-validator.js";
+
+export {
+  parseRules,
+  parseRuleGroups,
+  parseCapturedRequests,
+  parseResponseAssertions,
+  parseMockEnvVars,
+  parseRuleValidation,
+  type ParsedRule,
+  type ParsedRuleGroup,
+  type ParsedCapturedRequest,
+  type ParsedResponseAssertion,
+  type ParsedMockEnvVar,
+  type ParsedRuleValidation,
+} from "./storage-parsers.js";
+
+export {
+  compareContracts,
+  compareContractStrings,
+  type SnapshotDiffEntry,
+  type SnapshotComparisonResult,
+} from "./contract-comparator.js";

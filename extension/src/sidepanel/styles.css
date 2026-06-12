@@ -1633,3 +1633,145 @@ summary:focus-visible {
   display: grid;
   gap: 8px;
 }
+
+/* ── Error Simulation Profiles (RQ-010) ───────────────────────────────────── */
+
+.error-profiles-section {
+  margin-top: 12px;
+}
+
+.error-profiles-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.error-profile-card {
+  border: 1px solid #e4e9f2;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.error-profile-card.active {
+  border-color: #f4a0a0;
+  background: #fff5f5;
+}
+
+.error-profile-info {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.error-profile-info strong {
+  font-size: 0.82rem;
+  color: #1f2c3f;
+}
+
+.error-profile-desc {
+  margin: 0;
+  font-size: 0.74rem;
+  color: #607085;
+}
+
+.action-btn.danger {
+  border-color: #f2c4c4;
+  background: #fff1f1;
+  color: #8a1c1c;
+}
+
+.action-btn.danger:hover {
+  background: #ffe4e4;
+  border-color: #e8a0a0;
+}
+
+/* ── Assertion Results Panel (QP-001) ────────────────────────────────────── */
+
+.network-assertions-section {
+  border-top: 1px dashed #d7deea;
+  padding-top: 10px;
+}
+
+.assertion-summary {
+  font-size: 0.74rem;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #d8dfeb;
+  background: #f8fafc;
+  color: #607085;
+}
+
+.assertion-summary.ok {
+  border-color: #b6e2c4;
+  background: #ebfff2;
+  color: #11663a;
+}
+
+.assertion-summary.fail {
+  border-color: #f2c4c4;
+  background: #fff1f1;
+  color: #8a1c1c;
+}
+
+.assertion-results-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.assertion-result-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border: 1px solid #e4e9f2;
+  border-radius: 8px;
+  background: #fff;
+  padding: 7px 9px;
+  font-size: 0.75rem;
+}
+
+.assertion-result-item.ok {
+  border-color: #b6e2c4;
+  background: #f0fff5;
+}
+
+.assertion-result-item.error {
+  border-color: #f4d1a8;
+  background: #fffcf5;
+}
+
+.assertion-result-item.client {
+  border-color: #f2c4c4;
+  background: #fff5f5;
+}
+
+.assertion-result-icon {
+  font-size: 0.88rem;
+  min-width: 18px;
+  text-align: center;
+}
+
+.assertion-result-body {
+  display: grid;
+  gap: 2px;
+}
+
+.assertion-result-body strong {
+  font-size: 0.76rem;
+  color: #1f2c3f;
+}
+
+.assertion-result-body small {
+  color: #607085;
+  font-size: 0.72rem;
+}

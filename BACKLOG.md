@@ -153,12 +153,21 @@ Reference analysis: docs/requestly-benchmark-analysis.md
 | RQ-007 | Tags and quick filters | P2 | Done | Copilot | RQ-006 | User can label assets and filter quickly by tag in Rules/Network/Mocks |
 | RQ-008 | Minimal API client (QA scope) | P1 | Done | Copilot | NET-006 | User can send saved requests, inspect response body/headers, and export evidence |
 | RQ-009 | Response assertions presets | P1 | Done | Copilot | RQ-008 | QA user can define assertions for status, headers, and JSON path values |
-| RQ-010 | Error simulation profiles | P1 | Todo | Copilot | NS-001, MK-002 | One-click profiles for 400/401/403/404/500 and network failure behavior |
+| RQ-010 | Error simulation profiles | P1 | Done | Copilot | NS-001, MK-002 | One-click profiles for 400/401/403/404/500 and network failure behavior |
 
 ## Execution Queue - Architecture Hardening
 
 | ID | Item | Priority | Status | Owner | Dependencies | Acceptance Criteria |
 | --- | --- | --- | --- | --- | --- | --- |
-| ARC-001 | Feature-based sidepanel modules | P1 | Todo | Copilot | FE-008 | Sidepanel code is split into feature folders (rules/network/mocks/history/settings) with bounded responsibilities |
-| ARC-002 | Typed runtime message contracts | P1 | Todo | Copilot | ARC-001 | Background/content/sidepanel message payloads share typed contracts and runtime validation |
-| ARC-003 | Storage abstraction layer | P2 | Todo | Copilot | ARC-002 | Storage access is centralized in one module to simplify future migration and testing |
+| ARC-001 | Feature-based sidepanel modules | P1 | Done | Copilot | FE-008 | Sidepanel code is split into feature folders (rules/network/mocks/history/settings) with bounded responsibilities |
+| ARC-002 | Typed runtime message contracts | P1 | Done | Copilot | ARC-001 | Background/content/sidepanel message payloads share typed contracts and runtime validation |
+| ARC-003 | Storage abstraction layer | P2 | Done | Copilot | ARC-002 | Storage access is centralized in one module to simplify future migration and testing |
+
+## Execution Queue - Phase 3 QA Platform Features
+
+| ID | Item | Priority | Status | Owner | Dependencies | Acceptance Criteria |
+| --- | --- | --- | --- | --- | --- | --- |
+| QP-001 | Assertion evaluation pipeline | P1 | Done | Copilot | RQ-009 | Enabled assertions auto-evaluate against selected/composed responses in Network inspector |
+| QP-002 | JSON Schema validation engine | P1 | Done | Copilot | QP-001 | Pure schema validator with subset of JSON Schema draft-07 (type, properties, required, enum, etc.) — 49 tests |
+| QP-003 | Contract snapshot comparison | P1 | Done | Copilot | QP-002 | Structural diff between expected and actual JSON response detects missing/extra keys and type changes |
+| TEST-002 | Unit tests for storage parse layer | P1 | Done | Copilot | ARC-003 | 50 tests covering parseRules, parseRuleGroups, parseCapturedRequests, parseResponseAssertions, parseMockEnvVars, parseRuleValidation |

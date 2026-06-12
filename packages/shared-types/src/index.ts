@@ -17,7 +17,8 @@ export type RuleType =
   | "mock-status"
   | "redirect"
   | "block"
-  | "delay";
+  | "delay"
+  | "validate-schema";
 
 export type Rule = {
   id: string;
@@ -83,3 +84,5 @@ export type ResponseAssertionPreset = {
   assertions: ResponseAssertion[];
   createdAt: string;
 };
+
+export * from "./messages";
