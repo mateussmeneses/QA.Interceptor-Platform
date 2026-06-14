@@ -25,6 +25,12 @@ import {
   type AssertionResult
 } from "../../../../packages/rule-engine/src/assertion-evaluator";
 import { diffText, normalizeDiffText } from "../../../../packages/rule-engine/src/diff-engine";
+import {
+  detectConflicts,
+  type ConflictSeverity
+} from "../../../../packages/rule-engine/src/conflict-detector";
+import { compareContractStrings } from "../../../../packages/rule-engine/src/contract-comparator";
+import { inferSchemaFromString } from "../../../../packages/rule-engine/src/schema-inference";
 
 // ---------------------------------------------------------------------------
 // DOM references
@@ -50,6 +56,8 @@ let networkTimelineBarEl: HTMLElement;
 let networkTimelineCaptionEl: HTMLElement;
 let networkDetailBodySectionEl: HTMLElement;
 let networkDetailBodyEl: HTMLElement;
+let networkInferSchemaButtonEl: HTMLButtonElement | null = null;
+let networkInferredSchemaEl: HTMLElement | null = null;
 let networkExecutionLogEl: HTMLElement;
 let networkCloneRequestButtonEl: HTMLButtonElement;
 let networkEditResendButtonEl: HTMLButtonElement;
@@ -81,6 +89,7 @@ let networkDiffResultEl: HTMLElement | null = null;
 let networkDiffStatsEl: HTMLElement | null = null;
 let networkDiffLeftEl: HTMLElement | null = null;
 let networkDiffRightEl: HTMLElement | null = null;
+let networkDiffContractListEl: HTMLElement | null = null;
 let networkComposeModalController: ModalController;
 
 // ---------------------------------------------------------------------------
@@ -137,7 +146,8 @@ let _state: AppState = {
   rules: [],
   ruleGroups: [],
   validation: null,
-  assertions: []
+  assertions: [],
+  conditionalMocks: []
 };
 let selectedNetworkRequestId: string | null = null;
 let networkSearchQuery = "";
@@ -181,6 +191,10 @@ export function initNetwork(): void {
   networkTimelineCaptionEl = getEl("network-timeline-caption");
   networkDetailBodySectionEl = getEl("network-detail-body-section");
   networkDetailBodyEl = getEl("network-detail-body");
+  networkInferSchemaButtonEl = document.getElementById(
+    "network-infer-schema-button"
+  ) as HTMLButtonElement | null;
+  networkInferredSchemaEl = document.getElementById("network-inferred-schema");
   networkExecutionLogEl = getEl("network-execution-log");
   networkCloneRequestButtonEl = getEl("network-clone-request-button") as HTMLButtonElement;
   networkEditResendButtonEl = getEl("network-edit-resend-button") as HTMLButtonElement;
@@ -218,6 +232,7 @@ export function initNetwork(): void {
   networkDiffStatsEl = document.getElementById("network-diff-stats");
   networkDiffLeftEl = document.getElementById("network-diff-left");
   networkDiffRightEl = document.getElementById("network-diff-right");
+  networkDiffContractListEl = document.getElementById("network-diff-contract-list");
 
   networkComposeModalController = createModalController({
     panelEl: networkComposePanelEl,
@@ -322,6 +337,12 @@ const renderNetworkDetail = (row: RequestRow | null): void => {
     networkDetailBodyEl.textContent = "";
   }
 
+  // INT-006: reset any previously inferred schema when switching requests
+  if (networkInferredSchemaEl) {
+    networkInferredSchemaEl.textContent = "";
+    networkInferredSchemaEl.classList.add("hidden");
+  }
+
   // Auto-evaluate assertions against the selected response (QP-001)
   if (row.response) {
     const responseContext = {
@@ -345,16 +366,52 @@ const renderNetworkDetail = (row: RequestRow | null): void => {
   }
 };
 
-const renderNetworkExecutionTimeline = (row: RequestRow): string => {
-  // OBS-004: Detect rule type conflicts
-  const typeCounts = new Map<string, number>();
+const conflictSeverityIcon = (severity: ConflictSeverity): string =>
+  severity === "error" ? "⛔" : severity === "warning" ? "⚠" : "ℹ";
 
-  for (const rule of row.matchedRules) {
-    typeCounts.set(rule.type, (typeCounts.get(rule.type) ?? 0) + 1);
+// INT-002: render structural contract comparison between two response bodies.
+const renderContractDiff = (expectedBody: string, actualBody: string): string => {
+  if (!expectedBody.trim() || !actualBody.trim()) {
+    return `<li class="placeholder">No response bodies to compare for contract changes.</li>`;
   }
 
-  const conflicts = [...typeCounts.entries()].filter(([, count]) => count > 1);
-  const hasConflicts = conflicts.length > 0;
+  const comparison = compareContractStrings(expectedBody, actualBody);
+
+  if (comparison.match) {
+    return `<li class="contract-ok">✓ No structural contract changes detected.</li>`;
+  }
+
+  const labels: Record<string, string> = {
+    "missing-key": "Missing key",
+    "extra-key": "Extra key",
+    "type-change": "Type change",
+    "null-change": "Null change"
+  };
+
+  return comparison.diffs
+    .map((diff) => {
+      const label = labels[diff.type] ?? diff.type;
+      return (
+        `<li class="contract-diff ${escapeHtml(diff.type)}">` +
+        `<span class="contract-diff-kind">${escapeHtml(label)}</span>` +
+        `<code class="contract-diff-path">${escapeHtml(diff.path)}</code>` +
+        `<small>expected ${escapeHtml(diff.expected)} → actual ${escapeHtml(diff.actual)}</small>` +
+        `</li>`
+      );
+    })
+    .join("");
+};
+
+const renderNetworkExecutionTimeline = (row: RequestRow): string => {
+  // OBS-004 / INT-003: detect rule conflicts using the rule-engine conflict detector.
+  // Only conflicts among rules that actually matched THIS request are surfaced.
+  const matchedRuleIds = new Set(row.matchedRules.map((m) => m.ruleId));
+  const conflictReport = detectConflicts(_state.rules);
+  const relevantConflicts = conflictReport.conflicts.filter(
+    (c) => matchedRuleIds.has(c.ruleIds[0]) && matchedRuleIds.has(c.ruleIds[1])
+  );
+  const conflictingRuleIds = new Set(relevantConflicts.flatMap((c) => c.ruleIds));
+  const hasConflicts = relevantConflicts.length > 0;
 
   const parts: string[] = [];
 
@@ -375,9 +432,16 @@ const renderNetworkExecutionTimeline = (row: RequestRow): string => {
       continue;
     }
 
-    const conflictCount = typeCounts.get(matched.type) ?? 1;
-    const isConflicting = conflictCount > 1;
+    const isConflicting = conflictingRuleIds.has(matched.ruleId);
     const badgeClass = isConflicting ? "rule conflict" : "rule";
+
+    const ruleConflictHints = relevantConflicts
+      .filter((c) => c.ruleIds.includes(matched.ruleId))
+      .map(
+        (c) =>
+          `<small class="exec-conflict-hint">${conflictSeverityIcon(c.severity)} ${escapeHtml(c.description)}</small>`
+      )
+      .join("");
 
     parts.push(
       `<li class="network-execution-item rule${isConflicting ? " conflict" : ""}">` +
@@ -386,20 +450,24 @@ const renderNetworkExecutionTimeline = (row: RequestRow): string => {
         `<strong>${escapeHtml(matched.ruleName)}</strong>` +
         `<small>${escapeHtml(summarizeRuleAction(matched.type))}</small>` +
         `<small class="exec-type-pill">${escapeHtml(matched.type)}</small>` +
-        `${isConflicting ? `<small class="exec-conflict-hint">⚠ ${escapeHtml(String(conflictCount))} rules of type "${escapeHtml(matched.type)}" matched — last one wins</small>` : ""}` +
+        ruleConflictHints +
         `</div></li>`
     );
   }
 
   // Conflict summary
   if (hasConflicts) {
-    const conflictList = conflicts.map(([type, count]) => `${type} ×${count}`).join(", ");
+    const summaryItems = relevantConflicts
+      .map(
+        (c) =>
+          `<small>${conflictSeverityIcon(c.severity)} <strong>${escapeHtml(c.ruleNames[0])}</strong> ↔ <strong>${escapeHtml(c.ruleNames[1])}</strong>: ${escapeHtml(c.description)} — ${escapeHtml(c.suggestion)}</small>`
+      )
+      .join("");
     parts.push(
       `<li class="network-execution-item warning">` +
         `<span class="exec-badge warning">⚠</span>` +
-        `<div class="exec-body"><strong>Rule conflicts detected</strong>` +
-        `<small>${escapeHtml(conflictList)}</small>` +
-        `<small>Multiple rules of the same type matched. Only the last rule's effect is applied.</small>` +
+        `<div class="exec-body"><strong>Rule conflicts detected (${String(relevantConflicts.length)})</strong>` +
+        summaryItems +
         `</div></li>`
     );
   }
@@ -621,6 +689,34 @@ const bindEvents = (): void => {
     fillComposeFromRequest(selectedRow);
     setNetworkComposeStatus("Editing cloned request. Update fields and click Send Request.", "ok");
     openComposePanel();
+  });
+
+  // INT-006: infer a JSON Schema from the selected response body
+  networkInferSchemaButtonEl?.addEventListener("click", () => {
+    if (!networkInferredSchemaEl) {
+      return;
+    }
+
+    const selectedRow = _state.requests.find((r) => r.id === selectedNetworkRequestId);
+    const responseBody = selectedRow?.response?.body;
+
+    if (!responseBody) {
+      networkInferredSchemaEl.textContent = "No response body to infer a schema from.";
+      networkInferredSchemaEl.classList.remove("hidden");
+      return;
+    }
+
+    const schema = inferSchemaFromString(responseBody);
+
+    if (!schema) {
+      networkInferredSchemaEl.textContent =
+        "Response body is not valid JSON — cannot infer schema.";
+      networkInferredSchemaEl.classList.remove("hidden");
+      return;
+    }
+
+    networkInferredSchemaEl.textContent = JSON.stringify(schema, null, 2);
+    networkInferredSchemaEl.classList.remove("hidden");
   });
 
   networkComposeCloseButtonEl.addEventListener("click", () => {
@@ -859,6 +955,14 @@ const bindEvents = (): void => {
         return `<span class="${cls}">${escapeHtml(line.content) || " "}</span>`;
       })
       .join("");
+
+    // INT-002: structural contract comparison (breaking-change detection)
+    if (networkDiffContractListEl) {
+      networkDiffContractListEl.innerHTML = renderContractDiff(
+        left.response?.body ?? "",
+        right.response?.body ?? ""
+      );
+    }
 
     networkDiffResultEl.classList.remove("hidden");
   });

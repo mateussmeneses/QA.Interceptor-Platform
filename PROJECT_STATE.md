@@ -5,7 +5,7 @@
 > Update this document whenever you finish a feature or change the architecture.
 
 **Last audit:** 2026-06-13 (full 9-phase audit, evidence by code + build + tests)
-**Current health evidence:** `npm run build` ✅ · full `tsc` ✅ (no errors) · `npm test` ✅ 579 tests / 20 files
+**Current health evidence:** `npm run build` ✅ · full `tsc` ✅ (no errors) · `npm test` ✅ 590 tests / 20 files
 
 ---
 
@@ -61,30 +61,29 @@ No circular dependencies. Import direction is unidirectional.
 - Evidence export JSON / Markdown / HTML.
 - Live edit propagation without reload (`storage.onChanged`).
 - Dynamic variables in mock templates (`{{timestamp}}`, `{{uuid}}`, `{{method}}`, `{{url}}`, env vars).
+- JSON Schema validation of responses (`schema-validator` via the `json-schema` assertion type — INT-001).
+- Rule conflict detection in the execution trace (`conflict-detector` — INT-003).
+- Structural contract drift in the diff compare flow (`contract-comparator` — INT-002).
+- Typed assertion creation UI (status / header / json-path / body-contains / json-schema — UI-ASSERT-001).
+- JSON Schema inference from a captured response body (`schema-inference` — INT-006).
+- State-aware sequence mocks (`conditional-mock-evaluator` — INT-005): per-call responses via the Mocks view.
 
 ### 🟡 Partially implemented
 
 - `QP-006` HTML export — exists, no full charts/waterfall.
 - `QP-007` Replay player — sequential replay, no timeline/scrubber.
 - `OBS-001` Diff UI — functional, partial UX.
-- `OBS-004` Execution trace — inline conflict badges (does not use the `conflict-detector` engine).
+- `OBS-004` Execution trace — uses `conflict-detector` (INT-003): 4 conflict kinds with descriptions/suggestions.
 - Response body capture — only for mocked responses (MV3 `webRequest` limitation).
 
 ### 🟦 Implemented as engines, NOT wired to runtime (value ready, wiring missing)
 
-> These modules compile and have green tests, but **no line executes** in the running
-> extension. Do NOT recreate them. Wire them up (see backlog INT-\*).
-
-- `schema-validator.ts` (JSON Schema draft-07) — QP-002.
-- `contract-comparator.ts` (contract drift) — QP-003.
-- `conflict-detector.ts` (4 conflict kinds) — OBS-005.
-- `conditional-mock-evaluator.ts` (conditional mock) — MOCK-001.
-- `schema-inference.ts` (schema inference) — AI-001.
-- `rule-index.ts` (concurrent indexed engine) — TECH-001 (decide: migrate or remove).
+> All rule-engine modules are now wired to the runtime (INT-001..006, TECH-001). None remain idle.
 
 ### ❌ Not implemented / phantom
 
-- `validate-schema` rule type — **REMOVED** (FIX-001). Will be reintroduced as a real feature by INT-001.
+- `validate-schema` rule type — **REMOVED** (FIX-001). JSON Schema validation was instead delivered
+  as the `json-schema` assertion type (INT-001) — the natural home, since it checks responses rather than transforms traffic.
 - `XMLHttpRequest` / WebSocket interception — mocks only catch `fetch`.
 - Phase 4 (desktop proxy), Phase 5 (team/enterprise), Future Phase (AI/security) — not started.
 
@@ -115,7 +114,8 @@ packages/
   rule-engine/src/           pure logic + tests (*.test.ts)
 docs/
   adr/                       ADR-001..006
-  architecture/ backlog/ planning/ analysis/ reference/
+  architecture/ planning/ reference/   active docs
+  _archive/                  historical, read-only (analysis, planning, old backlogs)
 ```
 
 ---
@@ -150,9 +150,9 @@ docs/
 
 ## 9. Recommended next task
 
-**INT-001 — wire `schema-validator` to the runtime** (reintroduces `validate-schema` as a real
-feature, with access to the response body and result display). Then **INT-003** (wire
-`conflict-detector`, replacing the inline counting in `network.ts`). See `BACKLOG_CONSOLIDATED.md`.
+**Reporting & Observability completion** — finish the partials: **QP-006** (HTML report with charts),
+**QP-007** (replay timeline/scrubber), **OBS-006/007** (baseline capture + regression report).
+All six rule-engine modules are now wired. See `BACKLOG_CONSOLIDATED.md`.
 
 ---
 

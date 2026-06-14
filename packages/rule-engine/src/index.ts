@@ -1,5 +1,4 @@
 import type { InterceptedRequest, Rule } from "@qa-interceptor/shared-types";
-import { matchesCondition } from "./rule-index.js";
 
 export type MatchedRule = {
   ruleId: string;
@@ -39,6 +38,25 @@ const byPriorityThenCreatedAt = (a: Rule, b: Rule): number => {
   return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
 };
 
+/**
+ * Canonical rule-condition matcher.
+ * Method comparison is case-insensitive so behavior is consistent across the
+ * background DNR pipeline and the page fetch bridge.
+ */
+export const matchesCondition = (rule: Rule, request: InterceptedRequest): boolean => {
+  const condition = rule.condition;
+
+  if (condition.method && condition.method.toUpperCase() !== request.method.toUpperCase()) {
+    return false;
+  }
+
+  if (condition.urlContains && !request.url.includes(condition.urlContains)) {
+    return false;
+  }
+
+  return true;
+};
+
 export {
   evaluateAssertions,
   type AssertionInput,
@@ -76,14 +94,6 @@ export {
   type SnapshotDiffEntry,
   type SnapshotComparisonResult
 } from "./contract-comparator.js";
-
-export {
-  buildRuleIndex,
-  evaluateRulesFromIndex,
-  matchesCondition,
-  computeRuleFingerprint,
-  type RuleIndex
-} from "./rule-index.js";
 
 export {
   detectConflicts,

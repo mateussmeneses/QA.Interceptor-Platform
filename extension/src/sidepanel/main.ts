@@ -17,7 +17,8 @@ import {
   parseRuleGroups,
   parseCapturedRequests,
   parseRuleValidation,
-  parseResponseAssertions
+  parseResponseAssertions,
+  parseConditionalMocks
 } from "../storage/index";
 
 // ---------------------------------------------------------------------------
@@ -36,7 +37,8 @@ const loadAppState = async (): Promise<AppState> => {
     STORAGE_KEYS.RULES,
     STORAGE_KEYS.RULE_GROUPS,
     STORAGE_KEYS.RULE_VALIDATION,
-    STORAGE_KEYS.RESPONSE_ASSERTIONS
+    STORAGE_KEYS.RESPONSE_ASSERTIONS,
+    STORAGE_KEYS.CONDITIONAL_MOCKS
   ]);
 
   return {
@@ -44,7 +46,8 @@ const loadAppState = async (): Promise<AppState> => {
     rules: parseRules(stored[STORAGE_KEYS.RULES]),
     ruleGroups: parseRuleGroups(stored[STORAGE_KEYS.RULE_GROUPS]),
     validation: parseRuleValidation(stored[STORAGE_KEYS.RULE_VALIDATION]),
-    assertions: parseResponseAssertions(stored[STORAGE_KEYS.RESPONSE_ASSERTIONS])
+    assertions: parseResponseAssertions(stored[STORAGE_KEYS.RESPONSE_ASSERTIONS]),
+    conditionalMocks: parseConditionalMocks(stored[STORAGE_KEYS.CONDITIONAL_MOCKS])
   };
 };
 
@@ -126,6 +129,13 @@ const applyStorageChanges = (
 
   if (changes[STORAGE_KEYS.RESPONSE_ASSERTIONS]) {
     state.assertions = parseResponseAssertions(changes[STORAGE_KEYS.RESPONSE_ASSERTIONS].newValue);
+    changed = true;
+  }
+
+  if (changes[STORAGE_KEYS.CONDITIONAL_MOCKS]) {
+    state.conditionalMocks = parseConditionalMocks(
+      changes[STORAGE_KEYS.CONDITIONAL_MOCKS].newValue
+    );
     changed = true;
   }
 

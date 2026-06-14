@@ -87,6 +87,12 @@ const PROFILE_RULE_URL_PATTERN = "/api";
 let assertionsAddButtonEl: HTMLButtonElement;
 let responseAssertionsListEl: HTMLElement;
 let errorProfilesListEl: HTMLElement;
+let assertionTypeSelectEl: HTMLSelectElement;
+let assertionExpectedInputEl: HTMLInputElement;
+let assertionPathInputEl: HTMLInputElement;
+let assertionPathFieldEl: HTMLElement;
+let assertionPathLabelEl: HTMLElement;
+let assertionExpectedLabelEl: HTMLElement;
 
 // ---------------------------------------------------------------------------
 // Local state
@@ -97,7 +103,8 @@ let _state: AppState = {
   rules: [],
   ruleGroups: [],
   validation: null,
-  assertions: []
+  assertions: [],
+  conditionalMocks: []
 };
 
 // ---------------------------------------------------------------------------
@@ -118,6 +125,12 @@ export function initSettings(): void {
   assertionsAddButtonEl = getEl("assertions-add-button") as HTMLButtonElement;
   responseAssertionsListEl = getEl("response-assertions-list");
   errorProfilesListEl = getEl("error-profiles-list");
+  assertionTypeSelectEl = getEl("assertion-type-select") as HTMLSelectElement;
+  assertionExpectedInputEl = getEl("assertion-expected-input") as HTMLInputElement;
+  assertionPathInputEl = getEl("assertion-path-input") as HTMLInputElement;
+  assertionPathFieldEl = assertionPathInputEl.closest(".field-inline") as HTMLElement;
+  assertionPathLabelEl = getEl("assertion-path-label");
+  assertionExpectedLabelEl = getEl("assertion-expected-label");
 
   bindEvents();
 }
@@ -286,17 +299,72 @@ const isErrorProfileId = (value: string): value is ErrorProfileId =>
 // Event bindings
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Assertion creation form (UI-ASSERT-001)
+// ---------------------------------------------------------------------------
+
+const syncAssertionFormFields = (): void => {
+  const type = assertionTypeSelectEl.value;
+  const needsPath = type === "header" || type === "json-path";
+
+  assertionPathFieldEl.classList.toggle("hidden", !needsPath);
+
+  if (type === "header") {
+    assertionPathLabelEl.textContent = "Header";
+    assertionPathInputEl.placeholder = "content-type";
+    assertionExpectedLabelEl.textContent = "Equals";
+    assertionExpectedInputEl.placeholder = "application/json";
+  } else if (type === "json-path") {
+    assertionPathLabelEl.textContent = "Path";
+    assertionPathInputEl.placeholder = "$.user.id";
+    assertionExpectedLabelEl.textContent = "Equals";
+    assertionExpectedInputEl.placeholder = "42";
+  } else if (type === "status") {
+    assertionExpectedLabelEl.textContent = "Expected";
+    assertionExpectedInputEl.placeholder = "200";
+  } else if (type === "body-contains") {
+    assertionExpectedLabelEl.textContent = "Contains";
+    assertionExpectedInputEl.placeholder = "success";
+  } else {
+    assertionExpectedLabelEl.textContent = "Schema (JSON)";
+    assertionExpectedInputEl.placeholder = '{"type":"object","required":["id"]}';
+  }
+};
+
 const bindEvents = (): void => {
+  assertionTypeSelectEl.addEventListener("change", syncAssertionFormFields);
+  syncAssertionFormFields();
+
   assertionsAddButtonEl.addEventListener("click", () => {
+    const type = assertionTypeSelectEl.value as ResponseAssertionRow["type"];
+    const expectedRaw = assertionExpectedInputEl.value.trim();
+    const pathRaw = assertionPathInputEl.value.trim();
+
+    if (!expectedRaw) {
+      assertionExpectedInputEl.focus();
+      return;
+    }
+
+    if ((type === "header" || type === "json-path") && !pathRaw) {
+      assertionPathInputEl.focus();
+      return;
+    }
+
+    const expected: string | number =
+      type === "status" && Number.isFinite(Number(expectedRaw)) ? Number(expectedRaw) : expectedRaw;
+
     const newAssertion: ResponseAssertionRow = {
       id: generateId("assertion"),
-      type: "status",
+      type,
       enabled: true,
-      expected: 200,
+      expected,
+      ...(pathRaw && (type === "header" || type === "json-path") ? { path: pathRaw } : {}),
       createdAt: new Date().toISOString()
     };
 
     const nextAssertions = [newAssertion, ..._state.assertions];
+    assertionExpectedInputEl.value = "";
+    assertionPathInputEl.value = "";
     void saveResponseAssertions(nextAssertions);
   });
 

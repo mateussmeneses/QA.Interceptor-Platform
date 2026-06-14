@@ -4,6 +4,17 @@ This file defines ownership of each top-level document to avoid redundancy.
 
 ## Single Source of Truth
 
+- `PROJECT_STATE.md`
+  - Owns: real project state, official architecture, working/partial/unwired features, next task.
+  - Authoritative. Read before any work.
+
+- `BACKLOG_CONSOLIDATED.md`
+  - Owns: the only official backlog (priorities, statuses, evidence).
+  - No other backlog file is authoritative; legacy backlogs live in `docs/_archive/backlog/`.
+
+- `AI_DEVELOPMENT_RULES.md`
+  - Owns: rules for AI/developer sessions (anti-duplication, validation gates).
+
 - `PRODUCT_VISION.md`
   - Owns: problem statement, vision, target users, product outcomes, non-goals.
   - Must not include: implementation backlog details.

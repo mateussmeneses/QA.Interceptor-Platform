@@ -1,5 +1,12 @@
 export {};
 
+import {
+  evaluateConditionalMock,
+  createMockState,
+  type ConditionalMockRule,
+  type MockState
+} from "../../../packages/rule-engine/src/conditional-mock-evaluator";
+
 type RuleCondition = {
   urlContains?: string;
   method?: string;
@@ -60,6 +67,17 @@ type RewriteRequestBodyPayload = {
   contentType?: string;
 };
 
+/** Stored shape of a sequence conditional mock (INT-005). */
+type StoredConditionalMock = {
+  id: string;
+  name: string;
+  enabled: boolean;
+  urlContains: string;
+  method?: string;
+  branches: Array<{ id: string; status: number; body: string }>;
+  createdAt: string;
+};
+
 declare global {
   interface Window {
     __QA_INTERCEPTOR_MOCK_BRIDGE__?: boolean;
@@ -68,6 +86,9 @@ declare global {
 
 let rules: Rule[] = [];
 let envVars: MockEnvVar[] = [];
+let conditionalMocks: StoredConditionalMock[] = [];
+// In-page call-count state for conditional mocks. Resets on page reload.
+let conditionalMockState: MockState = createMockState();
 
 if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
   window.__QA_INTERCEPTOR_MOCK_BRIDGE__ = true;
@@ -83,6 +104,7 @@ if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
       type?: string;
       rules?: Rule[];
       envVars?: MockEnvVar[];
+      conditionalMocks?: StoredConditionalMock[];
     };
 
     if (
@@ -98,12 +120,59 @@ if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
     if (Array.isArray(payload.envVars)) {
       envVars = payload.envVars.filter(isMockEnvVar);
     }
+
+    if (Array.isArray(payload.conditionalMocks)) {
+      conditionalMocks = payload.conditionalMocks.filter(isStoredConditionalMock);
+    }
   });
 
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const requestUrl = resolveUrl(input);
     const requestMethod = resolveMethod(input, init);
     const delayMs = resolveDelayMs(requestUrl, requestMethod);
+
+    // INT-005: state-aware sequence mocks take precedence over static mocks.
+    const conditionalResult = resolveConditionalMock(requestUrl, requestMethod);
+
+    if (conditionalResult) {
+      if (delayMs > 0) {
+        await sleep(delayMs);
+      }
+
+      window.postMessage(
+        {
+          source: "qa-interceptor-page",
+          type: "MOCK_APPLIED",
+          payload: {
+            requestId: crypto.randomUUID(),
+            method: requestMethod,
+            url: requestUrl,
+            timestamp: new Date().toISOString(),
+            status: conditionalResult.status,
+            durationMs: delayMs,
+            responseBody: conditionalResult.body,
+            matchedRules: [
+              {
+                ruleId: conditionalResult.id,
+                ruleName: conditionalResult.name,
+                type: "mock-response",
+                payload: { status: conditionalResult.status, body: conditionalResult.body }
+              }
+            ]
+          }
+        },
+        "*"
+      );
+
+      return new Response(conditionalResult.body, {
+        status: conditionalResult.status,
+        headers: {
+          "content-type": "application/json",
+          "x-qa-interceptor": "conditional-mock"
+        }
+      });
+    }
+
     const match = findMockMatch(requestUrl, requestMethod);
     const requestBodyRewrite = findRequestBodyRewrite(requestUrl, requestMethod);
 
@@ -546,4 +615,78 @@ const isMockEnvVar = (value: unknown): value is MockEnvVar => {
     typeof candidate.enabled === "boolean" &&
     typeof candidate.createdAt === "string"
   );
+};
+
+const isStoredConditionalMock = (value: unknown): value is StoredConditionalMock => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.name === "string" &&
+    typeof candidate.enabled === "boolean" &&
+    typeof candidate.urlContains === "string" &&
+    (candidate.method === undefined || typeof candidate.method === "string") &&
+    typeof candidate.createdAt === "string" &&
+    Array.isArray(candidate.branches)
+  );
+};
+
+/**
+ * INT-005: resolve a state-aware sequence mock for the given request.
+ * Converts the stored shape into the rule-engine's ConditionalMockRule, where
+ * the nth branch answers the nth matching call and the last branch is the
+ * fallback for all subsequent calls. Returns null when nothing matches.
+ */
+const resolveConditionalMock = (
+  url: string,
+  method: string
+): { id: string; name: string; status: number; body: string } | null => {
+  for (const mock of conditionalMocks) {
+    if (!mock.enabled || mock.branches.length === 0) {
+      continue;
+    }
+
+    if (!url.includes(mock.urlContains)) {
+      continue;
+    }
+
+    if (mock.method && mock.method.toUpperCase() !== method.toUpperCase()) {
+      continue;
+    }
+
+    const lastBranch = mock.branches[mock.branches.length - 1];
+    const rule: ConditionalMockRule = {
+      id: mock.id,
+      name: mock.name,
+      enabled: true,
+      branches: mock.branches.map((branch, index) => ({
+        id: branch.id,
+        condition: { kind: "sequence", nth: index + 1 },
+        payload: { status: branch.status, body: branch.body }
+      })),
+      fallback: { status: lastBranch.status, body: lastBranch.body }
+    };
+
+    const result = evaluateConditionalMock(
+      rule,
+      { method, url, headers: {} },
+      conditionalMockState
+    );
+    conditionalMockState = result.updatedState;
+
+    if (result.matched) {
+      return {
+        id: mock.id,
+        name: mock.name,
+        status: result.payload.status ?? 200,
+        body: result.payload.body ?? ""
+      };
+    }
+  }
+
+  return null;
 };

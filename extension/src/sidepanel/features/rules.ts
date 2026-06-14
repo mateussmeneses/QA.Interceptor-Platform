@@ -89,7 +89,8 @@ let _state: AppState = {
   rules: [],
   ruleGroups: [],
   validation: null,
-  assertions: []
+  assertions: [],
+  conditionalMocks: []
 };
 let selectedRuleId: string | null = null;
 let rulesSearchQuery = "";

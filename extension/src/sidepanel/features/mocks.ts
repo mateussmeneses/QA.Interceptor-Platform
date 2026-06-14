@@ -9,11 +9,12 @@ import type {
   MockTypeFilter,
   MockStatusFilter,
   MockTemplate,
-  HttpMethod
+  HttpMethod,
+  ConditionalMockRow
 } from "../shared/types";
 import { isMockRule } from "../shared/types";
 import { escapeHtml, formatRuleType, formatRuleCondition, generateId } from "../shared/utils";
-import { saveRules } from "../../storage/index";
+import { saveRules, saveConditionalMocks } from "../../storage/index";
 
 // ---------------------------------------------------------------------------
 // Template library
@@ -87,6 +88,13 @@ let mockTemplateSelectEl: HTMLSelectElement;
 let mockTemplateApplyButtonEl: HTMLButtonElement;
 let mockTemplateDescriptionEl: HTMLElement;
 let mockSaveButtonEl: HTMLButtonElement;
+let conditionalMockNameEl: HTMLInputElement;
+let conditionalMockUrlEl: HTMLInputElement;
+let conditionalMockMethodEl: HTMLSelectElement;
+let conditionalMockBranchesEl: HTMLTextAreaElement;
+let conditionalMockAddButtonEl: HTMLButtonElement;
+let conditionalMockStatusEl: HTMLElement;
+let conditionalMockListEl: HTMLElement;
 
 // ---------------------------------------------------------------------------
 // Local state
@@ -97,7 +105,8 @@ let _state: AppState = {
   rules: [],
   ruleGroups: [],
   validation: null,
-  assertions: []
+  assertions: [],
+  conditionalMocks: []
 };
 let selectedMockRuleId: string | null = null;
 let mockSearchQuery = "";
@@ -138,6 +147,13 @@ export function initMocks(): void {
   mockTemplateApplyButtonEl = getEl("mock-template-apply-button") as HTMLButtonElement;
   mockTemplateDescriptionEl = getEl("mock-template-description");
   mockSaveButtonEl = getEl("mock-save-button") as HTMLButtonElement;
+  conditionalMockNameEl = getEl("conditional-mock-name") as HTMLInputElement;
+  conditionalMockUrlEl = getEl("conditional-mock-url") as HTMLInputElement;
+  conditionalMockMethodEl = getEl("conditional-mock-method") as HTMLSelectElement;
+  conditionalMockBranchesEl = getEl("conditional-mock-branches") as HTMLTextAreaElement;
+  conditionalMockAddButtonEl = getEl("conditional-mock-add-button") as HTMLButtonElement;
+  conditionalMockStatusEl = getEl("conditional-mock-status");
+  conditionalMockListEl = getEl("conditional-mock-list");
 
   populateTemplateDropdown();
   bindEvents();
@@ -150,7 +166,32 @@ export function initMocks(): void {
 export function renderMocks(state: AppState): void {
   _state = state;
   renderMockPlayground(state.rules);
+  renderConditionalMocks(state.conditionalMocks);
 }
+
+const renderConditionalMocks = (mocks: ConditionalMockRow[]): void => {
+  if (mocks.length === 0) {
+    conditionalMockListEl.innerHTML = '<li class="placeholder">No sequence mocks yet.</li>';
+    return;
+  }
+
+  conditionalMockListEl.innerHTML = mocks
+    .map((mock) => {
+      const scope = `${mock.method ? `${mock.method} ` : ""}${mock.urlContains}`;
+      const toggleIcon = mock.enabled ? "✓" : "○";
+      return `<li class="conditional-mock-item${mock.enabled ? "" : " disabled"}">
+        <div class="conditional-mock-info">
+          <strong>${escapeHtml(mock.name)}</strong>
+          <small>${escapeHtml(scope)} · ${String(mock.branches.length)} responses</small>
+        </div>
+        <div class="conditional-mock-actions">
+          <button type="button" class="icon-btn" data-conditional-toggle="${escapeHtml(mock.id)}" title="Toggle" aria-pressed="${String(mock.enabled)}">${toggleIcon}</button>
+          <button type="button" class="icon-btn danger" data-conditional-delete="${escapeHtml(mock.id)}" title="Delete">✕</button>
+        </div>
+      </li>`;
+    })
+    .join("");
+};
 
 const renderMockPlayground = (rows: RuleRow[]): void => {
   const mockRules = rows.filter(isMockRule);
@@ -489,6 +530,87 @@ const bindEvents = (): void => {
     void saveRules(nextRules);
     setMockSaveStatus("Mock rule saved to local storage.", "ok");
   });
+
+  // INT-005: sequence (conditional) mocks
+  conditionalMockAddButtonEl.addEventListener("click", () => {
+    const name = conditionalMockNameEl.value.trim();
+    const urlContains = conditionalMockUrlEl.value.trim();
+    const method = conditionalMockMethodEl.value.trim();
+    const branches = parseConditionalBranches(conditionalMockBranchesEl.value);
+
+    if (!name || !urlContains) {
+      conditionalMockStatusEl.textContent = "Name and URL contains are required.";
+      return;
+    }
+
+    if (branches.length === 0) {
+      conditionalMockStatusEl.textContent =
+        'Add at least one response line (e.g. 200 {"ok":true}).';
+      return;
+    }
+
+    const newMock: ConditionalMockRow = {
+      id: generateId("cmock"),
+      name,
+      enabled: true,
+      urlContains,
+      ...(method ? { method } : {}),
+      branches,
+      createdAt: new Date().toISOString()
+    };
+
+    void saveConditionalMocks([newMock, ..._state.conditionalMocks]);
+    conditionalMockNameEl.value = "";
+    conditionalMockUrlEl.value = "";
+    conditionalMockBranchesEl.value = "";
+    conditionalMockStatusEl.textContent = `Sequence mock "${name}" saved.`;
+  });
+
+  conditionalMockListEl.addEventListener("click", (event) => {
+    const target = event.target as HTMLElement | null;
+    const toggleButton = target?.closest("[data-conditional-toggle]") as HTMLButtonElement | null;
+    const deleteButton = target?.closest("[data-conditional-delete]") as HTMLButtonElement | null;
+
+    if (toggleButton) {
+      const id = toggleButton.dataset.conditionalToggle;
+      if (!id) {
+        return;
+      }
+      const next = _state.conditionalMocks.map((mock) =>
+        mock.id === id ? { ...mock, enabled: !mock.enabled } : mock
+      );
+      void saveConditionalMocks(next);
+      return;
+    }
+
+    if (deleteButton) {
+      const id = deleteButton.dataset.conditionalDelete;
+      if (!id) {
+        return;
+      }
+      void saveConditionalMocks(_state.conditionalMocks.filter((mock) => mock.id !== id));
+    }
+  });
+};
+
+/**
+ * Parse the sequence-mock textarea: one response per line as `STATUS BODY`.
+ * The status is the first whitespace-delimited token; the rest is the body.
+ */
+const parseConditionalBranches = (raw: string): ConditionalMockRow["branches"] => {
+  return raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const spaceIndex = line.indexOf(" ");
+      const statusToken = spaceIndex === -1 ? line : line.slice(0, spaceIndex);
+      const body = spaceIndex === -1 ? "" : line.slice(spaceIndex + 1).trim();
+      const status = Number.parseInt(statusToken, 10);
+      return { status, body };
+    })
+    .filter((branch) => Number.isFinite(branch.status) && branch.status >= 100)
+    .map((branch) => ({ id: generateId("cbranch"), status: branch.status, body: branch.body }));
 };
 
 // ---------------------------------------------------------------------------

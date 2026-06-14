@@ -27,6 +27,16 @@ type MockEnvVar = {
   createdAt: string;
 };
 
+type ConditionalMock = {
+  id: string;
+  name: string;
+  enabled: boolean;
+  urlContains: string;
+  method?: string;
+  branches: Array<{ id: string; status: number; body: string }>;
+  createdAt: string;
+};
+
 type MockAppliedMessage = {
   source: "qa-interceptor-page";
   type: "MOCK_APPLIED";
@@ -116,15 +126,46 @@ const readMockEnvVars = async (): Promise<MockEnvVar[]> => {
   });
 };
 
+const readConditionalMocks = async (): Promise<ConditionalMock[]> => {
+  const stored = await chrome.storage.local.get("conditionalMocks");
+  const value = stored.conditionalMocks;
+
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((candidate): candidate is ConditionalMock => {
+    if (!candidate || typeof candidate !== "object") {
+      return false;
+    }
+
+    const normalized = candidate as Record<string, unknown>;
+
+    return (
+      typeof normalized.id === "string" &&
+      typeof normalized.name === "string" &&
+      typeof normalized.enabled === "boolean" &&
+      typeof normalized.urlContains === "string" &&
+      typeof normalized.createdAt === "string" &&
+      Array.isArray(normalized.branches)
+    );
+  });
+};
+
 const publishRules = async () => {
-  const [rules, envVars] = await Promise.all([readRules(), readMockEnvVars()]);
+  const [rules, envVars, conditionalMocks] = await Promise.all([
+    readRules(),
+    readMockEnvVars(),
+    readConditionalMocks()
+  ]);
 
   window.postMessage(
     {
       source: "qa-interceptor-content",
       type: "RULES_UPDATE",
       rules,
-      envVars
+      envVars,
+      conditionalMocks
     },
     "*"
   );
@@ -152,7 +193,10 @@ window.addEventListener("message", (event: MessageEvent<unknown>) => {
 });
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName !== "local" || (!changes.rules && !changes.mockEnvVars)) {
+  if (
+    areaName !== "local" ||
+    (!changes.rules && !changes.mockEnvVars && !changes.conditionalMocks)
+  ) {
     return;
   }
 

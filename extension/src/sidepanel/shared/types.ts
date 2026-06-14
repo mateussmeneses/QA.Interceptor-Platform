@@ -6,7 +6,8 @@
 import type {
   StoredCapturedRequest,
   StoredRuleValidation,
-  StoredResponseAssertion
+  StoredResponseAssertion,
+  StoredConditionalMock
 } from "../../storage/index";
 import type { Rule, RuleGroup, HttpMethod } from "../../../../packages/shared-types/src/index";
 
@@ -170,6 +171,8 @@ export type EvidenceReport = {
 
 export type RuleValidation = StoredRuleValidation;
 
+export type ConditionalMockRow = StoredConditionalMock;
+
 // ---------------------------------------------------------------------------
 // App-level shared state (passed to all feature renders)
 // ---------------------------------------------------------------------------
@@ -180,6 +183,7 @@ export type AppState = {
   ruleGroups: RuleGroupRow[];
   validation: RuleValidation | null;
   assertions: ResponseAssertionRow[];
+  conditionalMocks: ConditionalMockRow[];
 };
 
 // ---------------------------------------------------------------------------

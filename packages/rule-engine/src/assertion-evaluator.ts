@@ -4,7 +4,9 @@
  * This is a pure function module — no chrome API, no DOM, fully testable.
  */
 
-export type AssertionType = "status" | "header" | "json-path" | "body-contains";
+import { validateJsonString, type JsonSchema } from "./schema-validator.js";
+
+export type AssertionType = "status" | "header" | "json-path" | "body-contains" | "json-schema";
 
 export type AssertionInput = {
   id: string;
@@ -53,6 +55,8 @@ const evaluateSingle = (assertion: AssertionInput, response: ResponseContext): A
         return evaluateJsonPath(assertion, response);
       case "body-contains":
         return evaluateBodyContains(assertion, response);
+      case "json-schema":
+        return evaluateJsonSchema(assertion, response);
       default:
         return {
           ...assertion,
@@ -145,6 +149,41 @@ const evaluateBodyContains = (
   const passed = body.includes(needle);
 
   return { ...assertion, passed, actual: passed ? needle : undefined };
+};
+
+const evaluateJsonSchema = (
+  assertion: AssertionInput,
+  response: ResponseContext
+): AssertionResult => {
+  if (!response.body) {
+    return {
+      ...assertion,
+      passed: false,
+      error: "Response body is empty — cannot validate schema."
+    };
+  }
+
+  let schema: JsonSchema;
+
+  try {
+    schema = JSON.parse(String(assertion.expected)) as JsonSchema;
+  } catch {
+    return {
+      ...assertion,
+      passed: false,
+      error: "Schema is not valid JSON."
+    };
+  }
+
+  const result = validateJsonString(response.body, schema);
+
+  if (result.valid) {
+    return { ...assertion, passed: true, actual: "valid" };
+  }
+
+  const summary = result.errors.map((e) => `${e.path}: ${e.message}`).join("; ");
+
+  return { ...assertion, passed: false, actual: "invalid", error: summary };
 };
 
 // ---------------------------------------------------------------------------

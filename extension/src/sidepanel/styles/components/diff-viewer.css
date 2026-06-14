@@ -89,6 +89,51 @@
   }
 }
 
+/* INT-002: structural contract comparison list */
+.network-diff-contract {
+  margin-top: 12px;
+}
+
+.network-diff-contract-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.network-diff-contract-list .contract-ok {
+  color: var(--success);
+  font-size: 13px;
+}
+
+.network-diff-contract-list .contract-diff {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 8px;
+  border-left: 3px solid var(--warning);
+  background: var(--surface-alt);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+
+.network-diff-contract-list .contract-diff.missing-key,
+.network-diff-contract-list .contract-diff.type-change {
+  border-left-color: var(--error);
+}
+
+.network-diff-contract-list .contract-diff-kind {
+  font-weight: 600;
+}
+
+.network-diff-contract-list .contract-diff-path {
+  font-family: var(--font-mono, monospace);
+  color: var(--text-secondary);
+}
+
 @media (prefers-contrast: more) {
   .diff-viewer,
   .diff-viewer-header,

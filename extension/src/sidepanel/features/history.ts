@@ -84,7 +84,8 @@ let _state: AppState = {
   rules: [],
   ruleGroups: [],
   validation: null,
-  assertions: []
+  assertions: [],
+  conditionalMocks: []
 };
 let selectedHistorySessionId: string | null = null;
 let historySearchQuery = "";

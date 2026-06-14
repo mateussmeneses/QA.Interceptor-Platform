@@ -764,6 +764,36 @@
                       +
                     </button>
                   </div>
+                  <div class="assertion-create-form">
+                    <label class="field-inline" for="assertion-type-select">
+                      <span>Type</span>
+                      <select id="assertion-type-select">
+                        <option value="status">Status</option>
+                        <option value="header">Header</option>
+                        <option value="json-path">JSON path</option>
+                        <option value="body-contains">Body contains</option>
+                        <option value="json-schema">JSON schema</option>
+                      </select>
+                    </label>
+                    <label class="field-inline hidden" for="assertion-path-input">
+                      <span id="assertion-path-label">Path</span>
+                      <input
+                        id="assertion-path-input"
+                        type="text"
+                        placeholder="$.user.id"
+                        autocomplete="off"
+                      />
+                    </label>
+                    <label class="field-inline" for="assertion-expected-input">
+                      <span id="assertion-expected-label">Expected</span>
+                      <input
+                        id="assertion-expected-input"
+                        type="text"
+                        placeholder="200"
+                        autocomplete="off"
+                      />
+                    </label>
+                  </div>
                   <ul
                     id="response-assertions-list"
                     class="response-assertions-list"
@@ -856,8 +886,23 @@
                   </section>
 
                   <section id="network-detail-body-section" class="hidden">
-                    <h4>Response Body</h4>
+                    <div class="section-head compact">
+                      <h4>Response Body</h4>
+                      <button
+                        id="network-infer-schema-button"
+                        type="button"
+                        class="action-btn xs"
+                        title="Infer a JSON Schema from this response body"
+                      >
+                        Infer JSON schema
+                      </button>
+                    </div>
                     <pre id="network-detail-body" class="response-body-preview"></pre>
+                    <pre
+                      id="network-inferred-schema"
+                      class="response-body-preview hidden"
+                      aria-live="polite"
+                    ></pre>
                   </section>
 
                   <section class="network-assertions-section" aria-label="assertion results">
@@ -913,6 +958,14 @@
                           <div class="network-diff-pane-label">Selected (current)</div>
                           <pre id="network-diff-right" class="network-diff-body"></pre>
                         </div>
+                      </div>
+                      <div class="network-diff-contract">
+                        <div class="network-diff-pane-label">Contract changes (structural)</div>
+                        <ul
+                          id="network-diff-contract-list"
+                          class="network-diff-contract-list"
+                          aria-live="polite"
+                        ></ul>
                       </div>
                     </div>
                     <div class="editor-actions network-diff-actions">
@@ -1000,6 +1053,62 @@
                   No mock rules match current filters.
                 </div>
                 <ul id="mock-rule-list" class="mock-rule-list"></ul>
+
+                <section class="conditional-mock-panel" aria-label="sequence mocks">
+                  <div class="section-head compact">
+                    <h4>Sequence Mocks (state-aware)</h4>
+                  </div>
+                  <p class="conditional-mock-hint">
+                    Returns a different response per call. Each line below is one call:
+                    <code>STATUS BODY</code> (e.g. <code>200 {"ok":true}</code>). The last line
+                    repeats for further calls.
+                  </p>
+                  <label class="field-block" for="conditional-mock-name">
+                    <span>Name</span>
+                    <input id="conditional-mock-name" type="text" placeholder="Login retry flow" />
+                  </label>
+                  <label class="field-block" for="conditional-mock-url">
+                    <span>URL contains</span>
+                    <input id="conditional-mock-url" type="text" placeholder="/api/login" />
+                  </label>
+                  <label class="field-block" for="conditional-mock-method">
+                    <span>Method (optional)</span>
+                    <select id="conditional-mock-method">
+                      <option value="">Any</option>
+                      <option value="GET">GET</option>
+                      <option value="POST">POST</option>
+                      <option value="PUT">PUT</option>
+                      <option value="PATCH">PATCH</option>
+                      <option value="DELETE">DELETE</option>
+                    </select>
+                  </label>
+                  <label class="field-block" for="conditional-mock-branches">
+                    <span>Responses (one per call)</span>
+                    <textarea
+                      id="conditional-mock-branches"
+                      rows="4"
+                      spellcheck="false"
+                      placeholder='401 {"error":"retry"}
+200 {"ok":true}'
+                    ></textarea>
+                  </label>
+                  <div class="editor-actions">
+                    <button
+                      id="conditional-mock-add-button"
+                      type="button"
+                      class="action-btn primary"
+                    >
+                      Add Sequence Mock
+                    </button>
+                  </div>
+                  <p
+                    id="conditional-mock-status"
+                    class="editor-save-status"
+                    role="status"
+                    aria-live="polite"
+                  ></p>
+                  <ul id="conditional-mock-list" class="conditional-mock-list"></ul>
+                </section>
               </section>
 
               <aside class="mock-editor" aria-label="mock editor">

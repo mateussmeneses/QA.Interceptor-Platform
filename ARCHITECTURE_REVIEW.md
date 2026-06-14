@@ -52,7 +52,7 @@ Impact:
 
 Recommendation:
 
-- Treat docs/backlog/BACKLOG_CANONICAL.md and BACKLOG_CONSOLIDATED.md as operative sources
+- Treat BACKLOG_CONSOLIDATED.md as the single operative backlog (old backlogs archived under docs/\_archive/)
 - Archive stale status docs or update to current numbers
 
 ### C. Type System Inconsistency (RESOLVED)

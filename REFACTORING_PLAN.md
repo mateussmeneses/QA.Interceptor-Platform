@@ -39,7 +39,7 @@ Transform the repository into a clean, maintainable, and predictable codebase wi
 ### 2) Backlog and Governance Corrections
 
 1. Use BACKLOG_CONSOLIDATED.md as execution board
-2. Keep docs/backlog/BACKLOG_CANONICAL.md as evidence registry
+2. Keep docs/\_archive/backlog/BACKLOG_CANONICAL.md as a historical evidence registry
 3. Demote remaining backlog/planning docs to reference-only
 
 ### 3) Runtime Functional Corrections

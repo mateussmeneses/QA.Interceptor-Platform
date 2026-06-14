@@ -1,158 +1,97 @@
-# QA.Interceptor Platform - Índice Central
+# QA.Interceptor Platform — Documentation Index
 
-Este é o **índice centralizado** de toda a documentação do projeto. Use-o como ponto de entrada para navegar pelos diferentes aspectos do projeto.
+This is the central entry point for the project documentation.
 
----
-
-## 📋 Início Rápido
-
-- **[README.md](README.md)** - Visão geral do projeto
-- **[PRODUCT_VISION.md](PRODUCT_VISION.md)** - Visão de produto e objetivos
-- **[PROJECT_RULES.md](PROJECT_RULES.md)** - Regras não-negociáveis do projeto
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Referência rápida
-
----
-
-## 🎯 Planejamento & Execução
-
-### Roadmap e Fases
-
-- **[ROADMAP.md](ROADMAP.md)** - Milestones e timeline do projeto
-- **[CURRENT_PHASE.md](CURRENT_PHASE.md)** - Fase atual e status
-- **[docs/planning/DELIVERABLES.md](docs/planning/DELIVERABLES.md)** - Entregas esperadas
-- **[docs/planning/IMPLEMENTATION_READY.md](docs/planning/IMPLEMENTATION_READY.md)** - Tarefas prontas para implementação
-
-### Backlog & Priorização
-
-- **[docs/backlog/BACKLOG_CANONICAL.md](docs/backlog/BACKLOG_CANONICAL.md)** - Fonte unica de verdade (status oficial)
-- **[docs/backlog/BACKLOG.md](docs/backlog/BACKLOG.md)** - Backlog principal (historico priorizado)
-- **[docs/backlog/BACKLOG_EXPANDED.md](docs/backlog/BACKLOG_EXPANDED.md)** - Catalogo expandido (planejamento)
-- **[docs/backlog/BACKLOG_FRONTEND.md](docs/backlog/BACKLOG_FRONTEND.md)** - Catalogo frontend (planejamento)
+> **Start here (single source of truth, repo root):**
+>
+> 1. **[PROJECT_STATE.md](PROJECT_STATE.md)** — real state + official architecture.
+> 2. **[BACKLOG_CONSOLIDATED.md](BACKLOG_CONSOLIDATED.md)** — the only official backlog.
+> 3. **[AI_DEVELOPMENT_RULES.md](AI_DEVELOPMENT_RULES.md)** — rules for any AI/developer session.
+>
+> Onboarding hooks for AI tools: **[AGENTS.md](AGENTS.md)**, **[CLAUDE.md](CLAUDE.md)**,
+> **[.github/copilot-instructions.md](.github/copilot-instructions.md)**.
 
 ---
 
-## 🏗️ Arquitetura & Design
+## Governance & quality
 
-### Arquitetura do Projeto
-
-- **[docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)** - Arquitetura geral do sistema
-- **[docs/architecture/FRONTEND_ARCHITECTURE.md](docs/architecture/FRONTEND_ARCHITECTURE.md)** - Arquitetura do frontend
-- **[docs/architecture/FRONTEND_INTEGRATION_STRATEGY.md](docs/architecture/FRONTEND_INTEGRATION_STRATEGY.md)** - Estratégia de integração
-- **[docs/architecture/DESIGN_SYSTEM.md](docs/architecture/DESIGN_SYSTEM.md)** - Design system e componentes
-
-### UI/UX
-
-- **[docs/architecture/UI_UX_PREVIEW.md](docs/architecture/UI_UX_PREVIEW.md)** - Prévia visual e wireframes
-- **[docs/architecture/FRONTEND_QUICK_START.md](docs/architecture/FRONTEND_QUICK_START.md)** - Guia rápido do frontend
-- **[docs/architecture/FRONTEND_STRATEGY_COMPLETE.md](docs/architecture/FRONTEND_STRATEGY_COMPLETE.md)** - Estratégia completa do frontend
-
-### Decisões de Arquitetura
-
-- **[docs/adr/](docs/adr/)** - Architecture Decision Records (ADRs)
+- **[ARCHITECTURE_REVIEW.md](ARCHITECTURE_REVIEW.md)** — architecture findings and target.
+- **[TECHNICAL_DEBT.md](TECHNICAL_DEBT.md)** — debt register.
+- **[REFACTORING_PLAN.md](REFACTORING_PLAN.md)** — remove/fix/rewrite plan.
+- **[PROJECT_RULES.md](PROJECT_RULES.md)** — non-negotiable project rules.
+- **[PRODUCT_VISION.md](PRODUCT_VISION.md)** — product vision and goals.
+- **[MANIFEST.md](MANIFEST.md)** — manifesto and principles.
+- **[README.md](README.md)** — project overview.
 
 ---
 
-## 📊 Análise & Pesquisa
+## Architecture & design (current)
 
-- **[docs/analysis/ANALYSIS_COMPLETE.md](docs/analysis/ANALYSIS_COMPLETE.md)** - Análise completa do projeto
-- **[docs/analysis/ANALYSIS_STATE_OF_PROJECT.md](docs/analysis/ANALYSIS_STATE_OF_PROJECT.md)** - Estado atual do projeto
-- **[docs/analysis/PROJECT_STATUS.md](docs/analysis/PROJECT_STATUS.md)** - Status do projeto
-- **[docs/analysis/EXECUTIVE_SUMMARY.md](docs/analysis/EXECUTIVE_SUMMARY.md)** - Sumário executivo
-- **[docs/analysis/SESSION_SUMMARY.md](docs/analysis/SESSION_SUMMARY.md)** - Resumo da sessão
-- **[docs/requestly-benchmark-analysis.md](docs/requestly-benchmark-analysis.md)** - Análise de benchmark (Requestly)
+- **[docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)** — system layers.
+- **[docs/adr/](docs/adr/)** — Architecture Decision Records (ADR-001..006).
 
----
-
-## 📖 Referência & Guias
-
-### Contribuição & Qualidade
-
-- **[docs/reference/CONTRIBUTING.md](docs/reference/CONTRIBUTING.md)** - Guia de contribuição
-- **[MANIFEST.md](MANIFEST.md)** - Manifesto e princípios do projeto
-- **[docs/reference/PROJECT_RULES.md](docs/reference/PROJECT_RULES.md)** - Regras de projeto
-- **[docs/reference/LANGUAGE_POLICY.md](docs/reference/LANGUAGE_POLICY.md)** - Política de linguagem
-
-### Versionamento & Documentação
-
-- **[docs/reference/VERSIONING.md](docs/reference/VERSIONING.md)** - Política de versionamento
-- **[docs/reference/DOCUMENTATION_STRUCTURE.md](docs/reference/DOCUMENTATION_STRUCTURE.md)** - Estrutura de documentação
-- **[docs/reference/DOCUMENTATION_INDEX.md](docs/reference/DOCUMENTATION_INDEX.md)** - Índice de documentação (legado)
-- **[docs/reference/DOCUMENTATION_MAP.md](docs/reference/DOCUMENTATION_MAP.md)** - Mapa de documentação (legado)
-
-### Internacionalização
-
-- **[RESUMO_EXECUTIVO_PT.md](RESUMO_EXECUTIVO_PT.md)** - Resumo executivo em português
+> Note: the `docs/architecture/FRONTEND_*` and `DESIGN_SYSTEM*` documents describe the **removed**
+> React component layer and are kept only as historical design references.
 
 ---
 
-## 📁 Estrutura de Diretórios
+## Reference & guides
+
+- **[docs/reference/CONTRIBUTING.md](docs/reference/CONTRIBUTING.md)** — contribution guide + language policy.
+- **[docs/reference/VERSIONING.md](docs/reference/VERSIONING.md)** — versioning policy.
+- **[docs/reference/DOCUMENTATION_STRUCTURE.md](docs/reference/DOCUMENTATION_STRUCTURE.md)** — document ownership.
+- **[docs/planning/ROADMAP.md](docs/planning/ROADMAP.md)** — phased roadmap (high-level).
+- **[docs/requestly-benchmark-analysis.md](docs/requestly-benchmark-analysis.md)** — benchmark analysis.
+
+---
+
+## Archived (historical, read-only)
+
+Dated snapshots that **do not match the current code** live in
+**[docs/\_archive/](docs/_archive/README.md)** (analysis, planning, superseded backlogs, PT summary).
+Do not use them for active development.
+
+---
+
+## Directory structure
 
 ```
 QA.Interceptor Platform/
-├── README.md                          # Overview do projeto
-├── INDEX.md                           # Este arquivo - navegação centralizada
-├── PRODUCT_VISION.md                  # Visão de produto
-├── PROJECT_RULES.md                   # Regras não-negociáveis
-├── MANIFEST.md                        # Manifesto e princípios
-├── QUICK_REFERENCE.md                 # Referência rápida
-├── RESUMO_EXECUTIVO_PT.md             # Resumo em português
+├── PROJECT_STATE.md            # source of truth — real state + architecture
+├── BACKLOG_CONSOLIDATED.md     # the only official backlog
+├── AI_DEVELOPMENT_RULES.md     # rules for AI/dev sessions
+├── AGENTS.md / CLAUDE.md       # AI onboarding hooks
+├── ARCHITECTURE_REVIEW.md · TECHNICAL_DEBT.md · REFACTORING_PLAN.md
+├── README.md · PRODUCT_VISION.md · PROJECT_RULES.md · MANIFEST.md · QUICK_REFERENCE.md
 │
 ├── docs/
-│   ├── backlog/                       # Todos os arquivos de backlog
-│   │   ├── BACKLOG.md
-│   │   ├── BACKLOG_EXPANDED.md
-│   │   └── BACKLOG_FRONTEND.md
-│   │
-│   ├── architecture/                  # Documentação de arquitetura
-│   │   ├── ARCHITECTURE.md
-│   │   ├── FRONTEND_ARCHITECTURE.md
-│   │   ├── FRONTEND_INTEGRATION_STRATEGY.md
-│   │   ├── FRONTEND_STRATEGY_COMPLETE.md
-│   │   ├── FRONTEND_QUICK_START.md
-│   │   ├── DESIGN_SYSTEM.md
-│   │   └── UI_UX_PREVIEW.md
-│   │
-│   ├── planning/                      # Planejamento e roadmap
-│   │   ├── ROADMAP.md
-│   │   ├── CURRENT_PHASE.md
-│   │   ├── DELIVERABLES.md
-│   │   └── IMPLEMENTATION_READY.md
-│   │
-│   ├── analysis/                      # Análises e pesquisa
-│   │   ├── ANALYSIS_COMPLETE.md
-│   │   ├── ANALYSIS_STATE_OF_PROJECT.md
-│   │   ├── PROJECT_STATUS.md
-│   │   ├── EXECUTIVE_SUMMARY.md
-│   │   ├── SESSION_SUMMARY.md
-│   │   └── requestly-benchmark-analysis.md
-│   │
-│   ├── reference/                     # Guias de referência
-│   │   ├── CONTRIBUTING.md
-│   │   ├── LANGUAGE_POLICY.md
-│   │   ├── VERSIONING.md
-│   │   ├── DOCUMENTATION_STRUCTURE.md
-│   │   ├── DOCUMENTATION_INDEX.md
-│   │   └── DOCUMENTATION_MAP.md
-│   │
-│   └── adr/                           # Architecture Decision Records
-│       ├── ADR-001-*.md
-│       ├── ADR-002-*.md
-│       └── ...
+│   ├── adr/                    # Architecture Decision Records
+│   ├── architecture/           # ARCHITECTURE.md (+ historical FRONTEND_* design refs)
+│   ├── planning/               # ROADMAP.md
+│   ├── reference/              # CONTRIBUTING, VERSIONING, DOCUMENTATION_*
+│   ├── requestly-benchmark-analysis.md
+│   └── _archive/               # historical, read-only (analysis, planning, old backlogs)
 │
-├── extension/                         # Código-fonte da extensão
-│   └── src/
-│       ├── background/
-│       ├── content/
-│       ├── sidepanel/
-│       ├── popup/
-│       └── ...
+├── extension/                  # MV3 extension source (background, content, sidepanel, storage)
+└── packages/
+    ├── shared-types/           # domain types + message contracts
+    └── rule-engine/            # pure logic + tests
+```
+
+│ └── src/
+│ ├── background/
+│ ├── content/
+│ ├── sidepanel/
+│ ├── popup/
+│ └── ...
 │
-├── packages/                          # Pacotes reutilizáveis
-│   ├── rule-engine/
-│   └── shared-types/
+├── packages/ # Pacotes reutilizáveis
+│ ├── rule-engine/
+│ └── shared-types/
 │
 └── .github/
-    └── agents/                        # Agentes de coordenação
+└── agents/ # Agentes de coordenação
+
 ```
 
 ---
@@ -178,5 +117,6 @@ QA.Interceptor Platform/
 
 ---
 
-**Última atualização:** 2026-06-12  
+**Última atualização:** 2026-06-12
 **Mantido por:** Product Owner Agent
+```

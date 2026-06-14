@@ -248,6 +248,71 @@ describe("evaluateAssertions — body-contains", () => {
 });
 
 // ---------------------------------------------------------------------------
+// JSON Schema assertions (INT-001 — wires schema-validator to the runtime)
+// ---------------------------------------------------------------------------
+
+describe("evaluateAssertions — json-schema", () => {
+  const schema = JSON.stringify({
+    type: "object",
+    properties: {
+      user: {
+        type: "object",
+        properties: { id: { type: "number" }, name: { type: "string" } },
+        required: ["id", "name"]
+      },
+      items: { type: "array", items: { type: "number" } }
+    },
+    required: ["user", "items"]
+  });
+
+  it("passes when the response body matches the schema", () => {
+    const result = evaluateAssertions(
+      [makeAssertion({ type: "json-schema", expected: schema })],
+      makeResponse()
+    );
+    expect(result[0].passed).toBe(true);
+    expect(result[0].actual).toBe("valid");
+  });
+
+  it("fails with errors when the response body violates the schema", () => {
+    const result = evaluateAssertions(
+      [makeAssertion({ type: "json-schema", expected: schema })],
+      makeResponse({ body: '{"user":{"id":"not-a-number","name":"Alice"},"items":[1]}' })
+    );
+    expect(result[0].passed).toBe(false);
+    expect(result[0].actual).toBe("invalid");
+    expect(result[0].error).toBeTruthy();
+  });
+
+  it("fails when the schema itself is not valid JSON", () => {
+    const result = evaluateAssertions(
+      [makeAssertion({ type: "json-schema", expected: "{not json" })],
+      makeResponse()
+    );
+    expect(result[0].passed).toBe(false);
+    expect(result[0].error).toContain("Schema is not valid JSON");
+  });
+
+  it("fails when the response body is empty", () => {
+    const result = evaluateAssertions(
+      [makeAssertion({ type: "json-schema", expected: schema })],
+      makeResponse({ body: "" })
+    );
+    expect(result[0].passed).toBe(false);
+    expect(result[0].error).toContain("empty");
+  });
+
+  it("fails when the response body is not valid JSON", () => {
+    const result = evaluateAssertions(
+      [makeAssertion({ type: "json-schema", expected: schema })],
+      makeResponse({ body: "<html>not json</html>" })
+    );
+    expect(result[0].passed).toBe(false);
+    expect(result[0].error).toBeTruthy();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Multiple assertions in one call
 // ---------------------------------------------------------------------------
 

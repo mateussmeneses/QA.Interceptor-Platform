@@ -10,7 +10,7 @@
 
 1. **Read `PROJECT_STATE.md`** — understand the real state, the official architecture, and what already exists.
 2. **Read `BACKLOG_CONSOLIDATED.md`** — it is the **only** official backlog. Do not use others.
-3. **Do not trust historical docs** (`docs/analysis/*`, `docs/planning/*`): they are dated
+3. **Do not trust historical docs** (`docs/_archive/*`): they are dated
    snapshots and may contradict the code. **Code is the primary evidence.**
 
 ---
@@ -46,7 +46,7 @@
 - **A task is "Done" only with evidence:** code + green build + green test/typecheck.
   Layout/skeleton = "In Progress". Unwired engine = "Engine ready / not wired".
 - **Update `PROJECT_STATE.md`** after finishing any feature or architectural change.
-- Documents in `docs/analysis/`, `docs/planning/`, and old backlogs are **read-only history**.
+- Documents in `docs/_archive/` (analysis, planning, old backlogs) are **read-only history**.
 
 ---
 

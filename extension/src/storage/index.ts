@@ -17,7 +17,8 @@ export const STORAGE_KEYS = {
   RULE_VALIDATION: "ruleValidation",
   RESPONSE_ASSERTIONS: "responseAssertions",
   MOCK_ENV_VARS: "mockEnvVars",
-  REPLAY_ARTIFACTS: "replayArtifacts"
+  REPLAY_ARTIFACTS: "replayArtifacts",
+  CONDITIONAL_MOCKS: "conditionalMocks"
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
@@ -47,7 +48,7 @@ export type StoredMockEnvVar = {
 
 export type StoredResponseAssertion = {
   id: string;
-  type: "status" | "header" | "json-path" | "body-contains";
+  type: "status" | "header" | "json-path" | "body-contains" | "json-schema";
   enabled: boolean;
   expected: unknown;
   path?: string;
@@ -101,6 +102,27 @@ export type StoredReplayArtifact = {
   createdAt: string;
   requestCount: number;
   requests: StoredReplayArtifactRequest[];
+};
+
+/**
+ * Sequence-based conditional mock (INT-005).
+ * Each branch is the response for the nth matching call (1-indexed);
+ * the last branch is reused as the fallback for all subsequent calls.
+ */
+export type StoredConditionalMockBranch = {
+  id: string;
+  status: number;
+  body: string;
+};
+
+export type StoredConditionalMock = {
+  id: string;
+  name: string;
+  enabled: boolean;
+  urlContains: string;
+  method?: string;
+  branches: StoredConditionalMockBranch[];
+  createdAt: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -184,6 +206,35 @@ const isStoredReplayArtifact = (value: unknown): value is StoredReplayArtifact =
   );
 };
 
+const isStoredConditionalMockBranch = (value: unknown): value is StoredConditionalMockBranch => {
+  if (!isObject(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === "string" &&
+    typeof value.status === "number" &&
+    typeof value.body === "string"
+  );
+};
+
+const isStoredConditionalMock = (value: unknown): value is StoredConditionalMock => {
+  if (!isObject(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === "string" &&
+    typeof value.name === "string" &&
+    typeof value.enabled === "boolean" &&
+    typeof value.urlContains === "string" &&
+    (value.method === undefined || typeof value.method === "string") &&
+    typeof value.createdAt === "string" &&
+    Array.isArray(value.branches) &&
+    (value.branches as unknown[]).every(isStoredConditionalMockBranch)
+  );
+};
+
 export const isStoredCapturedRequest = (value: unknown): value is StoredCapturedRequest => {
   if (!isObject(value)) {
     return false;
@@ -228,7 +279,8 @@ const isStoredResponseAssertion = (value: unknown): value is StoredResponseAsser
     (value.type === "status" ||
       value.type === "header" ||
       value.type === "json-path" ||
-      value.type === "body-contains") &&
+      value.type === "body-contains" ||
+      value.type === "json-schema") &&
     typeof value.enabled === "boolean" &&
     value.expected !== undefined &&
     (value.path === undefined || typeof value.path === "string") &&
@@ -302,6 +354,14 @@ export const parseResponseAssertions = (raw: unknown): StoredResponseAssertion[]
   }
 
   return raw.filter(isStoredResponseAssertion);
+};
+
+export const parseConditionalMocks = (raw: unknown): StoredConditionalMock[] => {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  return raw.filter(isStoredConditionalMock);
 };
 
 export const parseRuleValidation = (raw: unknown): StoredRuleValidation | null => {
@@ -378,6 +438,15 @@ export const saveResponseAssertions = async (
   assertions: StoredResponseAssertion[]
 ): Promise<void> => {
   await chrome.storage.local.set({ [STORAGE_KEYS.RESPONSE_ASSERTIONS]: assertions });
+};
+
+export const loadConditionalMocks = async (): Promise<StoredConditionalMock[]> => {
+  const stored = await chrome.storage.local.get(STORAGE_KEYS.CONDITIONAL_MOCKS);
+  return parseConditionalMocks(stored[STORAGE_KEYS.CONDITIONAL_MOCKS]);
+};
+
+export const saveConditionalMocks = async (mocks: StoredConditionalMock[]): Promise<void> => {
+  await chrome.storage.local.set({ [STORAGE_KEYS.CONDITIONAL_MOCKS]: mocks });
 };
 
 export const loadReplayArtifacts = async (): Promise<StoredReplayArtifact[]> => {

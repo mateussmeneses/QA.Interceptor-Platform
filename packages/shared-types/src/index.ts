@@ -52,7 +52,12 @@ export type InterceptedResponse = {
   durationMs: number;
   timestamp: string;
 };
-export type ResponseAssertionType = "status" | "header" | "json-path" | "body-contains";
+export type ResponseAssertionType =
+  | "status"
+  | "header"
+  | "json-path"
+  | "body-contains"
+  | "json-schema";
 
 export type ResponseAssertion = {
   id: string;
