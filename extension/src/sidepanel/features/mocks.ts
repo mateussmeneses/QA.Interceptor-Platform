@@ -392,8 +392,12 @@ const bindEvents = (): void => {
       return;
     }
 
+    // No mock selected: create a new mock rule from the template and persist it.
     if (!selectedMockRuleId) {
-      setMockSaveStatus("Select a mock rule before applying a template.", "error");
+      const newRule = createMockRuleFromTemplate(template);
+      selectedMockRuleId = newRule.id;
+      void saveRules([newRule, ..._state.rules]);
+      setMockSaveStatus(`Created mock from template: ${template.name}.`, "ok");
       return;
     }
 
@@ -641,7 +645,7 @@ const setMockSaveStatus = (message: string, tone: "neutral" | "ok" | "error"): v
   }
 };
 
-export const createMockRuleFromTemplate = (template: MockTemplate): RuleRow => ({
+const createMockRuleFromTemplate = (template: MockTemplate): RuleRow => ({
   id: generateId("rule"),
   name: template.name,
   type: "mock-response",

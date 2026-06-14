@@ -611,10 +611,15 @@ const repeatRequest = async (
   const rules = await loadRulesForRuntime();
   const evaluation = evaluateRules(rules, request);
 
+  // GET/HEAD requests cannot carry a body (fetch throws otherwise).
+  const methodUpper = payload.method.toUpperCase();
+  const allowsBody = methodUpper !== "GET" && methodUpper !== "HEAD";
+  const sendBody = allowsBody && payload.body !== undefined;
+
   const response = await fetch(payload.url, {
     method: payload.method,
     headers: payload.headers,
-    ...(payload.body !== undefined ? { body: payload.body } : {})
+    ...(sendBody ? { body: payload.body } : {})
   });
 
   const responseText = await response.text();

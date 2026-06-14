@@ -235,7 +235,7 @@
                 <div class="editor-grid">
                   <label class="field-block" for="editor-rule-type">
                     <span>Type</span>
-                    <select id="editor-rule-type" name="type" disabled>
+                    <select id="editor-rule-type" name="type">
                       <option value="rewrite-url">rewrite-url</option>
                       <option value="rewrite-header">rewrite-header</option>
                       <option value="rewrite-query">rewrite-query</option>
@@ -566,13 +566,6 @@
           aria-hidden="true"
         >
           <section class="network-inspector" aria-label="network inspector">
-            <div class="section-head">
-              <div>
-                <h3>Network Inspector</h3>
-                <p>Traffic table, status chips, and request detail timeline preview.</p>
-              </div>
-            </div>
-
             <div class="network-toolbar" aria-label="network filters">
               <label class="field-inline" for="network-search">
                 <span>Search URL</span>
@@ -1045,13 +1038,6 @@
           aria-hidden="true"
         >
           <section class="mock-playground" aria-label="mock playground">
-            <div class="section-head">
-              <div>
-                <h3>Mock Playground</h3>
-                <p>Mock response and status playground for QA scenarios and error simulation.</p>
-              </div>
-            </div>
-
             <div class="mock-toolbar" aria-label="mock filters">
               <label class="field-inline" for="mock-search">
                 <span>Search</span>
@@ -1322,13 +1308,6 @@
           aria-hidden="true"
         >
           <section class="history-evidence" aria-label="history and evidence">
-            <div class="section-head">
-              <div>
-                <h3>History & Evidence</h3>
-                <p>Captured sessions, evidence timeline, and export-ready QA snapshot.</p>
-              </div>
-            </div>
-
             <div class="history-toolbar" aria-label="history filters">
               <label class="field-inline" for="history-search">
                 <span>Search URL</span>
@@ -1632,13 +1611,6 @@
           aria-hidden="true"
         >
           <section class="settings-panel" aria-label="settings">
-            <div class="section-head">
-              <div>
-                <h3>Settings</h3>
-                <p>Workspace preferences, defaults, and diagnostics controls.</p>
-              </div>
-            </div>
-
             <div class="settings-grid">
               <section class="settings-card" aria-label="general preferences">
                 <h4>General Preferences</h4>
@@ -1680,7 +1652,9 @@
                   <button type="button" class="action-btn preview">
                     Run Health Check (Preview)
                   </button>
-                  <button type="button" class="action-btn preview">Download Logs (Preview)</button>
+                  <button id="settings-download-logs-button" type="button" class="action-btn">
+                    Download Logs
+                  </button>
                 </div>
               </section>
 

@@ -17,7 +17,11 @@
 /* 3. Layout & utility classes */
 @import "./layout.css";
 
-/* 4. Component styles (only the ones used by the plain-TS runtime).
+/* 4. Application component layer (shell, nav, cards, forms, buttons, chips,
+   lists, and per-feature layouts for the plain-TS sidepanel UI). */
+@import "./components.css";
+
+/* 5. Component styles (only the ones used by the plain-TS runtime).
    The React component CSS was removed with the orphan .tsx subtree (QA-CSS-001). */
 @import "./components/diff-viewer.css";
 @import "./components/modal.css";

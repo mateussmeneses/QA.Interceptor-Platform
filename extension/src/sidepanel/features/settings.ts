@@ -4,7 +4,13 @@
  */
 
 import type { AppState, ResponseAssertionRow, RuleRow } from "../shared/types";
-import { escapeHtml, generateId } from "../shared/utils";
+import {
+  escapeHtml,
+  generateId,
+  buildDiagnosticsReport,
+  formatDateSlug,
+  triggerDownload
+} from "../shared/utils";
 import { wireThemeSelect } from "../shared/theme-manager";
 import { saveResponseAssertions, saveRules, loadRules, resetWorkspace } from "../../storage/index";
 
@@ -96,6 +102,7 @@ let assertionPathLabelEl: HTMLElement;
 let assertionExpectedLabelEl: HTMLElement;
 let resetWorkspaceButtonEl: HTMLButtonElement;
 let resetStatusEl: HTMLElement;
+let downloadLogsButtonEl: HTMLButtonElement;
 
 // ---------------------------------------------------------------------------
 // Local state
@@ -140,6 +147,7 @@ export function initSettings(): void {
 
   resetWorkspaceButtonEl = getEl("settings-reset-workspace-button") as HTMLButtonElement;
   resetStatusEl = getEl("settings-reset-status");
+  downloadLogsButtonEl = getEl("settings-download-logs-button") as HTMLButtonElement;
 
   bindEvents();
 }
@@ -400,11 +408,35 @@ const bindResetWorkspace = (): void => {
   });
 };
 
+// Runtime Diagnostics → Download Logs: export a local diagnostics snapshot.
+const bindDownloadLogs = (): void => {
+  downloadLogsButtonEl.addEventListener("click", () => {
+    const report = buildDiagnosticsReport(
+      {
+        rules: _state.rules.map((r) => ({ enabled: r.enabled, type: r.type })),
+        ruleGroups: _state.ruleGroups,
+        requests: _state.requests,
+        assertions: _state.assertions,
+        conditionalMocks: _state.conditionalMocks
+      },
+      new Date().toISOString(),
+      navigator.userAgent
+    );
+
+    triggerDownload(
+      `qa-interceptor-diagnostics-${formatDateSlug()}.json`,
+      report,
+      "application/json"
+    );
+  });
+};
+
 const bindEvents = (): void => {
   assertionTypeSelectEl.addEventListener("change", syncAssertionFormFields);
   syncAssertionFormFields();
 
   bindResetWorkspace();
+  bindDownloadLogs();
 
   assertionsAddButtonEl.addEventListener("click", () => {
     const type = assertionTypeSelectEl.value as ResponseAssertionRow["type"];

@@ -5,7 +5,7 @@
 > Update this document whenever you finish a feature or change the architecture.
 
 **Last audit:** 2026-06-13 (full 9-phase audit, evidence by code + build + tests)
-**Current health evidence:** `npm run build` ✅ · full `tsc` ✅ (no errors) · `npm test` ✅ 628 engine + 28 extension tests
+**Current health evidence:** `npm run build` ✅ · full `tsc` ✅ (no errors) · `npm test` ✅ 628 engine + 31 extension tests
 
 ---
 
@@ -112,7 +112,7 @@ extension/
       index.html             markup for all views
       features/*.ts          rules, network, mocks, history, settings, navigation
       shared/                utils, modal-controller, theme-manager, types
-      styles/                tokens, global, layout + styles/components/*.css
+      styles/                tokens, global, layout, components + styles/components/*.css
 packages/
   shared-types/src/          index.ts (domain) + messages.ts (contracts)
   rule-engine/src/           pure logic + tests (*.test.ts)
@@ -160,6 +160,25 @@ unit-tested in a Node (vitest) environment without a DOM:
 
 Rule of thumb: when adding UI behavior, put the decision/format logic in a pure helper or in the
 rule-engine and cover it with tests; keep `features/*.ts` limited to DOM plumbing.
+
+---
+
+## 7c. Styling architecture (TD-017)
+
+CSS is layered and token-driven (`styles/index.css` imports in order):
+
+1. `tokens.css` — design tokens (colors, spacing, typography, radius, shadows) + full light/dark
+   themes via `html[data-theme="dark"]`.
+2. `global.css` — reset, base element styles, focus, scrollbars, print.
+3. `layout.css` — utility classes (flex/grid/spacing/text) + a few feature widgets
+   (waterfall, anomaly, bandwidth, timing phases, danger button).
+4. `components.css` — the **application component layer**: app shell, sidebar nav, cards/panels,
+   forms/inputs, buttons, pills/chips, status tones, lists/cards, and per-feature layouts. This is
+   what styles the semantic classes the plain-TS HTML and `features/*.ts` templates emit.
+5. `components/diff-viewer.css`, `components/modal.css` — specific widgets.
+
+Theme is applied at boot by `shared/theme-manager.ts` (localStorage, sync). When adding UI, reuse
+existing tokens and component classes; do not inline colors or re-introduce React component CSS.
 
 ---
 

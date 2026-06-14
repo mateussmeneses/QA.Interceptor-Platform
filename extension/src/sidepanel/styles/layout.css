@@ -795,9 +795,9 @@
 .bandwidth-panel {
   margin: 12px 0;
   padding: 10px 12px;
-  border: 1px solid var(--border, #e5e7eb);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--surface, #fff);
+  background: var(--surface-bg);
 }
 
 .bandwidth-head {
@@ -865,7 +865,7 @@
 .bandwidth-bar > span {
   display: block;
   height: 100%;
-  background: var(--accent, #6366f1);
+  background: var(--info);
 }
 
 .bandwidth-meta small {
@@ -878,9 +878,9 @@
 .anomaly-panel {
   margin: 12px 0;
   padding: 10px 12px;
-  border: 1px solid var(--border, #e5e7eb);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--surface, #fff);
+  background: var(--surface-bg);
 }
 
 .anomaly-head {
@@ -922,7 +922,7 @@
 }
 
 .anomaly-row.anomaly-info {
-  border-left-color: var(--accent, #6366f1);
+  border-left-color: var(--info);
 }
 
 .anomaly-row-main {
@@ -959,7 +959,7 @@
 }
 
 .anomaly-info .anomaly-badge {
-  background: var(--accent, #6366f1);
+  background: var(--info);
 }
 
 .anomaly-row small {

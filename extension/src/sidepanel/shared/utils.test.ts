@@ -13,7 +13,8 @@ import {
   renderRuleChips,
   buildHistorySessions,
   computeAverageDuration,
-  getUniqueMatchedRulesCount
+  getUniqueMatchedRulesCount,
+  buildDiagnosticsReport
 } from "./utils";
 import type { RequestRow } from "./types";
 
@@ -216,5 +217,54 @@ describe("getUniqueMatchedRulesCount", () => {
 
   it("returns 0 when no rules matched", () => {
     expect(getUniqueMatchedRulesCount([makeRow({ id: "a" })])).toBe(0);
+  });
+});
+
+describe("buildDiagnosticsReport", () => {
+  const baseInput = {
+    rules: [
+      { enabled: true, type: "block" },
+      { enabled: false, type: "delay" }
+    ],
+    ruleGroups: [{}, {}],
+    requests: [
+      makeRow({ id: "a", response: { status: 200, durationMs: 100, timestamp: "" } }),
+      makeRow({ id: "b", response: { status: 500, durationMs: 300, timestamp: "" } }),
+      makeRow({ id: "c" })
+    ],
+    assertions: [],
+    conditionalMocks: [{}]
+  };
+
+  it("produces valid JSON with tool metadata and the provided clock/UA", () => {
+    const json = buildDiagnosticsReport(baseInput, "2026-06-14T00:00:00.000Z", "test-agent/1.0");
+    const parsed = JSON.parse(json) as Record<string, unknown>;
+    expect(parsed.tool).toBe("QA.Interceptor");
+    expect(parsed.generatedAt).toBe("2026-06-14T00:00:00.000Z");
+    expect((parsed.environment as { userAgent: string }).userAgent).toBe("test-agent/1.0");
+  });
+
+  it("summarizes counts including failed and pending requests", () => {
+    const json = buildDiagnosticsReport(baseInput, "2026-06-14T00:00:00.000Z", "ua");
+    const summary = (JSON.parse(json) as { summary: Record<string, number> }).summary;
+    expect(summary.rules).toBe(2);
+    expect(summary.enabledRules).toBe(1);
+    expect(summary.ruleGroups).toBe(2);
+    expect(summary.conditionalMocks).toBe(1);
+    expect(summary.capturedRequests).toBe(3);
+    expect(summary.failedRequests).toBe(1);
+    expect(summary.pendingRequests).toBe(1);
+    expect(summary.averageDurationMs).toBe(200);
+  });
+
+  it("caps recent requests at 20 entries", () => {
+    const many = Array.from({ length: 30 }, (_, i) => makeRow({ id: `r${String(i)}` }));
+    const json = buildDiagnosticsReport(
+      { ...baseInput, requests: many },
+      "2026-06-14T00:00:00.000Z",
+      "ua"
+    );
+    const recent = (JSON.parse(json) as { recentRequests: unknown[] }).recentRequests;
+    expect(recent).toHaveLength(20);
   });
 });

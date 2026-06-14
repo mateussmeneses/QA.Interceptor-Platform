@@ -658,6 +658,67 @@ export const readHarAsRequestRows = (value: unknown): RequestRow[] => {
     .filter((row): row is RequestRow => Boolean(row));
 };
 
+// ---------------------------------------------------------------------------
+// Diagnostics report (Runtime Diagnostics → Download Logs)
+// ---------------------------------------------------------------------------
+
+export type DiagnosticsInput = {
+  rules: Array<{ enabled: boolean; type: string }>;
+  ruleGroups: unknown[];
+  requests: RequestRow[];
+  assertions: ResponseAssertionRow[];
+  conditionalMocks: unknown[];
+};
+
+/**
+ * Builds a self-contained, local diagnostics snapshot for QA troubleshooting.
+ * Pure: callers pass the clock and user-agent so it is fully testable. No PII
+ * beyond what the user already captured locally.
+ */
+export const buildDiagnosticsReport = (
+  input: DiagnosticsInput,
+  generatedAt: string,
+  userAgent: string
+): string => {
+  const failed = input.requests.filter((r) => {
+    const status = r.response?.status;
+    return typeof status === "number" && status >= 400;
+  }).length;
+  const pending = input.requests.filter((r) => !r.response).length;
+
+  const recentRequests = input.requests.slice(0, 20).map((r) => ({
+    method: r.method,
+    url: r.url,
+    status: r.response?.status ?? null,
+    durationMs: r.response?.durationMs ?? null,
+    captureSource: r.captureSource,
+    matchedRules: r.matchedRules.length
+  }));
+
+  const report = {
+    tool: "QA.Interceptor",
+    version: "0.1.0",
+    generatedAt,
+    environment: {
+      userAgent
+    },
+    summary: {
+      rules: input.rules.length,
+      enabledRules: input.rules.filter((r) => r.enabled).length,
+      ruleGroups: input.ruleGroups.length,
+      conditionalMocks: input.conditionalMocks.length,
+      assertions: input.assertions.length,
+      capturedRequests: input.requests.length,
+      failedRequests: failed,
+      pendingRequests: pending,
+      averageDurationMs: computeAverageDuration(input.requests)
+    },
+    recentRequests
+  };
+
+  return JSON.stringify(report, null, 2);
+};
+
 const harEntryToRequestRow = (entry: unknown, index: number): RequestRow | null => {
   if (!entry || typeof entry !== "object") {
     return null;

@@ -366,6 +366,7 @@ const populateEditor = (rule: RuleRow | null): void => {
 
 const setEditorFieldsDisabled = (disabled: boolean): void => {
   editorNameEl.disabled = disabled;
+  editorTypeEl.disabled = disabled;
   editorPriorityEl.disabled = disabled;
   editorMethodEl.disabled = disabled;
   editorEnabledEl.disabled = disabled;
@@ -773,6 +774,7 @@ const bindEvents = (): void => {
     const methodValue = editorMethodEl.value.trim().toUpperCase() as HttpMethod | "";
     const groupValue = editorGroupEl.value.trim();
     const urlContainsValue = editorUrlEl.value.trim();
+    const typeValue = isRuleType(editorTypeEl.value) ? editorTypeEl.value : currentRule.type;
 
     const nextRules = _state.rules.map((rule) => {
       if (rule.id !== selectedRuleId) {
@@ -782,6 +784,7 @@ const bindEvents = (): void => {
       return {
         ...rule,
         name: editorNameEl.value.trim() || rule.name,
+        type: typeValue,
         enabled: editorEnabledEl.value === "true",
         priority: normalizedPriority,
         ...(groupValue ? { groupId: groupValue } : { groupId: undefined }),
@@ -828,13 +831,13 @@ const bindEvents = (): void => {
 
 const createDefaultRule = (): RuleRow => ({
   id: generateId("rule"),
-  name: "New Delay Rule",
-  type: "delay",
+  name: "New Rule",
+  type: "block",
   enabled: false,
   priority: 100,
   createdAt: new Date().toISOString(),
   condition: { urlContains: "/api" },
-  payload: { delayMs: 500 }
+  payload: {}
 });
 
 const isRuleRowShape = (value: unknown): value is RuleRow => {
@@ -876,7 +879,7 @@ const populateModalFromSelectedRule = (): void => {
 
   if (!rule) {
     rulesModalNameEl.value = "";
-    rulesModalTypeEl.value = "delay";
+    rulesModalTypeEl.value = "block";
     rulesModalPriorityEl.value = "100";
     rulesModalEnabledEl.value = "false";
     rulesModalUrlEl.value = "";
