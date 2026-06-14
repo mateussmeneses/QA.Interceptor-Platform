@@ -85,11 +85,11 @@ If you add pure logic to `rule-engine`, **add tests** (`*.test.ts`).
 
 ## 7. Anti-patterns already committed in this project (do not repeat)
 
-| Anti-pattern | What happened | Rule |
-| --- | --- | --- |
-| Parallel implementation | An entire React layer created without wiring to runtime (~3,300 dead lines) | Never two UIs/stacks |
-| Concurrent engine | `rule-index.ts` duplicated `evaluateRules` without replacing it | One engine only |
-| Type copies | `Rule`/`MockEnvVar` redefined in 4 places | Import from `shared-types` |
-| Duplicated parsers | `storage-parsers.ts` copied `storage/index.ts` | Single source |
-| "Done" without execution | Engines marked Done but never wired | Done = runs at runtime |
-| Multiple backlogs | 5 backlogs with divergent statuses | One backlog only |
+| Anti-pattern             | What happened                                                               | Rule                       |
+| ------------------------ | --------------------------------------------------------------------------- | -------------------------- |
+| Parallel implementation  | An entire React layer created without wiring to runtime (~3,300 dead lines) | Never two UIs/stacks       |
+| Concurrent engine        | `rule-index.ts` duplicated `evaluateRules` without replacing it             | One engine only            |
+| Type copies              | `Rule`/`MockEnvVar` redefined in 4 places                                   | Import from `shared-types` |
+| Duplicated parsers       | `storage-parsers.ts` copied `storage/index.ts`                              | Single source              |
+| "Done" without execution | Engines marked Done but never wired                                         | Done = runs at runtime     |
+| Multiple backlogs        | 5 backlogs with divergent statuses                                          | One backlog only           |

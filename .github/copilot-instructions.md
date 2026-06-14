@@ -24,13 +24,13 @@ The goal is not only intercepting requests.
 
 The goal is helping QA Engineers validate:
 
-* Frontend behavior
-* Backend integrations
-* API contracts
-* Error scenarios
-* Performance edge cases
-* Mock responses
-* Request manipulation
+- Frontend behavior
+- Backend integrations
+- API contracts
+- Error scenarios
+- Performance edge cases
+- Mock responses
+- Request manipulation
 
 ## Core Principles
 
@@ -68,13 +68,13 @@ Prefer small modules.
 
 ## Coding Standards
 
-* Use TypeScript.
-* Avoid any.
-* Follow SOLID principles.
-* Follow Clean Code.
-* Use ESLint.
-* Use Prettier.
-* Create unit tests whenever possible.
+- Use TypeScript.
+- Avoid any.
+- Follow SOLID principles.
+- Follow Clean Code.
+- Use ESLint.
+- Use Prettier.
+- Create unit tests whenever possible.
 
 ## Architecture
 
@@ -101,8 +101,8 @@ Every feature must prioritize usability over technical complexity.
 
 QA.Interceptor should become a lightweight alternative to:
 
-* Requestly
-* Charles Proxy
-* Burp Suite Community
+- Requestly
+- Charles Proxy
+- Burp Suite Community
 
 Focused on QA professionals.

@@ -73,7 +73,7 @@ No circular dependencies. Import direction is unidirectional.
 ### 🟦 Implemented as engines, NOT wired to runtime (value ready, wiring missing)
 
 > These modules compile and have green tests, but **no line executes** in the running
-> extension. Do NOT recreate them. Wire them up (see backlog INT-*).
+> extension. Do NOT recreate them. Wire them up (see backlog INT-\*).
 
 - `schema-validator.ts` (JSON Schema draft-07) — QP-002.
 - `contract-comparator.ts` (contract drift) — QP-003.

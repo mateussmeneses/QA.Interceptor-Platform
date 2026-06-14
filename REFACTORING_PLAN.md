@@ -16,13 +16,13 @@ Transform the repository into a clean, maintainable, and predictable codebase wi
 
 ## Removal Plan (Safe-first)
 
-| Action | Reason | Impact | Status |
-| --- | --- | --- | --- |
-| Remove full React subtree (components/\*.tsx + __tests__ + barrel) | Orphan, uncompilable, dead | -3,300 lines; green full typecheck | **DONE 2026-06-13** |
-| Archive stale status docs into docs/_archive | Remove contradictory status sources | Improves planning reliability | Pending (QA-DOC-001) |
-| Clean orphan component CSS class-by-class | Styled dead `.tsx`; `modal.css` is mixed | Smaller CSS surface | Pending (QA-CSS-001) |
-| Repair broken cross-doc links | Restore docs operability | Better onboarding | Pending (QA-DOC-002) |
-| Decide `storage/adapter.ts`: adopt or remove | Orphan abstraction | Simplification | Pending (TD-003) |
+| Action                                                             | Reason                                   | Impact                             | Status               |
+| ------------------------------------------------------------------ | ---------------------------------------- | ---------------------------------- | -------------------- |
+| Remove full React subtree (components/\*.tsx + **tests** + barrel) | Orphan, uncompilable, dead               | -3,300 lines; green full typecheck | **DONE 2026-06-13**  |
+| Archive stale status docs into docs/\_archive                      | Remove contradictory status sources      | Improves planning reliability      | Pending (QA-DOC-001) |
+| Clean orphan component CSS class-by-class                          | Styled dead `.tsx`; `modal.css` is mixed | Smaller CSS surface                | Pending (QA-CSS-001) |
+| Repair broken cross-doc links                                      | Restore docs operability                 | Better onboarding                  | Pending (QA-DOC-002) |
+| Decide `storage/adapter.ts`: adopt or remove                       | Orphan abstraction                       | Simplification                     | Pending (TD-003)     |
 
 ## Correction Plan
 

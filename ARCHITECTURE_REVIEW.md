@@ -75,6 +75,7 @@ Recommendation:
 See `PROJECT_STATE.md` §3 and §5 for the authoritative target structure. Summary:
 `shared-types ← rule-engine ← extension`, single rule engine, single storage layer,
 shared types (no local copies), pure logic with mandatory tests.
+
 - False confidence about component readiness
 
 Recommendation:
