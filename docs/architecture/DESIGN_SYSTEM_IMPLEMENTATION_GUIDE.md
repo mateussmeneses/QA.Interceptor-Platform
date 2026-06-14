@@ -1,4 +1,5 @@
 # QA.Interceptor — Design System Implementation Guide
+<!-- markdownlint-disable MD022 MD031 MD032 MD040 -->
 
 **Status**: ✅ Phase FE-0 — Design Foundation Complete
 
@@ -579,10 +580,10 @@ Each component will follow the same pattern:
 
 ## 📚 References
 
-- [Design System Documentation](../DESIGN_SYSTEM.md)
+- [Design System Documentation](./DESIGN_SYSTEM.md)
 - [Frontend Backlog](../backlog/BACKLOG_FRONTEND.md)
-- [Frontend Strategy](../FRONTEND_STRATEGY_COMPLETE.md)
-- [CSS Tokens Reference](./styles/tokens.css)
+- [Frontend Strategy](./FRONTEND_STRATEGY_COMPLETE.md)
+- [CSS Tokens Reference](../../extension/src/sidepanel/styles/tokens.css)
 
 ---
 

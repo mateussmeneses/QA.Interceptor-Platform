@@ -22,9 +22,10 @@ Este é o **índice centralizado** de toda a documentação do projeto. Use-o co
 - **[docs/planning/IMPLEMENTATION_READY.md](docs/planning/IMPLEMENTATION_READY.md)** - Tarefas prontas para implementação
 
 ### Backlog & Priorização
-- **[docs/backlog/BACKLOG.md](docs/backlog/BACKLOG.md)** - Backlog principal (priorizado)
-- **[docs/backlog/BACKLOG_EXPANDED.md](docs/backlog/BACKLOG_EXPANDED.md)** - Backlog expandido (contexto completo)
-- **[docs/backlog/BACKLOG_FRONTEND.md](docs/backlog/BACKLOG_FRONTEND.md)** - Itens específicos do frontend
+- **[docs/backlog/BACKLOG_CANONICAL.md](docs/backlog/BACKLOG_CANONICAL.md)** - Fonte unica de verdade (status oficial)
+- **[docs/backlog/BACKLOG.md](docs/backlog/BACKLOG.md)** - Backlog principal (historico priorizado)
+- **[docs/backlog/BACKLOG_EXPANDED.md](docs/backlog/BACKLOG_EXPANDED.md)** - Catalogo expandido (planejamento)
+- **[docs/backlog/BACKLOG_FRONTEND.md](docs/backlog/BACKLOG_FRONTEND.md)** - Catalogo frontend (planejamento)
 
 ---
 

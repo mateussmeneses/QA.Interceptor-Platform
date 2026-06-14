@@ -1,4 +1,5 @@
 # Phase FE-1: Component Library Development
+<!-- markdownlint-disable MD022 MD032 MD036 MD040 -->
 
 **Phase Status: IN PROGRESS** 🔄
 **Completed: 24/25 components (96%)**
@@ -310,7 +311,7 @@ extension/
 
 ## Resources
 
-- [Design System Implementation Guide](../docs/architecture/DESIGN_SYSTEM_IMPLEMENTATION_GUIDE.md)
-- [Component Development Patterns](../docs/architecture/COMPONENT_DEVELOPMENT_PATTERNS.md)
-- [Phase FE-0 Completion Report](../docs/architecture/PHASE_FE0_COMPLETION_REPORT.md)
-- [Testing Patterns & Best Practices](../docs/reference/TESTING_PATTERNS.md)
+- [Design System Implementation Guide](./DESIGN_SYSTEM_IMPLEMENTATION_GUIDE.md)
+- [Component Development Patterns](./COMPONENT_DEVELOPMENT_PATTERNS.md)
+- [Phase FE-0 Completion Report](./PHASE_FE0_COMPLETION_REPORT.md)
+- Testing Patterns & Best Practices (document pending)

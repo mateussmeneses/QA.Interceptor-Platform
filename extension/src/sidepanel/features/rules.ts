@@ -15,6 +15,7 @@ import {
   formatDateSlug,
   generateId,
 } from "../shared/utils";
+import { createModalController, type ModalController } from "../shared/modal-controller";
 import { saveRules, saveRuleGroups } from "../../storage/index";
 
 // ---------------------------------------------------------------------------
@@ -49,6 +50,27 @@ let editorDeleteButtonEl: HTMLButtonElement;
 let rulesImportButtonEl: HTMLButtonElement;
 let rulesExportButtonEl: HTMLButtonElement;
 let rulesImportInputEl: HTMLInputElement;
+let rulesOpenModalEditorButtonEl: HTMLButtonElement;
+let rulesEditorModalPanelEl: HTMLElement;
+let rulesEditorModalDialogEl: HTMLElement;
+let rulesEditorModalCloseButtonEl: HTMLButtonElement;
+let rulesEditorTabBasicEl: HTMLButtonElement;
+let rulesEditorTabAdvancedEl: HTMLButtonElement;
+let rulesEditorPanelBasicEl: HTMLElement;
+let rulesEditorPanelAdvancedEl: HTMLElement;
+let rulesModalNameEl: HTMLInputElement;
+let rulesModalTypeEl: HTMLSelectElement;
+let rulesModalPriorityEl: HTMLInputElement;
+let rulesModalEnabledEl: HTMLSelectElement;
+let rulesModalUrlEl: HTMLInputElement;
+let rulesModalPayloadEl: HTMLTextAreaElement;
+let rulesModalMethodEl: HTMLSelectElement;
+let rulesModalGroupEl: HTMLSelectElement;
+let rulesModalTagsEl: HTMLInputElement;
+let rulesModalNotesEl: HTMLTextAreaElement;
+let rulesModalSavePreviewButtonEl: HTMLButtonElement;
+let rulesModalCancelButtonEl: HTMLButtonElement;
+let rulesEditorModalController: ModalController;
 
 // ---------------------------------------------------------------------------
 // Local state
@@ -93,6 +115,36 @@ export function initRules(): void {
   rulesImportButtonEl = getEl("rules-import-button") as HTMLButtonElement;
   rulesExportButtonEl = getEl("rules-export-button") as HTMLButtonElement;
   rulesImportInputEl = getEl("rules-import-input") as HTMLInputElement;
+  rulesOpenModalEditorButtonEl = getEl("rules-open-modal-editor-button") as HTMLButtonElement;
+  rulesEditorModalPanelEl = getEl("rules-editor-modal-panel");
+  rulesEditorModalDialogEl = getEl("rules-editor-modal-dialog");
+  rulesEditorModalCloseButtonEl = getEl("rules-editor-modal-close-button") as HTMLButtonElement;
+  rulesEditorTabBasicEl = getEl("rules-editor-tab-basic") as HTMLButtonElement;
+  rulesEditorTabAdvancedEl = getEl("rules-editor-tab-advanced") as HTMLButtonElement;
+  rulesEditorPanelBasicEl = getEl("rules-editor-panel-basic");
+  rulesEditorPanelAdvancedEl = getEl("rules-editor-panel-advanced");
+  rulesModalNameEl = getEl("rules-modal-name") as HTMLInputElement;
+  rulesModalTypeEl = getEl("rules-modal-type") as HTMLSelectElement;
+  rulesModalPriorityEl = getEl("rules-modal-priority") as HTMLInputElement;
+  rulesModalEnabledEl = getEl("rules-modal-enabled") as HTMLSelectElement;
+  rulesModalUrlEl = getEl("rules-modal-url") as HTMLInputElement;
+  rulesModalPayloadEl = getEl("rules-modal-payload") as HTMLTextAreaElement;
+  rulesModalMethodEl = getEl("rules-modal-method") as HTMLSelectElement;
+  rulesModalGroupEl = getEl("rules-modal-group") as HTMLSelectElement;
+  rulesModalTagsEl = getEl("rules-modal-tags") as HTMLInputElement;
+  rulesModalNotesEl = getEl("rules-modal-notes") as HTMLTextAreaElement;
+  rulesModalSavePreviewButtonEl = getEl("rules-modal-save-preview-button") as HTMLButtonElement;
+  rulesModalCancelButtonEl = getEl("rules-modal-cancel-button") as HTMLButtonElement;
+
+  rulesEditorModalController = createModalController({
+    panelEl: rulesEditorModalPanelEl,
+    dialogEl: rulesEditorModalDialogEl,
+    onRequestClose: () => {
+      closeRulesModalEditor();
+    },
+    initialFocusEl: () => rulesModalNameEl,
+    defaultRestoreFocusEl: () => rulesOpenModalEditorButtonEl,
+  });
 
   bindEvents();
 }
@@ -187,6 +239,7 @@ const renderRuleGroupsManager = (groups: RuleGroupRow[]): void => {
   if (groups.length === 0) {
     rulesGroupsListEl.innerHTML = '<li class="placeholder">No groups yet.</li>';
     editorGroupEl.innerHTML = '<option value="">Ungrouped</option>';
+    rulesModalGroupEl.innerHTML = '<option value="">Ungrouped</option>';
     return;
   }
 
@@ -200,6 +253,15 @@ const renderRuleGroupsManager = (groups: RuleGroupRow[]): void => {
     .join("");
 
   editorGroupEl.innerHTML = ['<option value="">Ungrouped</option>']
+    .concat(
+      ordered.map(
+        (group) =>
+          `<option value="${escapeHtml(group.id)}">${escapeHtml(group.name)}${group.enabled ? "" : " (Disabled)"}</option>`
+      )
+    )
+    .join("");
+
+  rulesModalGroupEl.innerHTML = ['<option value="">Ungrouped</option>']
     .concat(
       ordered.map(
         (group) =>
@@ -350,6 +412,10 @@ const bindEvents = (): void => {
       if (nextId) {
         selectedRuleId = nextId;
         renderRules(_state);
+
+        if (!rulesEditorModalPanelEl.classList.contains("hidden")) {
+          populateModalFromSelectedRule();
+        }
       }
 
       return;
@@ -375,6 +441,19 @@ const bindEvents = (): void => {
   rulesSearchEl.addEventListener("input", () => {
     rulesSearchQuery = rulesSearchEl.value.trim().toLowerCase();
     renderRules(_state);
+  });
+
+  rulesOpenModalEditorButtonEl.addEventListener("click", () => {
+    if (!_state.rules.length) {
+      setEditorSaveStatus("Create a rule before opening the modal editor.", "error");
+      return;
+    }
+
+    if (!selectedRuleId) {
+      selectedRuleId = _state.rules[0]?.id ?? null;
+    }
+
+    openRulesModalEditor();
   });
 
   rulesTypeFilterEl.addEventListener("change", () => {
@@ -703,6 +782,28 @@ const bindEvents = (): void => {
     void saveRules(nextRules);
     setEditorSaveStatus("Rule changes saved to local storage.", "ok");
   });
+
+  rulesEditorTabBasicEl.addEventListener("click", () => {
+    setRulesEditorModalTab("basic");
+  });
+
+  rulesEditorTabAdvancedEl.addEventListener("click", () => {
+    setRulesEditorModalTab("advanced");
+  });
+
+  rulesEditorModalCloseButtonEl.addEventListener("click", () => {
+    closeRulesModalEditor();
+  });
+
+  rulesModalCancelButtonEl.addEventListener("click", () => {
+    closeRulesModalEditor();
+  });
+
+  rulesModalSavePreviewButtonEl.addEventListener("click", () => {
+    setEditorSaveStatus("Modal preview save clicked. Use existing editor to persist changes.", "neutral");
+    closeRulesModalEditor();
+  });
+
 };
 
 // ---------------------------------------------------------------------------
@@ -739,6 +840,60 @@ const isRuleRowShape = (value: unknown): value is RuleRow => {
     typeof candidate.payload === "object" &&
     candidate.payload !== null
   );
+};
+
+const setRulesEditorModalTab = (tab: "basic" | "advanced"): void => {
+  const basicActive = tab === "basic";
+
+  rulesEditorTabBasicEl.classList.toggle("active", basicActive);
+  rulesEditorTabAdvancedEl.classList.toggle("active", !basicActive);
+
+  rulesEditorTabBasicEl.setAttribute("aria-selected", String(basicActive));
+  rulesEditorTabAdvancedEl.setAttribute("aria-selected", String(!basicActive));
+
+  rulesEditorPanelBasicEl.classList.toggle("hidden", !basicActive);
+  rulesEditorPanelAdvancedEl.classList.toggle("hidden", basicActive);
+};
+
+const populateModalFromSelectedRule = (): void => {
+  const rule = _state.rules.find((r) => r.id === selectedRuleId) ?? null;
+
+  if (!rule) {
+    rulesModalNameEl.value = "";
+    rulesModalTypeEl.value = "delay";
+    rulesModalPriorityEl.value = "100";
+    rulesModalEnabledEl.value = "false";
+    rulesModalUrlEl.value = "";
+    rulesModalPayloadEl.value = "{}";
+    rulesModalMethodEl.value = "";
+    rulesModalGroupEl.value = "";
+    rulesModalTagsEl.value = "";
+    rulesModalNotesEl.value = "";
+    return;
+  }
+
+  rulesModalNameEl.value = rule.name;
+  rulesModalTypeEl.value = rule.type;
+  rulesModalPriorityEl.value = String(rule.priority);
+  rulesModalEnabledEl.value = String(rule.enabled);
+  rulesModalUrlEl.value = rule.condition.urlContains ?? "";
+  rulesModalPayloadEl.value = JSON.stringify(rule.payload ?? {}, null, 2);
+  rulesModalMethodEl.value = rule.condition.method ?? "";
+  rulesModalGroupEl.value = rule.groupId ?? "";
+  rulesModalTagsEl.value = "";
+  rulesModalNotesEl.value = "";
+};
+
+const openRulesModalEditor = (): void => {
+  populateModalFromSelectedRule();
+  setRulesEditorModalTab("basic");
+  rulesOpenModalEditorButtonEl.setAttribute("aria-expanded", "true");
+  rulesEditorModalController.open();
+};
+
+const closeRulesModalEditor = (): void => {
+  rulesOpenModalEditorButtonEl.setAttribute("aria-expanded", "false");
+  rulesEditorModalController.close();
 };
 
 export const renderRuleChipsExport = renderRuleChips;

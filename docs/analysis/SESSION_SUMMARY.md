@@ -1,5 +1,9 @@
 # Session Summary: Frontend Strategy Complete ✅
 
+> Legacy snapshot: resumo historico de uma sessao anterior.
+> Nao usar como base de execucao atual.
+> Consultar `BACKLOG_CONSOLIDATED.md` e `docs/backlog/BACKLOG_CANONICAL.md` para estado vigente.
+
 **Date**: January 2025  
 **Duration**: Complete planning session  
 **Outcome**: Phase 3.5 architect/tech complete → Phase 3.6 (frontend) ready to launch  
@@ -12,6 +16,7 @@
 ### ✅ Phase 3.5: Architect/Tech Foundation (Completed)
 
 **Architect Tasks**:
+
 - ✅ OBS-005: Rule conflict detector (4 conflict kinds, 26 tests)
 - ✅ INFRA-001: GitHub Actions CI/CD (5 jobs)
 - ✅ INFRA-004: Dependabot security scanning (5 workspaces)
@@ -19,11 +24,13 @@
 - ✅ P4-001: Phase 4 proxy architecture (complete blueprint, 8-12 weeks)
 
 **Performance Foundations**:
+
 - ✅ TECH-001: RuleIndex engine (22 tests, O(1) build + O(k) eval + early-exit)
 - ✅ MOCK-001: Conditional mock evaluator (25 tests, 7 condition kinds, immutable state)
 - ✅ AI-001: Schema inference (30+ tests, format detection, multi-sample merge)
 
 **Infrastructure**:
+
 - ✅ Storage adapter interface (Chrome + Memory implementations)
 - ✅ All exports from rule-engine package
 
@@ -122,22 +129,23 @@
 
 ## 📈 Key Metrics
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| **Total Tests** | 469 | ✅ +126 from Phase 3.0 |
-| **Test Files** | 16 | ✅ All in rule-engine |
-| **Build Status** | Zero TypeScript errors | ✅ Clean |
-| **CI/CD Jobs** | 5 | ✅ All green |
-| **Frontend Tasks Documented** | 72 | ✅ Ready |
-| **Design System Tokens** | Complete | ✅ Ready |
-| **Architecture Decisions** | 6 ADRs | ✅ Documented |
-| **Timeline to Release** | 5–6 weeks | ✅ Realistic |
+| Metric                        | Value                  | Status                 |
+| ----------------------------- | ---------------------- | ---------------------- |
+| **Total Tests**               | 469                    | ✅ +126 from Phase 3.0 |
+| **Test Files**                | 16                     | ✅ All in rule-engine  |
+| **Build Status**              | Zero TypeScript errors | ✅ Clean               |
+| **CI/CD Jobs**                | 5                      | ✅ All green           |
+| **Frontend Tasks Documented** | 72                     | ✅ Ready               |
+| **Design System Tokens**      | Complete               | ✅ Ready               |
+| **Architecture Decisions**    | 6 ADRs                 | ✅ Documented          |
+| **Timeline to Release**       | 5–6 weeks              | ✅ Realistic           |
 
 ---
 
 ## 📁 Files Created This Session
 
 ### Frontend Documentation (6 files)
+
 - ✅ `FRONTEND_ARCHITECTURE.md` (300 lines)
 - ✅ `FRONTEND_QUICK_START.md` (400 lines)
 - ✅ `DESIGN_SYSTEM.md` (300 lines)
@@ -146,11 +154,13 @@
 - ✅ `FRONTEND_INTEGRATION_STRATEGY.md` (400 lines)
 
 ### Executive Documentation (3 files)
+
 - ✅ `IMPLEMENTATION_READY.md` (300 lines)
 - ✅ `PROJECT_STATUS.md` (400 lines)
 - ✅ `DOCUMENTATION_INDEX.md` (500 lines)
 
 ### Session Documentation (1 file)
+
 - ✅ `SESSION_SUMMARY.md` (this file)
 
 **Total**: ~4,800 lines of documentation created
@@ -160,38 +170,42 @@
 ## 🎯 What's Ready Now
 
 ### For Frontend Developers
+
 ✅ Step-by-step setup guide (30 minutes to first component)  
 ✅ 72 concrete tasks (6 phases, clear priorities)  
 ✅ Design system (colors, typography, spacing, animations)  
 ✅ Visual mockups (ASCII layouts of all 5 views)  
 ✅ Component templates  
-✅ Best practices guide  
+✅ Best practices guide
 
 **Result**: Can start building today. No waiting for backend.
 
 ### For Backend Developers
+
 ✅ Rule engine package (ready to import)  
 ✅ Storage adapter interface  
 ✅ Shared types  
 ✅ Integration strategy (props-based contracts)  
-✅ Phase 4 architecture (complete blueprint)  
+✅ Phase 4 architecture (complete blueprint)
 
 **Result**: Can implement features in parallel. Easy integration later.
 
 ### For Product / Design
+
 ✅ Visual mockups of all views  
 ✅ Complete design system  
 ✅ 72 tasks (all prioritized)  
 ✅ 5–6 week timeline (realistic)  
-✅ Success criteria (clear definitions)  
+✅ Success criteria (clear definitions)
 
 **Result**: Can validate requirements and approve design.
 
 ### For Infrastructure / DevOps
+
 ✅ CI/CD pipeline (5 jobs, all green)  
 ✅ Security scanning (Dependabot)  
 ✅ Architecture decisions documented (6 ADRs)  
-✅ Storage adapter abstraction (extensible)  
+✅ Storage adapter abstraction (extensible)
 
 **Result**: Infrastructure ready for Phase 4 proxy.
 
@@ -200,24 +214,28 @@
 ## 🚀 Immediate Next Steps
 
 ### For Frontend Team (Week 1)
+
 1. Read FRONTEND_QUICK_START.md (20 minutes)
 2. Follow setup steps (30 minutes)
 3. Build first component (Button + Storybook)
 4. Start implementing FE-1 tasks (components)
 
 ### For Backend Team (Week 1–2)
+
 1. Read ARCHITECTURE.md + ADR-004, ADR-006
 2. Import from rule-engine package
 3. Implement rule storage + persistence
 4. Implement network capture
 
 ### For Product (Week 1)
+
 1. Review UI_UX_PREVIEW.md (validate mockups)
 2. Review BACKLOG_FRONTEND.md (approve tasks)
 3. Validate DESIGN_SYSTEM.md (approve design)
 4. Assign frontend team to Phase 3.6
 
 ### For QA (Week 1+)
+
 1. Test components in Storybook (as they ship)
 2. Verify dark mode works
 3. Verify responsive design
@@ -228,15 +246,18 @@
 ## 📋 Reading Order (Recommended)
 
 ### If You Have 30 Minutes
+
 1. IMPLEMENTATION_READY.md (executive summary)
 2. PROJECT_STATUS.md (timeline + metrics)
 
 ### If You Have 1 Hour
+
 1. PROJECT_STATUS.md
 2. DOCUMENTATION_INDEX.md (find your role)
 3. Follow role-specific reading path
 
 ### If You Have 2 Hours (Comprehensive)
+
 1. IMPLEMENTATION_READY.md (10 min)
 2. DESIGN_SYSTEM.md (30 min)
 3. BACKLOG_FRONTEND.md (10 min)
@@ -249,13 +270,17 @@
 ## ✨ Key Innovations This Session
 
 ### 1. Agnóstic Frontend Pattern
+
 Components accept **props only**. They don't know where data comes from.
+
 - Develop with mock data (Storybook)
 - Integrate with real backend (same component code)
 - No blocking dependencies
 
 ### 2. Comprehensive Task Breakdown
+
 72 frontend tasks, each with:
+
 - Clear title
 - Priority (P0–P3)
 - Effort estimate (XS–XL)
@@ -264,14 +289,18 @@ Components accept **props only**. They don't know where data comes from.
 - Phase sequencing
 
 ### 3. Parallel Development Strategy
+
 Frontend and backend work **independently**:
+
 - Frontend: Builds components with mock data
 - Backend: Implements features
 - Integration: In week 4 (components + backend wire together)
 - No blocking, no waiting
 
 ### 4. Complete Design System
+
 Not just "use blue", but:
+
 - Semantic colors (primary, success, error, warning, info)
 - Typography system with scales
 - Spacing scale (2–64px)
@@ -281,7 +310,9 @@ Not just "use blue", but:
 - Component specifications (all 25 documented)
 
 ### 5. Visual Documentation
+
 ASCII mockups + descriptions for:
+
 - All 5 main views
 - Dark mode examples
 - Responsive breakpoints
@@ -294,6 +325,7 @@ Result: **Clear, shared vision** of what's being built.
 ## 🎓 Best Practices Documented
 
 ### Frontend Development
+
 - Component isolation (Storybook-first)
 - Props-based contracts
 - TypeScript strict mode
@@ -303,6 +335,7 @@ Result: **Clear, shared vision** of what's being built.
 - Dark mode support
 
 ### Backend Integration
+
 - Gradual feature wiring
 - Feature module pattern
 - Storage adapter abstraction
@@ -310,6 +343,7 @@ Result: **Clear, shared vision** of what's being built.
 - Type safety throughout
 
 ### Architecture
+
 - Feature-based modules
 - Pure function design
 - Bounded packages
@@ -317,6 +351,7 @@ Result: **Clear, shared vision** of what's being built.
 - Testability first
 
 ### Infrastructure
+
 - CI/CD automation (5 jobs)
 - Security scanning (Dependabot)
 - Architectural documentation (ADRs)
@@ -327,16 +362,19 @@ Result: **Clear, shared vision** of what's being built.
 ## 📊 Phase 3.5 Summary
 
 **Tasks Completed**: 10 (all scheduled)
+
 - Architect: 5 ✅
 - Performance: 3 ✅
 - Infrastructure: 2 ✅
 
 **Code Added**:
+
 - Lines of test: +469 tests
 - Lines of rule engine code: ~1200 lines
 - Lines of infrastructure: ~100 lines (storage adapter, exports)
 
 **Documentation Added**:
+
 - ~4,800 lines of frontend/planning docs
 - 6 Architectural Decision Records
 - Complete DESIGN_SYSTEM.md
@@ -348,6 +386,7 @@ Result: **Clear, shared vision** of what's being built.
 ## 🎉 Phase 3.6 Ready to Launch
 
 **Deliverables**:
+
 - ✅ Frontend strategy (complete)
 - ✅ Design system (complete)
 - ✅ 72 tasks documented (complete)
@@ -366,6 +405,7 @@ Result: **Clear, shared vision** of what's being built.
 ## 🏁 Success Metrics
 
 ### By End of Phase 3.6 (Week 6)
+
 - [ ] All 72 frontend tasks complete
 - [ ] 25+ components in Storybook
 - [ ] 5 feature layouts (Rules, Network, Mocks, History, Settings)
@@ -377,12 +417,14 @@ Result: **Clear, shared vision** of what's being built.
 - [ ] Professional, polished UI
 
 ### By End of Integration (Week 7)
+
 - [ ] Backend features wired to frontend
 - [ ] End-to-end tests passing
 - [ ] Full functionality working
 - [ ] Ready for release candidate
 
 ### By Release
+
 - [ ] Chrome Web Store submission
 - [ ] Firefox AMO submission
 - [ ] Safari App Store submission
@@ -423,23 +465,24 @@ A: Check the relevant document (DESIGN_SYSTEM.md, FRONTEND_QUICK_START.md, etc.)
 
 ---
 
-## 🚀 Let's Ship It!
+## 🚀 Let's Ship It
 
 All planning is complete.  
 All resources are documented.  
-All dependencies are ready.  
+All dependencies are ready.
 
 **The extension will be professional, polished, and fully functional in 5–6 weeks.**
 
-**Start with: [FRONTEND_QUICK_START.md](./FRONTEND_QUICK_START.md)**
+**Start with: [FRONTEND_QUICK_START.md](../architecture/FRONTEND_QUICK_START.md)**
 
 → **First step**: Clone repo + read FRONTEND_QUICK_START.md + build your first component.
 
-**Let's go! 🚀**
+Let's go.
 
 ---
 
 **Documentation Created This Session**:
+
 - ✅ FRONTEND_ARCHITECTURE.md
 - ✅ FRONTEND_QUICK_START.md
 - ✅ DESIGN_SYSTEM.md

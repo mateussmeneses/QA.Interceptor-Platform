@@ -35,6 +35,28 @@ let navButtons: HTMLButtonElement[] = [];
 let viewPanels: HTMLElement[] = [];
 let workspaceTitleEl: HTMLElement | null = null;
 let workspaceSubtitleEl: HTMLElement | null = null;
+let activeView: ViewId = "rules";
+const viewChangeListeners: Array<(view: ViewId) => void> = [];
+
+const getButtonView = (button: HTMLButtonElement): ViewId | null => {
+  const view = button.dataset.view;
+  return isViewId(view) ? view : null;
+};
+
+const focusNavButton = (index: number): void => {
+  const button = navButtons[index];
+
+  if (!button) {
+    return;
+  }
+
+  button.focus();
+
+  const view = getButtonView(button);
+  if (view) {
+    setActiveView(view);
+  }
+};
 
 export function initNavigation(): void {
   navButtons = Array.from(document.querySelectorAll<HTMLButtonElement>(".nav-item[data-view]"));
@@ -50,18 +72,91 @@ export function initNavigation(): void {
         setActiveView(view);
       }
     });
+
+    button.addEventListener("keydown", (event) => {
+      const currentIndex = navButtons.findIndex((candidate) => candidate === button);
+
+      if (currentIndex < 0) {
+        return;
+      }
+
+      if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+        event.preventDefault();
+        const nextIndex = (currentIndex + 1) % navButtons.length;
+        focusNavButton(nextIndex);
+        return;
+      }
+
+      if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+        event.preventDefault();
+        const prevIndex = (currentIndex - 1 + navButtons.length) % navButtons.length;
+        focusNavButton(prevIndex);
+        return;
+      }
+
+      if (event.key === "Home") {
+        event.preventDefault();
+        focusNavButton(0);
+        return;
+      }
+
+      if (event.key === "End") {
+        event.preventDefault();
+        focusNavButton(navButtons.length - 1);
+        return;
+      }
+
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        const view = getButtonView(button);
+
+        if (view) {
+          setActiveView(view);
+        }
+      }
+    });
   }
 
-  setActiveView("rules");
+  setActiveView(activeView);
+}
+
+export function getActiveView(): ViewId {
+  return activeView;
+}
+
+export function onActiveViewChange(listener: (view: ViewId) => void): () => void {
+  viewChangeListeners.push(listener);
+
+  return () => {
+    const index = viewChangeListeners.indexOf(listener);
+
+    if (index >= 0) {
+      viewChangeListeners.splice(index, 1);
+    }
+  };
 }
 
 export function setActiveView(view: ViewId): void {
+  const changed = activeView !== view;
+  activeView = view;
+
   for (const button of navButtons) {
-    button.classList.toggle("active", button.dataset.view === view);
+    const isActive = button.dataset.view === view;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+    button.setAttribute("tabindex", isActive ? "0" : "-1");
   }
 
   for (const panel of viewPanels) {
-    panel.classList.toggle("hidden", panel.dataset.panel !== view);
+    const isActive = panel.dataset.panel === view;
+    panel.classList.toggle("hidden", !isActive);
+    panel.setAttribute("aria-hidden", String(!isActive));
+
+    if (!isActive) {
+      panel.setAttribute("hidden", "true");
+    } else {
+      panel.removeAttribute("hidden");
+    }
   }
 
   if (workspaceTitleEl) {
@@ -70,5 +165,11 @@ export function setActiveView(view: ViewId): void {
 
   if (workspaceSubtitleEl) {
     workspaceSubtitleEl.textContent = VIEW_META[view].subtitle;
+  }
+
+  if (changed) {
+    for (const listener of viewChangeListeners) {
+      listener(view);
+    }
   }
 }

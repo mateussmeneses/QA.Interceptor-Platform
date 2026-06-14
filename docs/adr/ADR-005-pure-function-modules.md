@@ -1,4 +1,5 @@
 # ADR-005: Pure Function Modules for Testability
+<!-- markdownlint-disable MD040 -->
 
 **Status**: Accepted  
 **Date**: 2026-06-12  
@@ -41,6 +42,7 @@ Apply the **Functional Core, Imperative Shell** pattern throughout the codebase:
 4. **Naming convention**: pure modules in `shared/utils.ts` carry no `Async` suffix and do not return Promises unless the async operation is itself pure (e.g., JSON parsing a string).
 
 **Concrete examples**:
+
 - `buildEvidenceJson(session, assertions)` → pure (no chrome API, no DOM)
 - `diffText(left, right)` → pure (LCS algorithm, deterministic)
 - `detectConflicts(rules)` → pure (rule analysis, no state mutation)
@@ -52,15 +54,18 @@ Apply the **Functional Core, Imperative Shell** pattern throughout the codebase:
 ## Consequences
 
 **Positive**:
+
 - Unit tests run in < 400ms with Vitest, no browser needed.
 - Pure functions are composable — build more complex logic from simpler parts.
 - Side effects are centralized (storage layer, message handlers) — easy to audit.
 - New contributors can test their logic locally without setting up a browser extension environment.
 
 **Negative / Trade-offs**:
+
 - Passing dependencies as arguments can make function signatures verbose for deeply nested logic.
 - Requires discipline to resist "just calling chrome.storage here" when it would be faster.
 
 **Enforcement**:
+
 - `packages/rule-engine` TypeScript config excludes browser lib types — any chrome/DOM call is a compile error.
 - Code review checklist: does this new logic depend on I/O? If no, it belongs in a pure module.

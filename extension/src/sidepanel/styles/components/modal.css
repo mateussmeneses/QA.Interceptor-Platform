@@ -108,6 +108,92 @@
   color: var(--text-primary);
 }
 
+.history-export-dialog {
+  width: min(920px, 100%);
+  max-height: calc(100vh - 2 * var(--spacing-l));
+  overflow: auto;
+  padding: var(--spacing-l);
+}
+
+.history-export-panel-body {
+  display: grid;
+  gap: var(--spacing-m);
+}
+
+.history-export-header {
+  display: grid;
+  gap: var(--spacing-2xs);
+}
+
+.history-export-title {
+  margin: 0;
+  font-size: var(--font-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+
+.history-export-preview {
+  width: 100%;
+  min-height: 260px;
+  resize: vertical;
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+}
+
+.rules-editor-dialog {
+  width: min(900px, 100%);
+  max-height: calc(100vh - 2 * var(--spacing-l));
+  overflow: auto;
+  padding: var(--spacing-l);
+}
+
+.rules-editor-modal-shell {
+  display: grid;
+  gap: var(--spacing-m);
+}
+
+.rules-editor-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-m);
+}
+
+.rules-editor-modal-title {
+  margin: 0;
+  font-size: var(--font-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+
+.rules-editor-modal-tabs {
+  display: inline-flex;
+  gap: var(--spacing-xs);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--spacing-xs);
+}
+
+.rules-editor-tab {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  color: var(--text-secondary);
+  padding: var(--spacing-xs) var(--spacing-m-sm);
+  font-size: var(--font-sm);
+  font-weight: var(--fw-medium);
+}
+
+.rules-editor-tab.active {
+  background: var(--surface-bg);
+  color: var(--text-primary);
+  border-color: var(--primary);
+}
+
+.rules-editor-tab-panel {
+  display: grid;
+  gap: var(--spacing-m-sm);
+}
+
 @keyframes modalEnter {
   from {
     opacity: 0;

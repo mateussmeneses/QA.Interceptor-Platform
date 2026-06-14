@@ -1,12 +1,56 @@
 # QA.Interceptor — Project Status (January 2025)
+<!-- markdownlint-disable MD060 -->
+
+> Legacy snapshot: este documento foi congelado para referencia historica.
+> Nao utilizar para planejamento de sprint nem status oficial.
+> Fontes oficiais atuais: `BACKLOG_CONSOLIDATED.md` (execucao) e `docs/backlog/BACKLOG_CANONICAL.md` (status canonico).
 
 **Current Phase**: 3.5 Complete → 3.6 Launching (Frontend)
 
 ---
 
+## Session Handoff Protocol (Nao Perder Progresso)
+
+Quando quiser trocar de sessao de chat, siga exatamente este checklist:
+
+1. Confirmar fonte oficial do trabalho atual:
+  - Execucao: `BACKLOG_CONSOLIDATED.md`
+  - Status canonico: `docs/backlog/BACKLOG_CANONICAL.md`
+2. Registrar o ultimo item em andamento com:
+  - ID da tarefa (ex.: `QP-008`)
+  - Arquivos alterados
+  - Validacao executada (`npm run build`, typecheck, etc.)
+3. Abrir a nova sessao e colar um resumo com:
+  - Objetivo atual
+  - O que ja foi concluido
+  - Proximo passo imediato
+  - Risco conhecido (se houver)
+
+Template recomendado para abrir nova sessao:
+
+```text
+Continuar do ponto anterior.
+
+Fonte oficial:
+- BACKLOG_CONSOLIDATED.md (execucao)
+- docs/backlog/BACKLOG_CANONICAL.md (status)
+
+Estado atual:
+- Tarefa em andamento: <ID>
+- Ultimas alteracoes: <arquivos>
+- Validacoes: <comandos + resultado>
+
+Agora execute:
+- <proximo passo objetivo e testavel>
+```
+
+Regra pratica: sempre terminar uma sessao com 1 tarefa claramente "In Progress" e 1 proximo passo de no maximo 1 hora.
+
+---
+
 ## 📊 Project Completion Status
 
-```
+```text
 ┌────────────────────────────────────────────────────────────────┐
 │                    PROJECT ROADMAP STATUS                      │
 ├────────────────────────────────────────────────────────────────┤
@@ -29,6 +73,7 @@
 ## 🎯 Phase 3.5 Complete: What Was Delivered
 
 ### ✅ Architect Tasks (5 completed)
+
 - **OBS-005**: Rule conflict detector (4 conflict kinds, 26 tests)
 - **INFRA-001**: GitHub Actions CI/CD (5 jobs)
 - **INFRA-004**: Dependabot security scanning
@@ -36,15 +81,18 @@
 - **P4-001**: Phase 4 proxy architecture (complete blueprint)
 
 ### ✅ Performance Foundations (3 completed)
+
 - **TECH-001**: RuleIndex engine (O(1) setup, O(k) eval, early-exit, 22 tests)
 - **MOCK-001**: Conditional mock evaluator (7 condition kinds, 25 tests)
 - **AI-001**: Schema inference (30+ tests, format detection, multi-sample merge)
 
 ### ✅ Infrastructure (2 completed)
+
 - **Storage Adapter**: Chrome + Memory implementations
 - **Exports**: All new modules exported from rule-engine
 
 ### ✅ Frontend Planning (6 documents created)
+
 - **DESIGN_SYSTEM.md**: Colors, typography, components, dark mode, accessibility
 - **BACKLOG_FRONTEND.md**: 72 tasks in 6 phases
 - **UI_UX_PREVIEW.md**: Full mockups (Rules, Network, Mocks, History, Settings)
@@ -56,15 +104,15 @@
 
 ## 📈 Metrics
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| **Test Suite** | 469 tests | ✅ +126 from Phase 3.0 |
-| **Build** | Zero TypeScript errors | ✅ Clean |
-| **CI/CD** | 5 automated jobs | ✅ All green |
-| **Security** | Dependabot scanning 5 workspaces | ✅ Enabled |
-| **Frontend Tasks** | 72 items planned | ✅ Ready |
-| **Design System** | Complete tokens + components | ✅ Ready |
-| **Integration Strategy** | Documented | ✅ Ready |
+| Metric                   | Value                            | Status                 |
+| ------------------------ | -------------------------------- | ---------------------- |
+| **Test Suite**           | 469 tests                        | ✅ +126 from Phase 3.0 |
+| **Build**                | Zero TypeScript errors           | ✅ Clean               |
+| **CI/CD**                | 5 automated jobs                 | ✅ All green           |
+| **Security**             | Dependabot scanning 5 workspaces | ✅ Enabled             |
+| **Frontend Tasks**       | 72 items planned                 | ✅ Ready               |
+| **Design System**        | Complete tokens + components     | ✅ Ready               |
+| **Integration Strategy** | Documented                       | ✅ Ready               |
 
 ---
 
@@ -77,7 +125,7 @@
 
 ### Deliverables (72 Tasks)
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │ FE-0: Design System & Foundation     (6 tasks)         │
 │ └─ CSS tokens, typography, spacing, animations         │
@@ -106,14 +154,14 @@
 
 ### Timeline
 
-| Week | Phase | Focus | Status |
-|------|-------|-------|--------|
-| **1** | FE-0 + FE-1 (start) | Design tokens + 10 components | 🟢 Ready |
+| Week  | Phase               | Focus                           | Status   |
+| ----- | ------------------- | ------------------------------- | -------- |
+| **1** | FE-0 + FE-1 (start) | Design tokens + 10 components   | 🟢 Ready |
 | **2** | FE-1 + FE-2 (start) | 25 components + feature layouts | 🟢 Ready |
-| **3** | FE-2 + FE-3 | Feature layouts + dark mode | 🟢 Ready |
-| **4** | FE-3 + FE-4 | Polish + desktop/responsive | 🟢 Ready |
-| **5** | FE-5 + FE-6 | Accessibility + docs | 🟢 Ready |
-| **6** | Integration | Wire to backend (when ready) | ⏳ Later |
+| **3** | FE-2 + FE-3         | Feature layouts + dark mode     | 🟢 Ready |
+| **4** | FE-3 + FE-4         | Polish + desktop/responsive     | 🟢 Ready |
+| **5** | FE-5 + FE-6         | Accessibility + docs            | 🟢 Ready |
+| **6** | Integration         | Wire to backend (when ready)    | ⏳ Later |
 
 ---
 
@@ -121,13 +169,13 @@
 
 While frontend builds components, backend team:
 
-| Feature | Status | Dependency |
-|---------|--------|-----------|
-| Rule evaluation + persistence | Ready | rule-engine, storage adapter |
-| Network request capture | Ready | InterceptedRequest type |
-| Conditional mock evaluation | Ready | conditional-mock-evaluator |
-| Schema inference + assertions | Ready | schema-inference |
-| Conflict detection | Ready | detectConflicts |
+| Feature                       | Status | Dependency                   |
+| ----------------------------- | ------ | ---------------------------- |
+| Rule evaluation + persistence | Ready  | rule-engine, storage adapter |
+| Network request capture       | Ready  | InterceptedRequest type      |
+| Conditional mock evaluation   | Ready  | conditional-mock-evaluator   |
+| Schema inference + assertions | Ready  | schema-inference             |
+| Conflict detection            | Ready  | detectConflicts              |
 
 **All backend code is ready to import and use. No blocking.**
 
@@ -174,37 +222,38 @@ import {
 
 ### Frontend Planning Documents (Read These First)
 
-| File | Purpose | Time |
-|------|---------|------|
-| [IMPLEMENTATION_READY.md](./IMPLEMENTATION_READY.md) | Executive summary + next steps | 10 min |
-| [FRONTEND_QUICK_START.md](./FRONTEND_QUICK_START.md) | Step-by-step setup guide | 20 min |
-| [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) | Design tokens + components | 30 min |
-| [BACKLOG_FRONTEND.md](./BACKLOG_FRONTEND.md) | 72 tasks (FE-0 through FE-6) | 15 min |
-| [UI_UX_PREVIEW.md](./UI_UX_PREVIEW.md) | Visual mockups of all views | 20 min |
-| [FRONTEND_INTEGRATION_STRATEGY.md](./FRONTEND_INTEGRATION_STRATEGY.md) | How to wire to backend | 15 min |
+| File                                                                   | Purpose                        | Time   |
+| ---------------------------------------------------------------------- | ------------------------------ | ------ |
+| [IMPLEMENTATION_READY.md](../planning/IMPLEMENTATION_READY.md)                   | Executive summary + next steps | 10 min |
+| [FRONTEND_QUICK_START.md](../architecture/FRONTEND_QUICK_START.md)                   | Step-by-step setup guide       | 20 min |
+| [DESIGN_SYSTEM.md](../architecture/DESIGN_SYSTEM.md)                                 | Design tokens + components     | 30 min |
+| [BACKLOG_FRONTEND.md](../backlog/BACKLOG_FRONTEND.md)                           | 72 tasks (FE-0 through FE-6)   | 15 min |
+| [UI_UX_PREVIEW.md](../architecture/UI_UX_PREVIEW.md)                                 | Visual mockups of all views    | 20 min |
+| [FRONTEND_INTEGRATION_STRATEGY.md](../architecture/FRONTEND_INTEGRATION_STRATEGY.md) | How to wire to backend         | 15 min |
 
 ### Architecture & Infrastructure
 
-| File | Purpose |
-|------|---------|
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | Full project architecture |
-| [docs/adr/](./docs/adr/) | Architectural decision records (6 ADRs) |
-| [ADR-001](./docs/adr/ADR-001.md) | Feature-based module architecture |
-| [ADR-006](./docs/adr/ADR-006.md) | Phase 4 proxy architecture (complete) |
+| File                                 | Purpose                                 |
+| ------------------------------------ | --------------------------------------- |
+| [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) | Full project architecture               |
+| [docs/adr/](../adr/)             | Architectural decision records (6 ADRs) |
+| [ADR-001](../adr/ADR-001-feature-based-module-architecture.md)     | Feature-based module architecture       |
+| [ADR-006](../adr/ADR-006-phase4-proxy-architecture.md)     | Phase 4 proxy architecture (complete)   |
 
 ### Backend Code (Ready to Use)
 
-| Package | Purpose | Tests |
-|---------|---------|-------|
-| `packages/rule-engine` | Rule evaluation + conflict detection | 469 tests |
-| `packages/shared-types` | TypeScript types (Rule, Request, etc.) | N/A |
-| `extension/src/storage/adapter.ts` | Storage abstraction (Chrome + Memory) | ✓ Tested |
+| Package                            | Purpose                                | Tests     |
+| ---------------------------------- | -------------------------------------- | --------- |
+| `packages/rule-engine`             | Rule evaluation + conflict detection   | 469 tests |
+| `packages/shared-types`            | TypeScript types (Rule, Request, etc.) | N/A       |
+| `extension/src/storage/adapter.ts` | Storage abstraction (Chrome + Memory)  | ✓ Tested  |
 
 ---
 
 ## ✨ Key Features of This Plan
 
 ### ✅ Frontend Agnóstic (No Blocking)
+
 - Components built with **mock data** (Storybook)
 - No chrome extension needed
 - No backend dependencies
@@ -212,6 +261,7 @@ import {
 - Backend integrates later (component code unchanged)
 
 ### ✅ Comprehensive Planning
+
 - 72 concrete tasks (not vague)
 - Clear priorities (P0–P3)
 - Realistic effort estimates (XS–XL)
@@ -219,6 +269,7 @@ import {
 - Phase sequencing (FE-0 → FE-1 → FE-2, etc.)
 
 ### ✅ Design Quality
+
 - Semantic color palette (light + dark)
 - Complete typography system
 - Spacing scale (2–64px)
@@ -227,6 +278,7 @@ import {
 - Accessibility (WCAG 2.1 AA)
 
 ### ✅ Developer-Friendly
+
 - Step-by-step quick start (30 minutes)
 - Component templates
 - Best practices documented
@@ -234,6 +286,7 @@ import {
 - Test examples included
 
 ### ✅ Integration-Ready
+
 - Props-based contracts (component-backend interface)
 - Feature module pattern (orchestration layer)
 - Gradual integration (feature by feature)
@@ -258,30 +311,35 @@ import {
 ## 🚀 What's Next?
 
 ### This Week
+
 1. Frontend team reads FRONTEND_QUICK_START.md
 2. Setup component library package
 3. Build first component (Button) + Storybook
 4. Begin FE-1 tasks (components)
 
 ### Next Week
+
 1. 10+ components completed
 2. Feature layouts drafted
 3. CSS design tokens in place
 4. Storybook up and running
 
 ### Week 3
+
 1. All 25 components complete
 2. Feature layouts complete
 3. Dark mode implementation
 4. Animations + hover states
 
 ### Week 4
+
 1. Integration planning
 2. Backend features ready
 3. Start wiring components to backend
 4. End-to-end testing
 
 ### Week 5+
+
 1. Final polish
 2. Accessibility audit
 3. Responsive testing
@@ -308,12 +366,12 @@ A: Use BACKLOG_FRONTEND.md. Each task is concrete + time-boxed.
 
 ---
 
-## 🎉 Let's Ship It!
+## 🎉 Let's Ship It
 
 All planning is complete. All resources are documented. All dependencies are ready.
 
 **Start building today. Professional QA tool in 5–6 weeks.**
 
-→ **First step**: Read [FRONTEND_QUICK_START.md](./FRONTEND_QUICK_START.md)
+→ **First step**: Read [FRONTEND_QUICK_START.md](../architecture/FRONTEND_QUICK_START.md)
 
 🚀 Let's go!

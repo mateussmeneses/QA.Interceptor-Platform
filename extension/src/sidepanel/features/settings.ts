@@ -146,6 +146,10 @@ const renderResponseAssertions = (assertions: ResponseAssertionRow[]): void => {
       const actualText =
         assertion.actual !== undefined ? `Actual: ${String(assertion.actual)}` : "Not validated yet";
       const errorText = assertion.error ? `Error: ${assertion.error}` : "";
+      const toggleLabel = assertion.enabled
+        ? `Disable assertion ${typeLabel}`
+        : `Enable assertion ${typeLabel}`;
+      const deleteLabel = `Delete assertion ${typeLabel}`;
 
       return `<li class="response-assertion-item ${statusClass}">
         <div class="assertion-header">
@@ -158,10 +162,10 @@ const renderResponseAssertions = (assertions: ResponseAssertionRow[]): void => {
           ${errorText ? `<small class="error-text">${escapeHtml(errorText)}</small>` : ""}
         </div>
         <div class="assertion-actions">
-          <button type="button" class="icon-btn" data-assertion-toggle="${escapeHtml(assertion.id)}" title="Toggle assertion">
+          <button type="button" class="icon-btn" data-assertion-toggle="${escapeHtml(assertion.id)}" title="Toggle assertion" aria-label="${escapeHtml(toggleLabel)}" aria-pressed="${String(assertion.enabled)}">
             ${assertion.enabled ? "✓" : "○"}
           </button>
-          <button type="button" class="icon-btn danger" data-assertion-delete="${escapeHtml(assertion.id)}" title="Delete assertion">
+          <button type="button" class="icon-btn danger" data-assertion-delete="${escapeHtml(assertion.id)}" title="Delete assertion" aria-label="${escapeHtml(deleteLabel)}">
             ✕
           </button>
         </div>

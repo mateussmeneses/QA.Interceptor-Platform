@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/background/**/*.ts",
+    "src/content/**/*.ts",
+    "src/sidepanel/features/**/*.ts",
+    "src/sidepanel/shared/**/*.ts",
+    "src/sidepanel/main.ts",
+    "src/storage/**/*.ts"
+  ]
+}

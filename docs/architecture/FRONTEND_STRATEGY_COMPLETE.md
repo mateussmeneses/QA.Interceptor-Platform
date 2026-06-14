@@ -1,4 +1,5 @@
 # Frontend Strategy Complete! 🎉
+<!-- markdownlint-disable MD009 MD022 MD026 MD031 MD032 MD036 MD040 MD060 -->
 
 **Status**: Phase 3.5 ✅ Complete | Phase 3.6 🚀 Ready to Launch  
 **This Session**: Comprehensive frontend planning + strategy documentation
@@ -108,7 +109,7 @@ Backend (✅ Done)                Frontend (🚀 Ready to Build)
 ### For Frontend Developers (Start Now!)
 1. **Read** → [FRONTEND_QUICK_START.md](./FRONTEND_QUICK_START.md)
 2. **Setup** → Follow 5 steps (30 minutes)
-3. **Build** → Pick a component from [BACKLOG_FRONTEND.md](./BACKLOG_FRONTEND.md)
+3. **Build** → Pick a component from [BACKLOG_FRONTEND.md](../backlog/BACKLOG_FRONTEND.md)
 4. **Reference** → Use [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) while coding
 5. **Test** → Components run in Storybook (no chrome needed)
 
@@ -120,12 +121,12 @@ Backend (✅ Done)                Frontend (🚀 Ready to Build)
 
 ### For Product Managers
 1. **Review** → [UI_UX_PREVIEW.md](./UI_UX_PREVIEW.md) (visual mockups)
-2. **Validate** → [BACKLOG_FRONTEND.md](./BACKLOG_FRONTEND.md) (all tasks)
+2. **Validate** → [BACKLOG_FRONTEND.md](../backlog/BACKLOG_FRONTEND.md) (all tasks)
 3. **Approve** → [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) (design decisions)
-4. **Track** → [PROJECT_STATUS.md](./PROJECT_STATUS.md) (timeline + metrics)
+4. **Track** → [PROJECT_STATUS.md](../analysis/PROJECT_STATUS.md) (timeline + metrics)
 
 ### For Navigation
-→ **[DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md)** (find anything)
+→ **[DOCUMENTATION_INDEX.md](../reference/DOCUMENTATION_INDEX.md)** (find anything)
 
 ---
 
@@ -219,7 +220,7 @@ Backend (✅ Done)                Frontend (🚀 Ready to Build)
 → [FRONTEND_QUICK_START.md](./FRONTEND_QUICK_START.md) (30 min setup)
 
 **"What do I build?"**
-→ [BACKLOG_FRONTEND.md](./BACKLOG_FRONTEND.md) (pick a task)
+→ [BACKLOG_FRONTEND.md](../backlog/BACKLOG_FRONTEND.md) (pick a task)
 
 **"How does it look?"**
 → [UI_UX_PREVIEW.md](./UI_UX_PREVIEW.md) (visual mockups)
@@ -231,7 +232,7 @@ Backend (✅ Done)                Frontend (🚀 Ready to Build)
 → [FRONTEND_INTEGRATION_STRATEGY.md](./FRONTEND_INTEGRATION_STRATEGY.md) (week 4)
 
 **"Where's everything?"**
-→ [DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md) (full navigation)
+→ [DOCUMENTATION_INDEX.md](../reference/DOCUMENTATION_INDEX.md) (full navigation)
 
 ---
 

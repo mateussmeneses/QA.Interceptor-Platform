@@ -1,4 +1,5 @@
 # ADR-006: Phase 4 Proxy Engine Architecture
+<!-- markdownlint-disable MD040 -->
 
 **Status**: Proposed  
 **Date**: 2026-06-12  
@@ -40,6 +41,7 @@ packages/proxy/
 ```
 
 **Invariants for this package**:
+
 - `rule-bridge.ts` is the only file that imports from `@qa-interceptor/rule-engine`.
 - `traffic-capture.ts` emits events using Node.js `EventEmitter` — consumers decide where to store them.
 - No UI code. No browser extension APIs.
@@ -101,6 +103,7 @@ Client
 ```
 
 **Certificate Authority design** (in `tls-ca.ts`):
+
 - Generate root CA on first proxy start, persist to `~/.qa-interceptor/ca/`.
 - Issue per-domain leaf certificates signed by root CA.
 - Cache issued certs in memory (Map<string, tls.SecureContext>) — no disk write per request.
@@ -132,11 +135,11 @@ This ensures **the same rule evaluation semantics** in the browser extension, de
 
 ### 5. System Proxy Registration (`system-proxy.ts`)
 
-| OS | Mechanism |
-|----|-----------|
+| OS          | Mechanism                                                                 |
+| ----------- | ------------------------------------------------------------------------- |
 | **Windows** | `netsh winhttp set proxy 127.0.0.1:8080` + Internet Options registry keys |
-| **macOS** | `networksetup -setwebproxy Wi-Fi 127.0.0.1 8080` |
-| **Linux** | Set `http_proxy` / `https_proxy` env vars + `gsettings` for GNOME |
+| **macOS**   | `networksetup -setwebproxy Wi-Fi 127.0.0.1 8080`                          |
+| **Linux**   | Set `http_proxy` / `https_proxy` env vars + `gsettings` for GNOME         |
 
 - Registration is **opt-in** — the proxy starts without modifying OS settings unless the user clicks "Activate system proxy".
 - Registration is **reversible** — cleanup on process exit / user toggle.
@@ -158,6 +161,7 @@ packages/desktop/
 ```
 
 **IPC channel contract** (discriminated union, same pattern as ADR-003):
+
 - `proxy:start { port: number }` → `{ ok: true }` | `{ ok: false; error: string }`
 - `proxy:stop` → `{ ok: true }`
 - `proxy:get-traffic` → `StoredCapturedRequest[]`
@@ -188,14 +192,14 @@ export interface StorageAdapter {
 
 ## Phased Delivery Plan
 
-| Phase | Deliverable | Weeks |
-|-------|------------|-------|
-| **4.0** | HTTP proxy skeleton, rule-bridge, traffic capture | 1-2 |
-| **4.1** | HTTPS interception (CONNECT + CA) | 2-3 |
-| **4.2** | System proxy registration (OS auto-config) | 1 |
-| **4.3** | Device pairing UI (Android/iOS Wi-Fi routing) | 1 |
-| **4.4** | Electron desktop shell + IPC | 2-3 |
-| **4.5** | Storage adapter + UI reuse in desktop | 1-2 |
+| Phase   | Deliverable                                       | Weeks |
+| ------- | ------------------------------------------------- | ----- |
+| **4.0** | HTTP proxy skeleton, rule-bridge, traffic capture | 1-2   |
+| **4.1** | HTTPS interception (CONNECT + CA)                 | 2-3   |
+| **4.2** | System proxy registration (OS auto-config)        | 1     |
+| **4.3** | Device pairing UI (Android/iOS Wi-Fi routing)     | 1     |
+| **4.4** | Electron desktop shell + IPC                      | 2-3   |
+| **4.5** | Storage adapter + UI reuse in desktop             | 1-2   |
 
 **Total estimated effort**: 8-12 weeks (1 Architect + 1 Developer)
 
@@ -203,37 +207,39 @@ export interface StorageAdapter {
 
 ## Technology Choices
 
-| Need | Choice | Rationale |
-|------|--------|-----------|
-| HTTP server | `node:http` (built-in) | Zero deps, full control |
-| TLS/certs | `node:tls` + `node:crypto` | Built-in, sufficient for CA |
-| CONNECT tunneling | `net.Socket.pipe()` | Standard tunnel approach |
-| Electron | Latest stable | Established, React-compatible |
-| IPC | `ipcMain/ipcRenderer` with contextBridge | Secure by default |
+| Need              | Choice                                   | Rationale                     |
+| ----------------- | ---------------------------------------- | ----------------------------- |
+| HTTP server       | `node:http` (built-in)                   | Zero deps, full control       |
+| TLS/certs         | `node:tls` + `node:crypto`               | Built-in, sufficient for CA   |
+| CONNECT tunneling | `net.Socket.pipe()`                      | Standard tunnel approach      |
+| Electron          | Latest stable                            | Established, React-compatible |
+| IPC               | `ipcMain/ipcRenderer` with contextBridge | Secure by default             |
 
 ---
 
 ## Risks
 
-| Risk | Mitigation |
-|------|-----------|
-| HTTPS cert import UX friction | Provide one-click install script per OS; show QR code for mobile |
-| Certificate pinning breaks mobile apps | Document limitation; advise disabling for test builds |
-| OS proxy registration requires admin | Prompt for elevation; provide manual instructions as fallback |
-| Electron bundle size (~100MB) | Use `electron-builder` with asar compression; exclude dev deps |
-| Rule engine perf at high throughput | Benchmark `evaluateRules` at 1,000 req/s; optimize condition matching if needed |
+| Risk                                   | Mitigation                                                                      |
+| -------------------------------------- | ------------------------------------------------------------------------------- |
+| HTTPS cert import UX friction          | Provide one-click install script per OS; show QR code for mobile                |
+| Certificate pinning breaks mobile apps | Document limitation; advise disabling for test builds                           |
+| OS proxy registration requires admin   | Prompt for elevation; provide manual instructions as fallback                   |
+| Electron bundle size (~100MB)          | Use `electron-builder` with asar compression; exclude dev deps                  |
+| Rule engine perf at high throughput    | Benchmark `evaluateRules` at 1,000 req/s; optimize condition matching if needed |
 
 ---
 
 ## Consequences
 
 **Positive**:
+
 - Full interception for any HTTP/HTTPS client — mobile, desktop, CLI, browsers.
 - Zero rule logic duplication — proxy reuses `@qa-interceptor/rule-engine` exactly.
 - UI reuse — 80%+ of sidepanel feature modules work in desktop without changes.
 - Clear extension points — storage adapter and IPC channels are designed for future cloud sync (Phase 5).
 
 **Negative / Trade-offs**:
+
 - Introduces Node.js runtime dependency (Electron bundles it).
 - OS-level proxy registration is platform-specific and requires privilege escalation.
 - HTTPS interception requires user trust store installation — adds UX friction for first-time setup.

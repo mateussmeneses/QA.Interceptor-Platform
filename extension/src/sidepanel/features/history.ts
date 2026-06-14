@@ -12,6 +12,12 @@ import type {
 } from "../shared/types";
 import { isHistoryOutcomeFilter } from "../shared/types";
 import {
+  loadReplayArtifacts,
+  saveReplayArtifacts,
+  type StoredReplayArtifact,
+  type StoredReplayArtifactRequest,
+} from "../../storage/index";
+import {
   escapeHtml,
   formatTimestamp,
   formatDuration,
@@ -24,6 +30,7 @@ import {
   buildEvidenceJson,
   buildEvidenceMarkdown,
 } from "../shared/utils";
+import { createModalController, type ModalController } from "../shared/modal-controller";
 
 // ---------------------------------------------------------------------------
 // DOM references
@@ -45,6 +52,12 @@ let historyKpiRulesEl: HTMLElement;
 let historyTimelineListEl: HTMLElement;
 let historyExportJsonButtonEl: HTMLButtonElement;
 let historyExportMdButtonEl: HTMLButtonElement;
+let historyExportPanelEl: HTMLElement;
+let historyExportDialogEl: HTMLElement;
+let historyExportFormatEl: HTMLSelectElement;
+let historyExportPreviewEl: HTMLTextAreaElement;
+let historyExportDownloadButtonEl: HTMLButtonElement;
+let historyExportCloseButtonEl: HTMLButtonElement;
 // QP-007: Replay elements
 let historyReplayButtonEl: HTMLButtonElement;
 let historyReplayPanelEl: HTMLElement;
@@ -52,9 +65,15 @@ let historyReplayDialogEl: HTMLElement;
 let historyReplayStatusEl: HTMLElement;
 let historyReplayCounterEl: HTMLElement;
 let historyReplayListEl: HTMLElement;
+let historyReplaySaveArtifactButtonEl: HTMLButtonElement;
+let historyReplayDeleteArtifactButtonEl: HTMLButtonElement;
 let historyReplayStartButtonEl: HTMLButtonElement;
 let historyReplayCancelButtonEl: HTMLButtonElement;
 let historyReplayCloseButtonEl: HTMLButtonElement;
+let historyReplayArtifactStatusEl: HTMLElement;
+let historyExportModalController: ModalController;
+let historyReplayModalController: ModalController;
+let activeHistoryExportTriggerEl: HTMLElement | null = null;
 
 // ---------------------------------------------------------------------------
 // Local state
@@ -65,8 +84,14 @@ let selectedHistorySessionId: string | null = null;
 let historySearchQuery = "";
 let historyOutcomeFilter: HistoryOutcomeFilter = "all";
 let historySortOrder: HistorySortOrder = "recent";
+let historyExportFormat: EvidenceExportFormat = "json";
 // QP-007: Replay state
 let replayAbortController: AbortController | null = null;
+let currentReplayRows: StoredReplayArtifactRequest[] = [];
+let currentReplaySessionId: string | null = null;
+let currentReplayArtifactId: string | null = null;
+
+type EvidenceExportFormat = "json" | "markdown" | "html";
 
 // ---------------------------------------------------------------------------
 // Init
@@ -99,6 +124,12 @@ export function initHistory(): void {
   historyTimelineListEl = getEl("history-timeline-list");
   historyExportJsonButtonEl = getEl("history-export-json-button") as HTMLButtonElement;
   historyExportMdButtonEl = getEl("history-export-md-button") as HTMLButtonElement;
+  historyExportPanelEl = getEl("history-export-panel");
+  historyExportDialogEl = getEl("history-export-dialog");
+  historyExportFormatEl = getEl("history-export-format") as HTMLSelectElement;
+  historyExportPreviewEl = getEl("history-export-preview") as HTMLTextAreaElement;
+  historyExportDownloadButtonEl = getEl("history-export-download-button") as HTMLButtonElement;
+  historyExportCloseButtonEl = getEl("history-export-close-button") as HTMLButtonElement;
   // QP-007: Replay elements
   historyReplayButtonEl = getEl("history-replay-button") as HTMLButtonElement;
   historyReplayPanelEl = getEl("history-replay-panel");
@@ -106,9 +137,32 @@ export function initHistory(): void {
   historyReplayStatusEl = getEl("history-replay-status");
   historyReplayCounterEl = getEl("history-replay-counter");
   historyReplayListEl = getEl("history-replay-list");
+  historyReplaySaveArtifactButtonEl = getEl("history-replay-save-artifact-button") as HTMLButtonElement;
+  historyReplayDeleteArtifactButtonEl = getEl("history-replay-delete-artifact-button") as HTMLButtonElement;
   historyReplayStartButtonEl = getEl("history-replay-start-button") as HTMLButtonElement;
   historyReplayCancelButtonEl = getEl("history-replay-cancel-button") as HTMLButtonElement;
   historyReplayCloseButtonEl = getEl("history-replay-close-button") as HTMLButtonElement;
+  historyReplayArtifactStatusEl = getEl("history-replay-artifact-status");
+
+  historyExportModalController = createModalController({
+    panelEl: historyExportPanelEl,
+    dialogEl: historyExportDialogEl,
+    onRequestClose: () => {
+      closeExportDialog();
+    },
+    initialFocusEl: () => historyExportFormatEl,
+    defaultRestoreFocusEl: () => historyExportJsonButtonEl,
+  });
+
+  historyReplayModalController = createModalController({
+    panelEl: historyReplayPanelEl,
+    dialogEl: historyReplayDialogEl,
+    onRequestClose: () => {
+      closeReplayPanel();
+    },
+    initialFocusEl: () => historyReplayStartButtonEl,
+    defaultRestoreFocusEl: () => historyReplayButtonEl,
+  });
 
   bindEvents();
 }
@@ -285,35 +339,47 @@ const bindEvents = (): void => {
   });
 
   historyExportJsonButtonEl.addEventListener("click", () => {
-    const sessions = buildHistorySessions(_state.requests);
-    const session = sessions.find((s) => s.id === selectedHistorySessionId);
-
-    if (!session) {
-      return;
-    }
-
-    const report = buildEvidenceJson(session, _state.assertions);
-
-    triggerDownload(
-      `qa-evidence-${formatDateSlug()}.json`,
-      JSON.stringify(report, null, 2),
-      "application/json"
-    );
+    openExportDialog("json", historyExportJsonButtonEl);
   });
 
   historyExportMdButtonEl.addEventListener("click", () => {
-    const sessions = buildHistorySessions(_state.requests);
-    const session = sessions.find((s) => s.id === selectedHistorySessionId);
+    openExportDialog("markdown", historyExportMdButtonEl);
+  });
 
-    if (!session) {
+  historyExportFormatEl.addEventListener("change", () => {
+    const candidate = historyExportFormatEl.value;
+
+    if (candidate === "json" || candidate === "markdown" || candidate === "html") {
+      historyExportFormat = candidate;
+    } else {
+      historyExportFormat = "json";
+      historyExportFormatEl.value = "json";
+    }
+
+    const selectedSession = getSelectedHistorySession();
+
+    if (selectedSession) {
+      renderExportPreview(selectedSession, historyExportFormat);
+    }
+  });
+
+  historyExportDownloadButtonEl.addEventListener("click", () => {
+    const selectedSession = getSelectedHistorySession();
+
+    if (!selectedSession) {
       return;
     }
 
+    const exportData = buildExportData(selectedSession, historyExportFormat);
     triggerDownload(
-      `qa-evidence-${formatDateSlug()}.md`,
-      buildEvidenceMarkdown(session, _state.assertions),
-      "text/markdown"
+      `qa-evidence-${formatDateSlug()}.${exportData.extension}`,
+      exportData.content,
+      exportData.mimeType
     );
+  });
+
+  historyExportCloseButtonEl.addEventListener("click", () => {
+    closeExportDialog();
   });
 
   // QP-007: Show/hide replay panel
@@ -325,39 +391,73 @@ const bindEvents = (): void => {
       return;
     }
 
-    historyReplayPanelEl.classList.remove("hidden");
-    renderReplayList(session.requests, []);
+    historyReplayButtonEl.setAttribute("aria-expanded", "true");
+    historyReplayModalController.open();
+    setReplayArtifactStatus("Loading replay artifact...");
+    void prepareReplayDataForSession(session);
     setReplayStatus("ready");
-    historyReplayDialogEl.focus();
-    historyReplayStartButtonEl.focus();
+  });
+
+  historyReplaySaveArtifactButtonEl.addEventListener("click", () => {
+    const sessions = buildHistorySessions(_state.requests);
+    const session = sessions.find((s) => s.id === selectedHistorySessionId);
+
+    if (!session || session.requests.length === 0) {
+      setReplayArtifactStatus("No requests available to save.");
+      return;
+    }
+
+    void (async () => {
+      const artifact = await saveReplayArtifactForSession(session);
+      currentReplaySessionId = session.id;
+      currentReplayArtifactId = artifact.id;
+      currentReplayRows = artifact.requests;
+      renderReplayList(currentReplayRows, []);
+      historyReplayCounterEl.textContent = `0 / ${currentReplayRows.length}`;
+      setReplayArtifactStatus(`Artifact saved at ${formatTimestamp(artifact.createdAt)}.`);
+    })();
+  });
+
+  historyReplayDeleteArtifactButtonEl.addEventListener("click", () => {
+    if (!currentReplayArtifactId) {
+      setReplayArtifactStatus("No saved artifact selected to delete.");
+      return;
+    }
+
+    const artifactIdToDelete = currentReplayArtifactId;
+
+    void (async () => {
+      const deleted = await deleteReplayArtifactById(artifactIdToDelete);
+
+      if (!deleted) {
+        setReplayArtifactStatus("Saved artifact was not found.");
+        return;
+      }
+
+      currentReplayArtifactId = null;
+      setReplayArtifactStatus("Artifact removed. Using live session payload.");
+
+      const sessions = buildHistorySessions(_state.requests);
+      const session = sessions.find((s) => s.id === selectedHistorySessionId);
+
+      if (session) {
+        await prepareReplayDataForSession(session);
+      }
+    })();
   });
 
   historyReplayCloseButtonEl.addEventListener("click", () => {
     closeReplayPanel();
   });
 
-  historyReplayPanelEl.addEventListener("mousedown", (event) => {
-    if (event.target === historyReplayPanelEl) {
-      closeReplayPanel();
-    }
-  });
-
-  historyReplayPanelEl.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      closeReplayPanel();
-    }
-  });
-
   historyReplayStartButtonEl.addEventListener("click", () => {
-    const sessions = buildHistorySessions(_state.requests);
-    const session = sessions.find((s) => s.id === selectedHistorySessionId);
-
-    if (!session) {
+    if (!currentReplaySessionId || currentReplayRows.length === 0) {
+      setReplayArtifactStatus("No replay artifact loaded. Save artifact first.");
       return;
     }
 
-    void startReplay(session.requests);
+    setReplayArtifactStatus("Running replay from saved artifact payload.");
+    void startReplay(currentReplayRows);
   });
 
   historyReplayCancelButtonEl.addEventListener("click", () => {
@@ -372,8 +472,123 @@ const bindEvents = (): void => {
 const closeReplayPanel = (): void => {
   replayAbortController?.abort();
   replayAbortController = null;
-  historyReplayPanelEl.classList.add("hidden");
-  historyReplayButtonEl.focus();
+  currentReplayRows = [];
+  currentReplaySessionId = null;
+  currentReplayArtifactId = null;
+  historyReplayButtonEl.setAttribute("aria-expanded", "false");
+  historyReplayModalController.close();
+};
+
+const getSelectedHistorySession = (): HistorySession | null => {
+  const sessions = buildHistorySessions(_state.requests);
+  return sessions.find((s) => s.id === selectedHistorySessionId) ?? null;
+};
+
+const openExportDialog = (
+  initialFormat: EvidenceExportFormat,
+  triggerEl?: HTMLElement | null
+): void => {
+  const selectedSession = getSelectedHistorySession();
+
+  if (!selectedSession) {
+    return;
+  }
+
+  historyExportFormat = initialFormat;
+  historyExportFormatEl.value = initialFormat;
+  renderExportPreview(selectedSession, initialFormat);
+  activeHistoryExportTriggerEl = triggerEl ?? null;
+  historyExportJsonButtonEl.setAttribute(
+    "aria-expanded",
+    String(activeHistoryExportTriggerEl === historyExportJsonButtonEl)
+  );
+  historyExportMdButtonEl.setAttribute(
+    "aria-expanded",
+    String(activeHistoryExportTriggerEl === historyExportMdButtonEl)
+  );
+
+  historyExportModalController.open({
+    restoreFocusEl: triggerEl ?? null,
+  });
+};
+
+const closeExportDialog = (): void => {
+  historyExportJsonButtonEl.setAttribute("aria-expanded", "false");
+  historyExportMdButtonEl.setAttribute("aria-expanded", "false");
+  activeHistoryExportTriggerEl = null;
+  historyExportModalController.close();
+};
+
+const buildEvidenceHtml = (session: HistorySession): string => {
+  const markdown = buildEvidenceMarkdown(session, _state.assertions);
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QA Evidence Export</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        margin: 24px;
+        color: #1f2937;
+      }
+
+      h1 {
+        margin-bottom: 12px;
+      }
+
+      pre {
+        white-space: pre-wrap;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 16px;
+        background: #f9fafb;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>QA Evidence Export</h1>
+    <pre>${escapeHtml(markdown)}</pre>
+  </body>
+</html>`;
+};
+
+const buildExportData = (
+  session: HistorySession,
+  format: EvidenceExportFormat
+): { content: string; mimeType: string; extension: string } => {
+  if (format === "markdown") {
+    return {
+      content: buildEvidenceMarkdown(session, _state.assertions),
+      mimeType: "text/markdown",
+      extension: "md",
+    };
+  }
+
+  if (format === "html") {
+    return {
+      content: buildEvidenceHtml(session),
+      mimeType: "text/html",
+      extension: "html",
+    };
+  }
+
+  return {
+    content: JSON.stringify(buildEvidenceJson(session, _state.assertions), null, 2),
+    mimeType: "application/json",
+    extension: "json",
+  };
+};
+
+const renderExportPreview = (
+  session: HistorySession,
+  format: EvidenceExportFormat
+): void => {
+  const exportData = buildExportData(session, format);
+  historyExportPreviewEl.value = exportData.content;
 };
 
 // ---------------------------------------------------------------------------
@@ -389,6 +604,88 @@ type ReplayResult = {
   error?: string;
 };
 
+const setReplayArtifactStatus = (message: string): void => {
+  historyReplayArtifactStatusEl.textContent = message;
+};
+
+const toReplayArtifactRequest = (row: RequestRow): StoredReplayArtifactRequest => ({
+  id: row.id,
+  method: row.method,
+  url: row.url,
+  headers: row.headers ?? {},
+  ...(typeof row.body === "string" ? { body: row.body } : {}),
+});
+
+const buildReplayArtifact = (session: HistorySession): StoredReplayArtifact => {
+  const createdAt = new Date().toISOString();
+  const id = `artifact-${session.id}-${Date.now()}`;
+  const requests = session.requests.map(toReplayArtifactRequest);
+
+  return {
+    id,
+    label: `${session.label} replay artifact`,
+    sourceSessionId: session.id,
+    createdAt,
+    requestCount: requests.length,
+    requests,
+  };
+};
+
+const loadLatestArtifactForSession = async (
+  sessionId: string
+): Promise<StoredReplayArtifact | null> => {
+  const artifacts = await loadReplayArtifacts();
+  const candidates = artifacts
+    .filter((artifact) => artifact.sourceSessionId === sessionId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  return candidates[0] ?? null;
+};
+
+const saveReplayArtifactForSession = async (
+  session: HistorySession
+): Promise<StoredReplayArtifact> => {
+  const artifact = buildReplayArtifact(session);
+  const artifacts = await loadReplayArtifacts();
+  const remaining = artifacts.filter((item) => item.sourceSessionId !== session.id);
+  const nextArtifacts = [artifact, ...remaining].slice(0, 30);
+  await saveReplayArtifacts(nextArtifacts);
+  return artifact;
+};
+
+const deleteReplayArtifactById = async (artifactId: string): Promise<boolean> => {
+  const artifacts = await loadReplayArtifacts();
+  const nextArtifacts = artifacts.filter((item) => item.id !== artifactId);
+
+  if (nextArtifacts.length === artifacts.length) {
+    return false;
+  }
+
+  await saveReplayArtifacts(nextArtifacts);
+  return true;
+};
+
+const prepareReplayDataForSession = async (session: HistorySession): Promise<void> => {
+  currentReplaySessionId = session.id;
+  currentReplayArtifactId = null;
+  currentReplayRows = session.requests.map(toReplayArtifactRequest);
+  renderReplayList(currentReplayRows, []);
+  historyReplayCounterEl.textContent = `0 / ${currentReplayRows.length}`;
+
+  const artifact = await loadLatestArtifactForSession(session.id);
+
+  if (!artifact) {
+    setReplayArtifactStatus("Artifact not saved yet. Save artifact to freeze replay payload.");
+    return;
+  }
+
+  currentReplayArtifactId = artifact.id;
+  currentReplayRows = artifact.requests;
+  renderReplayList(currentReplayRows, []);
+  historyReplayCounterEl.textContent = `0 / ${currentReplayRows.length}`;
+  setReplayArtifactStatus(`Using saved artifact: ${formatTimestamp(artifact.createdAt)}`);
+};
+
 const setReplayStatus = (state: "ready" | "running" | "done" | "cancelled"): void => {
   historyReplayStatusEl.className = `history-replay-status ${state}`;
 
@@ -402,7 +699,7 @@ const setReplayStatus = (state: "ready" | "running" | "done" | "cancelled"): voi
   historyReplayStatusEl.textContent = labels[state] ?? state;
 };
 
-const renderReplayList = (rows: RequestRow[], results: ReplayResult[]): void => {
+const renderReplayList = (rows: StoredReplayArtifactRequest[], results: ReplayResult[]): void => {
   historyReplayCounterEl.textContent = `${results.filter((r) => r.status !== "pending").length} / ${rows.length}`;
 
   historyReplayListEl.innerHTML = rows
@@ -429,7 +726,7 @@ const renderReplayList = (rows: RequestRow[], results: ReplayResult[]): void => 
 const delay = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-const startReplay = async (rows: RequestRow[]): Promise<void> => {
+const startReplay = async (rows: StoredReplayArtifactRequest[]): Promise<void> => {
   replayAbortController = new AbortController();
   const { signal } = replayAbortController;
 
@@ -461,12 +758,13 @@ const startReplay = async (rows: RequestRow[]): Promise<void> => {
       }
 
       const response = await chrome.runtime.sendMessage({
-        type: "repeat-request",
-        requestId: row.id,
-        method: row.method,
-        url: row.url,
-        headers: row.headers ?? {},
-        body: undefined,
+        type: "REPEAT_REQUEST",
+        payload: {
+          method: row.method,
+          url: row.url,
+          headers: row.headers ?? {},
+          ...(typeof row.body === "string" ? { body: row.body } : {}),
+        },
       });
 
       if (signal.aborted) {

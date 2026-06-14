@@ -18,6 +18,7 @@ import {
   readHarAsRequestRows,
   buildCurlCommand,
 } from "../shared/utils";
+import { createModalController, type ModalController } from "../shared/modal-controller";
 import { saveCapturedRequests } from "../../storage/index";
 import { evaluateAssertions, type AssertionResult } from "../../../../packages/rule-engine/src/assertion-evaluator";
 import { diffText, normalizeDiffText } from "../../../../packages/rule-engine/src/diff-engine";
@@ -77,6 +78,7 @@ let networkDiffResultEl: HTMLElement | null = null;
 let networkDiffStatsEl: HTMLElement | null = null;
 let networkDiffLeftEl: HTMLElement | null = null;
 let networkDiffRightEl: HTMLElement | null = null;
+let networkComposeModalController: ModalController;
 
 // ---------------------------------------------------------------------------
 // Assertion result rendering (QP-001)
@@ -201,6 +203,16 @@ export function initNetwork(): void {
   networkDiffStatsEl = document.getElementById("network-diff-stats");
   networkDiffLeftEl = document.getElementById("network-diff-left");
   networkDiffRightEl = document.getElementById("network-diff-right");
+
+  networkComposeModalController = createModalController({
+    panelEl: networkComposePanelEl,
+    dialogEl: networkComposeDialogEl,
+    onRequestClose: () => {
+      closeComposePanel();
+    },
+    initialFocusEl: () => networkComposeUrlEl,
+    defaultRestoreFocusEl: () => networkComposeButtonEl,
+  });
 
   bindEvents();
 }
@@ -607,19 +619,6 @@ const bindEvents = (): void => {
     closeComposePanel();
   });
 
-  networkComposePanelEl.addEventListener("mousedown", (event) => {
-    if (event.target === networkComposePanelEl) {
-      closeComposePanel();
-    }
-  });
-
-  networkComposePanelEl.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      closeComposePanel();
-    }
-  });
-
   networkComposeSendButtonEl.addEventListener("click", () => {
     const method = networkComposeMethodEl.value || "GET";
     const url = networkComposeUrlEl.value.trim();
@@ -868,27 +867,23 @@ const fillComposeFromRequest = (row: RequestRow): void => {
 };
 
 const openComposePanel = (): void => {
-  networkComposePanelEl.classList.remove("hidden");
-  networkComposeDialogEl.focus();
-  setTimeout(() => {
-    networkComposeUrlEl.focus();
-  }, 0);
+  networkComposeButtonEl.setAttribute("aria-expanded", "true");
+  networkComposeModalController.open();
 };
 
 const closeComposePanel = (options?: {
   statusMessage?: string;
   focusTrigger?: boolean;
 }): void => {
-  networkComposePanelEl.classList.add("hidden");
+  networkComposeButtonEl.setAttribute("aria-expanded", "false");
+  networkComposeModalController.close({
+    restoreFocus: options?.focusTrigger !== false,
+  });
 
   if (options?.statusMessage !== undefined) {
     setNetworkComposeStatus(options.statusMessage, "neutral");
   } else if (!options) {
     setNetworkComposeStatus("Compose panel closed.", "neutral");
-  }
-
-  if (options?.focusTrigger !== false) {
-    networkComposeButtonEl.focus();
   }
 };
 

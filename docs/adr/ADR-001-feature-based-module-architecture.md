@@ -1,4 +1,5 @@
 # ADR-001: Feature-Based Module Architecture for Sidepanel
+<!-- markdownlint-disable MD040 -->
 
 **Status**: Accepted  
 **Date**: 2026-06-12  
@@ -50,15 +51,18 @@ extension/src/sidepanel/
 ## Consequences
 
 **Positive**:
+
 - Files are bounded to one concern. Easier to navigate, review, and reason about.
 - Pure functions in `shared/utils.ts` are fully unit-testable without a browser.
 - `main.ts` reduced from 2,844 lines to ~70 lines (orchestrator).
 - New features can be added as new modules without touching existing ones.
 
 **Negative / Trade-offs**:
+
 - Slight boilerplate: every feature must re-query DOM elements in `init{}()`.
 - `AppState` is passed on every render cycle — shallow for now, but could grow.
 
 **Mitigation**:
+
 - Keep `AppState` lean. New state belongs in `AppState` only if ≥ 2 feature modules need it.
 - If `AppState` grows beyond 8 fields, introduce a state slice pattern.

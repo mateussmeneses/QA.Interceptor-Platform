@@ -1,5 +1,9 @@
 # Implementation Ready — Executive Summary
 
+> Legacy snapshot: este documento foi congelado por conter contexto historico de fase.
+> Execucao atual deve seguir `BACKLOG_CONSOLIDATED.md` e status oficial deve seguir `docs/backlog/BACKLOG_CANONICAL.md`.
+> Para diagnostico estrutural atual use `PROJECT_AUDIT.md`, `ARCHITECTURE_REVIEW.md`, `TECHNICAL_DEBT.md` e `REFACTORING_PLAN.md`.
+
 **Date**: January 2025  
 **Status**: ✅ Phase 3.5 (Architect/Tech Foundation) Complete | 🚀 Phase 3.6 (Frontend) Ready to Start  
 **Next Sprint**: Begin Frontend Component Library Build
@@ -11,6 +15,7 @@
 ### ✅ Completed This Session
 
 **Architect-Level Tasks** (Phase 3.5):
+
 - ✅ **OBS-005**: Rule conflict detector (26 tests, 4 conflict kinds)
 - ✅ **INFRA-001**: GitHub Actions CI/CD (5 jobs)
 - ✅ **INFRA-004**: Dependabot security scanning
@@ -18,12 +23,14 @@
 - ✅ **P4-001**: Phase 4 proxy architecture (complete blueprint, ADR-006)
 
 **Performance & AI Foundations** (Phase 3.5):
+
 - ✅ **TECH-001**: RuleIndex performance engine (22 tests, O(1) build + O(k) eval)
 - ✅ **MOCK-001**: Conditional mock evaluator (25 tests, 7 condition kinds, immutable state)
 - ✅ **AI-001**: Schema inference engine (30+ tests, format detection, multi-sample merge)
 - ✅ **Storage Adapter**: Chrome + Memory adapters ready for Phase 4
 
 **Frontend Planning** (New):
+
 - ✅ **DESIGN_SYSTEM.md**: Complete design tokens, typography, components specs, dark mode
 - ✅ **BACKLOG_FRONTEND.md**: 72 agnóstic frontend tasks in 6 phases (FE-0 through FE-6)
 - ✅ **UI_UX_PREVIEW.md**: Full visual mockups of all 5 views
@@ -33,14 +40,14 @@
 
 ### 📊 Metrics
 
-| Metric | Value |
-|--------|-------|
-| Test Coverage | 469 tests passing (↑126 from Phase 3.0) |
-| Build Status | ✓ Clean (zero TypeScript errors) |
-| CI/CD | ✓ 5 jobs automated |
-| Dependencies | ✓ Dependabot scanning all 5 workspaces |
-| Frontend Tasks | 72 items (FE-0 through FE-6) |
-| Estimated Duration | 5–6 weeks for complete frontend |
+| Metric             | Value                                   |
+| ------------------ | --------------------------------------- |
+| Test Coverage      | 469 tests passing (↑126 from Phase 3.0) |
+| Build Status       | ✓ Clean (zero TypeScript errors)        |
+| CI/CD              | ✓ 5 jobs automated                      |
+| Dependencies       | ✓ Dependabot scanning all 5 workspaces  |
+| Frontend Tasks     | 72 items (FE-0 through FE-6)            |
+| Estimated Duration | 5–6 weeks for complete frontend         |
 
 ---
 
@@ -110,7 +117,7 @@
 
 ### 🚀 For Frontend Teams
 
-**Week 1 (FE-0 & FE-1): Components**
+#### Week 1 (FE-0 & FE-1): Components
 
 1. **Monday**:
    - Read DESIGN_SYSTEM.md
@@ -131,7 +138,7 @@
    - All with mock data
    - All fully tested
 
-**Week 2 (FE-2): Feature Layouts**
+#### Week 2 (FE-2): Feature Layouts
 
 1. Build Rules UI (card-based list, detail panel, editor skeleton)
 2. Build Network Inspector (waterfall list, detail, diff panel)
@@ -140,16 +147,17 @@
 5. Build Settings UI (tabs, theme toggle)
 6. All with mock data, no backend wiring yet
 
-**Week 3 (FE-3): Polish**
+#### Week 3 (FE-3): Polish
 
 1. Dark mode implementation
 2. Animations + hover states
 3. Empty states + loading states
 4. Responsive breakpoints
 
-**Week 4+ (Integration)**
+#### Week 4+ (Integration)
 
 When backend features are ready:
+
 1. Update feature modules with real data
 2. Wire components to backend
 3. End-to-end testing
@@ -211,20 +219,21 @@ By week 4, when frontend is ready for integration, backend features will be avai
 
 ## Risk Mitigation
 
-| Risk | Mitigation |
-|------|-----------|
+| Risk                                     | Mitigation                                                              |
+| ---------------------------------------- | ----------------------------------------------------------------------- |
 | **Frontend blocks on backend not ready** | ✓ Agnóstic design + mock data allows frontend to complete independently |
-| **Components need redesign later** | ✓ Props-based contracts ensure easy rewiring with real data |
-| **Storybook setup overhead** | ✓ Quick-start guide + template minimize setup time |
-| **Dark mode implementation forgotten** | ✓ Built into FE-3 phase; CSS custom properties from start |
-| **Accessibility audit delayed** | ✓ FE-5 phase dedicated; guidelines in DESIGN_SYSTEM.md from day 1 |
-| **Desktop/responsive forgotten** | ✓ FE-4 & responsive breakpoints in FE-3 |
+| **Components need redesign later**       | ✓ Props-based contracts ensure easy rewiring with real data             |
+| **Storybook setup overhead**             | ✓ Quick-start guide + template minimize setup time                      |
+| **Dark mode implementation forgotten**   | ✓ Built into FE-3 phase; CSS custom properties from start               |
+| **Accessibility audit delayed**          | ✓ FE-5 phase dedicated; guidelines in DESIGN_SYSTEM.md from day 1       |
+| **Desktop/responsive forgotten**         | ✓ FE-4 & responsive breakpoints in FE-3                                 |
 
 ---
 
 ## Success Criteria
 
 ### ✅ Frontend Phase Complete (Week 5–6)
+
 - [ ] All 72 frontend tasks completed
 - [ ] 25 base components in Storybook with full test coverage
 - [ ] 5 feature layouts (Rules, Network, Mocks, History, Settings)
@@ -235,6 +244,7 @@ By week 4, when frontend is ready for integration, backend features will be avai
 - [ ] All tests passing
 
 ### ✅ Backend Integration Complete (Week 6–7)
+
 - [ ] Rule storage persists to chrome.storage
 - [ ] Network capture working
 - [ ] Conditional mocks evaluated
@@ -243,6 +253,7 @@ By week 4, when frontend is ready for integration, backend features will be avai
 - [ ] Extension fully functional
 
 ### ✅ Ready for Release
+
 - [ ] Chrome Web Store submission checklist complete
 - [ ] Firefox AMO submission checklist complete
 - [ ] Safari App Store submission checklist complete
@@ -263,16 +274,16 @@ By week 4, when frontend is ready for integration, backend features will be avai
 
 ## Resources
 
-| Document | Purpose | Read First? |
-|----------|---------|---|
-| **DESIGN_SYSTEM.md** | Design tokens, components | ✓ Yes |
-| **BACKLOG_FRONTEND.md** | Task list (72 items) | ✓ Yes |
-| **UI_UX_PREVIEW.md** | Visual mockups | Yes |
-| **FRONTEND_QUICK_START.md** | Setup + dev guide | ✓ Yes (before coding) |
-| **FRONTEND_INTEGRATION_STRATEGY.md** | Backend wiring | Yes (week 4) |
-| **FRONTEND_ARCHITECTURE.md** | Overview | Yes (optional) |
-| **ARCHITECTURE.md** | Full project architecture | Optional |
-| **ADRs** | Architectural decisions | Optional |
+| Document                             | Purpose                   | Read First?           |
+| ------------------------------------ | ------------------------- | --------------------- |
+| **DESIGN_SYSTEM.md**                 | Design tokens, components | ✓ Yes                 |
+| **BACKLOG_FRONTEND.md**              | Task list (72 items)      | ✓ Yes                 |
+| **UI_UX_PREVIEW.md**                 | Visual mockups            | Yes                   |
+| **FRONTEND_QUICK_START.md**          | Setup + dev guide         | ✓ Yes (before coding) |
+| **FRONTEND_INTEGRATION_STRATEGY.md** | Backend wiring            | Yes (week 4)          |
+| **FRONTEND_ARCHITECTURE.md**         | Overview                  | Yes (optional)        |
+| **ARCHITECTURE.md**                  | Full project architecture | Optional              |
+| **ADRs**                             | Architectural decisions   | Optional              |
 
 ---
 
@@ -284,4 +295,4 @@ By week 4, when frontend is ready for integration, backend features will be avai
 4. **How do I design?** → Reference DESIGN_SYSTEM.md
 5. **How do I integrate with backend?** → Check FRONTEND_INTEGRATION_STRATEGY.md
 
-**Let's ship a professional QA tool! 🚀**
+Let's ship a professional QA tool.

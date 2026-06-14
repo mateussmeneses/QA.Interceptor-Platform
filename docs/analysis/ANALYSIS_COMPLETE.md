@@ -1,5 +1,9 @@
 # QA.Interceptor Platform — Análise Completa ✅
 
+> Legacy snapshot: analise historica mantida para rastreabilidade.
+> Nao usar para priorizacao ativa de backlog.
+> Para execucao atual e status oficial, usar `BACKLOG_CONSOLIDATED.md` e `docs/backlog/BACKLOG_CANONICAL.md`.
+
 **Executado em**: 12 de Junho de 2026  
 **Objetivo**: Análise assertiva + Backlog expandido com role assignments (Architect vs Developer)
 
@@ -8,8 +12,10 @@
 ## 📋 DOCUMENTOS CRIADOS
 
 ### 1. ANALYSIS_STATE_OF_PROJECT.md
+
 **Tipo**: Strategic Analysis  
 **Conteúdo**:
+
 - ✅ Estado atual (Phase 1-2: 100%, Phase 3: 40%)
 - ✅ 7 gaps identificados com prioridade (P0-P3)
 - ✅ Métricas do projeto (198 tests, 0 errors, 11 rule types)
@@ -22,8 +28,10 @@
 ---
 
 ### 2. BACKLOG_EXPANDED.md ⭐ (Principal)
+
 **Tipo**: Prioritized Execution Backlog  
 **Conteúdo**:
+
 - ✅ **71 itens** estruturados por fase
   - Phase 3.5: 17 items (In Progress)
   - Phase 4: 20 items (Not Started)
@@ -46,8 +54,10 @@
 ---
 
 ### 3. EXECUTIVE_SUMMARY.md
+
 **Tipo**: Leadership Summary  
 **Conteúdo**:
+
 - ✅ Snapshot estratégico (visão vs. realidade)
 - ✅ Competitive gap vs. Requestly/Charles/Fiddler
 - ✅ Roadmap crítico (Weeks 1-12)
@@ -62,8 +72,10 @@
 ---
 
 ### 4. BACKLOG.md (Atualizado)
+
 **Mudança**: Adicionado seção estratégica ao final  
 **Novo Conteúdo**:
+
 - Link para ANALYSIS_STATE_OF_PROJECT.md, BACKLOG_EXPANDED.md, EXECUTIVE_SUMMARY.md
 - Phase 3.5 preview queue com 6 itens MVP
 - Próximas fases (4, 5, Future)
@@ -75,8 +87,10 @@
 ---
 
 ### 5. RESUMO_EXECUTIVO_PT.md (Novo - Em Português)
+
 **Tipo**: Summary for Portuguese-speaking stakeholders  
 **Conteúdo**:
+
 - 📊 Estado atual do projeto
 - 🎯 Visão vs. Realidade (score: 90%)
 - 📈 Roadmap crítico (Weeks 1-12)
@@ -94,26 +108,26 @@
 
 ### Gaps Identificados (7 no total)
 
-| # | Gap | Prioridade | Impacto | Solução |
-|---|-----|-----------|--------|---------|
-| 1 | Phase 3 incompleta (Reporting/Replay) | P0 | QA users não conseguem documentar testes | Phase 3.5 (6 weeks) |
-| 2 | Desktop/Proxy não começado | P1 | Sem suporte non-browser | Phase 4 (8 weeks) |
-| 3 | Observabilidade (diff, trace, conflicts) | P1 | Difícil debugar regras complexas | Phase 3.5 (6 weeks) |
-| 4 | Mocks state-aware | P2 | Apenas static mocks | Future research |
-| 5 | Contract discovery automática | P2 | Manual effort required | Phase Future (AI) |
-| 6 | Team/Enterprise features | P3 | Solo-user apenas | Phase 5 (later) |
-| 7 | Performance analysis | P2 | Sem visibilidade de bottlenecks | Phase 3.5 |
+| #   | Gap                                      | Prioridade | Impacto                                  | Solução             |
+| --- | ---------------------------------------- | ---------- | ---------------------------------------- | ------------------- |
+| 1   | Phase 3 incompleta (Reporting/Replay)    | P0         | QA users não conseguem documentar testes | Phase 3.5 (6 weeks) |
+| 2   | Desktop/Proxy não começado               | P1         | Sem suporte non-browser                  | Phase 4 (8 weeks)   |
+| 3   | Observabilidade (diff, trace, conflicts) | P1         | Difícil debugar regras complexas         | Phase 3.5 (6 weeks) |
+| 4   | Mocks state-aware                        | P2         | Apenas static mocks                      | Future research     |
+| 5   | Contract discovery automática            | P2         | Manual effort required                   | Phase Future (AI)   |
+| 6   | Team/Enterprise features                 | P3         | Solo-user apenas                         | Phase 5 (later)     |
+| 7   | Performance analysis                     | P2         | Sem visibilidade de bottlenecks          | Phase 3.5           |
 
 ### Métricas Atuais
 
-| Métrica | Valor | Status |
-|---------|-------|--------|
-| Testes unitários | 198 | ✅ Forte |
-| TypeScript errors | 0 | ✅ Excelente |
-| Build warnings | 0 | ✅ Excelente |
-| Rule types | 11 | ✅ Completo |
-| Sidepanel modules | 6 | ✅ Bounded |
-| Feature completeness | 90% | ✅ Muito bom |
+| Métrica              | Valor | Status       |
+| -------------------- | ----- | ------------ |
+| Testes unitários     | 198   | ✅ Forte     |
+| TypeScript errors    | 0     | ✅ Excelente |
+| Build warnings       | 0     | ✅ Excelente |
+| Rule types           | 11    | ✅ Completo  |
+| Sidepanel modules    | 6     | ✅ Bounded   |
+| Feature completeness | 90%   | ✅ Muito bom |
 
 ### Alinhamento com Visão
 
@@ -121,20 +135,21 @@
 
 **Score**: 4.5 / 5 pilares = 90% complete
 
-| Pilar | Status |
-|-------|--------|
-| Validate frontend behavior | ✅ 100% |
-| Inspect traffic with low friction | ✅ 100% |
-| Simulate failures & edge cases | ✅ 100% |
-| Mock integrations without backend changes | ⚠️ 70% |
-| Reproduce and share bugs portably | ⚠️ 50% |
+| Pilar                                     | Status  |
+| ----------------------------------------- | ------- |
+| Validate frontend behavior                | ✅ 100% |
+| Inspect traffic with low friction         | ✅ 100% |
+| Simulate failures & edge cases            | ✅ 100% |
+| Mock integrations without backend changes | ⚠️ 70%  |
+| Reproduce and share bugs portably         | ⚠️ 50%  |
 
 ---
 
 ## 🚀 ROADMAP CRÍTICO (Próximas 12 Semanas)
 
 ### Phase 3.5: Reporting & Observability (Weeks 1-6)
-```
+
+```text
 MVP (3 items) → 3-4 weeks
 ├── QP-004: Export JSON
 ├── QP-005: Export Markdown
@@ -152,7 +167,8 @@ Full (17 items) → 6-8 weeks
 ```
 
 ### Phase 4: Desktop/Proxy (Weeks 7-12)
-```
+
+```text
 HTTP Proxy Foundation
 ├── P4-001: HTTP proxy skeleton
 ├── P4-002: CONNECT tunneling
@@ -167,12 +183,14 @@ Success: HTTP proxy + HTTPS CA + device pairing working
 ## 👥 RECOMENDAÇÃO DE EQUIPE
 
 ### Mínimo (Phase 3.5 apenas)
+
 - 1 Architect: 20% Phase 3.5, 80% planning/infra
 - 1 Developer: 100% Phase 3.5 implementation
 
 **Tempo**: 6 weeks
 
 ### Recomendado (Phase 3.5 + Phase 4 alpha)
+
 - 1 Architect: 15% Phase 3.5, 50% Phase 4, 35% planning/infra
 - 2 Developers: 70% Phase 3.5, 20% Phase 4, 10% bugs
 
@@ -183,6 +201,7 @@ Success: HTTP proxy + HTTPS CA + device pairing working
 ## 📌 ROLE ASSIGNMENT SUMMARY
 
 ### Architect Responsibilities (14 items)
+
 - Design Phase 4 proxy architecture
 - Implement rule conflict detection algorithm
 - Plan enterprise features (Phase 5)
@@ -191,6 +210,7 @@ Success: HTTP proxy + HTTPS CA + device pairing working
 - Security & compliance patterns
 
 ### Developer Responsibilities (57 items)
+
 - Implement Phase 3.5 features (reporting, playback, diff UI)
 - Implement Phase 4 proxy server
 - Build UI for all phases
@@ -227,38 +247,48 @@ Success: HTTP proxy + HTTPS CA + device pairing working
 ## 📞 COMO USAR ESSA ANÁLISE
 
 ### Para Product Owners
+
 → Leia: **EXECUTIVE_SUMMARY.md**
+
 - Strategic snapshot, resource recommendations, risk matrix
 
 ### Para Architects
+
 → Leia: **ANALYSIS_STATE_OF_PROJECT.md** + **BACKLOG_EXPANDED.md**
+
 - Understanding gaps, architecture recommendations, phase 4+ planning
 
 ### Para Developers
+
 → Leia: **BACKLOG_EXPANDED.md**
+
 - Detailed backlog items, effort estimation, acceptance criteria
 
 ### Para Stakeholders (PT)
+
 → Leia: **RESUMO_EXECUTIVO_PT.md**
+
 - Executive summary em português
 
 ### Para Sprint Planning
+
 → Use: **BACKLOG.md** + **BACKLOG_EXPANDED.md**
+
 - Phase 3.5 queue + detailed items for assignment
 
 ---
 
 ## 📊 FINAL SUMMARY
 
-| Aspecto | Resultado |
-|---------|-----------|
-| **Project Maturity** | 90% (4.5/5 pillars complete) |
-| **Code Quality** | 198 tests, 0 errors, 0 warnings ✅ |
+| Aspecto                  | Resultado                                                 |
+| ------------------------ | --------------------------------------------------------- |
+| **Project Maturity**     | 90% (4.5/5 pillars complete)                              |
+| **Code Quality**         | 198 tests, 0 errors, 0 warnings ✅                        |
 | **Competitive Position** | Parity with Requestly on core, phase 4 needed for desktop |
-| **Backlog Clarity** | 71 items, prioritized, effort-estimated, role-assigned ✅ |
-| **Roadmap** | 12-week plan with resource recommendations ✅ |
-| **Risk Assessment** | 4 risks identified + mitigation strategies ✅ |
-| **Team Readiness** | Ready to execute Phase 3.5 immediately ✅ |
+| **Backlog Clarity**      | 71 items, prioritized, effort-estimated, role-assigned ✅ |
+| **Roadmap**              | 12-week plan with resource recommendations ✅             |
+| **Risk Assessment**      | 4 risks identified + mitigation strategies ✅             |
+| **Team Readiness**       | Ready to execute Phase 3.5 immediately ✅                 |
 
 ---
 

@@ -33,6 +33,7 @@ export type ExtensionMessage =
 Each member has a `type` string literal as the discriminant. Type guards (`isRepeatRequestMessage`, etc.) validate incoming `unknown` payloads at extension boundaries.
 
 **Constraints**:
+
 1. All `chrome.runtime.sendMessage` calls must use a type from `ExtensionMessage`.
 2. All `chrome.runtime.onMessage` handlers must validate via the type guard before casting.
 3. New message types require updating `ExtensionMessage`, adding a guard, and documenting in this file.
@@ -43,14 +44,17 @@ Each member has a `type` string literal as the discriminant. Type guards (`isRep
 ## Consequences
 
 **Positive**:
+
 - TypeScript enforces payload shape at call sites — no silent mismatches.
 - `switch (message.type)` is type-narrowed — each case has the correct payload type.
 - New contributors can enumerate all message types from a single file.
 - No runtime `any` — all runtime validation is explicit and testable.
 
 **Negative / Trade-offs**:
+
 - Requires updating `messages.ts` whenever a new cross-context interaction is introduced.
 - Type guards are boilerplate. Justified because chrome.runtime bypasses TypeScript's type system.
 
 **Future consideration**:
+
 - If message count exceeds ~12, split `messages.ts` by context (`background-messages.ts`, `content-messages.ts`).

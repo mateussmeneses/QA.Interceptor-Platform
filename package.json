@@ -9,6 +9,8 @@
   "scripts": {
     "prepare": "husky",
     "build": "npm run build -w @qa-interceptor/extension && npm run build -w @qa-interceptor/shared-types && npm run build -w @qa-interceptor/rule-engine",
+    "typecheck": "npm run typecheck:runtime",
+    "typecheck:runtime": "npm run typecheck:runtime -w @qa-interceptor/extension && npm run build -w @qa-interceptor/shared-types && npm run build -w @qa-interceptor/rule-engine",
     "test": "npm run test -w @qa-interceptor/rule-engine",
     "lint": "eslint . --ext .ts,.js,.mjs --max-warnings=0",
     "format": "prettier --write .",

@@ -3,9 +3,9 @@
  * Bootstraps all feature modules, manages shared state, and drives renders on storage changes.
  */
 
-import type { AppState } from "./shared/types";
+import type { AppState, ViewId } from "./shared/types";
 import { initTheme } from "./shared/theme-manager";
-import { initNavigation } from "./features/navigation";
+import { getActiveView, initNavigation, onActiveViewChange } from "./features/navigation";
 import { initRules, renderRules } from "./features/rules";
 import { initNetwork, renderNetwork } from "./features/network";
 import { initMocks, renderMocks } from "./features/mocks";
@@ -52,12 +52,84 @@ const loadAppState = async (): Promise<AppState> => {
 // Render dispatch
 // ---------------------------------------------------------------------------
 
-const renderAll = (state: AppState): void => {
-  renderRules(state);
-  renderNetwork(state);
-  renderMocks(state);
-  renderHistory(state);
+let currentState: AppState | null = null;
+let renderScheduled = false;
+
+const renderActiveView = (state: AppState, view: ViewId): void => {
+  if (view === "rules") {
+    renderRules(state);
+    return;
+  }
+
+  if (view === "network") {
+    renderNetwork(state);
+    // Assertions UI is rendered by settings module inside the network compose panel.
+    renderSettings(state);
+    return;
+  }
+
+  if (view === "mocks") {
+    renderMocks(state);
+    return;
+  }
+
+  if (view === "history") {
+    renderHistory(state);
+    return;
+  }
+
   renderSettings(state);
+};
+
+const scheduleRender = (): void => {
+  if (!currentState || renderScheduled) {
+    return;
+  }
+
+  renderScheduled = true;
+  requestAnimationFrame(() => {
+    renderScheduled = false;
+
+    if (!currentState) {
+      return;
+    }
+
+    renderActiveView(currentState, getActiveView());
+  });
+};
+
+const applyStorageChanges = (
+  state: AppState,
+  changes: { [key: string]: chrome.storage.StorageChange }
+): boolean => {
+  let changed = false;
+
+  if (changes[STORAGE_KEYS.CAPTURED_REQUESTS]) {
+    state.requests = parseCapturedRequests(changes[STORAGE_KEYS.CAPTURED_REQUESTS].newValue);
+    changed = true;
+  }
+
+  if (changes[STORAGE_KEYS.RULES]) {
+    state.rules = parseRules(changes[STORAGE_KEYS.RULES].newValue);
+    changed = true;
+  }
+
+  if (changes[STORAGE_KEYS.RULE_GROUPS]) {
+    state.ruleGroups = parseRuleGroups(changes[STORAGE_KEYS.RULE_GROUPS].newValue);
+    changed = true;
+  }
+
+  if (changes[STORAGE_KEYS.RULE_VALIDATION]) {
+    state.validation = parseRuleValidation(changes[STORAGE_KEYS.RULE_VALIDATION].newValue);
+    changed = true;
+  }
+
+  if (changes[STORAGE_KEYS.RESPONSE_ASSERTIONS]) {
+    state.assertions = parseResponseAssertions(changes[STORAGE_KEYS.RESPONSE_ASSERTIONS].newValue);
+    changed = true;
+  }
+
+  return changed;
 };
 
 // ---------------------------------------------------------------------------
@@ -65,22 +137,28 @@ const renderAll = (state: AppState): void => {
 // ---------------------------------------------------------------------------
 
 const bootstrap = async (): Promise<void> => {
-  initNavigation();
   initRules();
   initNetwork();
   initMocks();
   initHistory();
   initSettings();
 
-  const initialState = await loadAppState();
-  renderAll(initialState);
+  onActiveViewChange(() => {
+    scheduleRender();
+  });
+  initNavigation();
 
-  chrome.storage.onChanged.addListener((_changes, areaName) => {
-    if (areaName !== "local") {
+  currentState = await loadAppState();
+  scheduleRender();
+
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== "local" || !currentState) {
       return;
     }
 
-    void loadAppState().then(renderAll);
+    if (applyStorageChanges(currentState, changes)) {
+      scheduleRender();
+    }
   });
 };
 

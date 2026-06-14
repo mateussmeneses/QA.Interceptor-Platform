@@ -95,6 +95,21 @@ export type HistorySession = {
   pendingCount: number;
 };
 
+export type ReplayArtifact = {
+  id: string;
+  label: string;
+  sourceSessionId: string;
+  createdAt: string;
+  requestCount: number;
+  requests: Array<{
+    id: string;
+    method: string;
+    url: string;
+    headers: Record<string, string>;
+    body?: string;
+  }>;
+};
+
 // ---------------------------------------------------------------------------
 // Response assertions view-model
 // ---------------------------------------------------------------------------

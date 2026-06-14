@@ -1,5 +1,5 @@
 import { build, context } from "esbuild";
-import { copyFile, mkdir } from "node:fs/promises";
+import { copyFile, cp, mkdir } from "node:fs/promises";
 import path from "node:path";
 
 const isWatch = process.argv.includes("--watch");
@@ -35,7 +35,10 @@ const tasks = [
 
 await mkdir(distDir, { recursive: true });
 await copyFile(path.join(rootDir, "src", "sidepanel", "index.html"), path.join(distDir, "sidepanel.html"));
-await copyFile(path.join(rootDir, "src", "sidepanel", "styles.css"), path.join(distDir, "styles.css"));
+await cp(path.join(rootDir, "src", "sidepanel", "styles"), path.join(distDir, "styles"), {
+  recursive: true,
+  force: true,
+});
 
 if (isWatch) {
   for (const task of tasks) {

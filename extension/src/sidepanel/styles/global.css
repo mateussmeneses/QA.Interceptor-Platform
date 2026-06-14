@@ -44,6 +44,23 @@ body {
               color var(--duration-base) var(--ease-in-out);
 }
 
+.skip-link {
+  position: absolute;
+  left: var(--spacing-m);
+  top: -40px;
+  z-index: 1100;
+  background: var(--surface-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  box-shadow: var(--shadow-md);
+}
+
+.skip-link:focus {
+  top: var(--spacing-m);
+}
+
 /* ============================================================================
    TYPOGRAPHY — BASE STYLES
    ============================================================================ */
@@ -573,5 +590,16 @@ html[data-theme="dark"] select {
   /* Desktop adjustments */
   body {
     font-size: var(--font-base);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -17,6 +17,7 @@ export const STORAGE_KEYS = {
   RULE_VALIDATION: "ruleValidation",
   RESPONSE_ASSERTIONS: "responseAssertions",
   MOCK_ENV_VARS: "mockEnvVars",
+  REPLAY_ARTIFACTS: "replayArtifacts",
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
@@ -85,6 +86,23 @@ export type StoredCapturedRequest = {
   response?: StoredCapturedResponse;
 };
 
+export type StoredReplayArtifactRequest = {
+  id: string;
+  method: string;
+  url: string;
+  headers: Record<string, string>;
+  body?: string;
+};
+
+export type StoredReplayArtifact = {
+  id: string;
+  label: string;
+  sourceSessionId: string;
+  createdAt: string;
+  requestCount: number;
+  requests: StoredReplayArtifactRequest[];
+};
+
 // ---------------------------------------------------------------------------
 // Type guards
 // ---------------------------------------------------------------------------
@@ -133,6 +151,36 @@ const isStoredMatchedRule = (value: unknown): value is StoredMatchedRule => {
     typeof value.ruleId === "string" &&
     typeof value.ruleName === "string" &&
     typeof value.type === "string"
+  );
+};
+
+const isStoredReplayArtifactRequest = (value: unknown): value is StoredReplayArtifactRequest => {
+  if (!isObject(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === "string" &&
+    typeof value.method === "string" &&
+    typeof value.url === "string" &&
+    isObject(value.headers) &&
+    (value.body === undefined || typeof value.body === "string")
+  );
+};
+
+const isStoredReplayArtifact = (value: unknown): value is StoredReplayArtifact => {
+  if (!isObject(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === "string" &&
+    typeof value.label === "string" &&
+    typeof value.sourceSessionId === "string" &&
+    typeof value.createdAt === "string" &&
+    typeof value.requestCount === "number" &&
+    Array.isArray(value.requests) &&
+    (value.requests as unknown[]).every(isStoredReplayArtifactRequest)
   );
 };
 
@@ -230,6 +278,14 @@ export const parseCapturedRequests = (raw: unknown): StoredCapturedRequest[] => 
   return raw.filter(isStoredCapturedRequest);
 };
 
+export const parseReplayArtifacts = (raw: unknown): StoredReplayArtifact[] => {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  return raw.filter(isStoredReplayArtifact);
+};
+
 export const parseMockEnvVars = (raw: unknown): StoredMockEnvVar[] => {
   if (!Array.isArray(raw)) {
     return [];
@@ -318,4 +374,13 @@ export const loadResponseAssertions = async (): Promise<StoredResponseAssertion[
 
 export const saveResponseAssertions = async (assertions: StoredResponseAssertion[]): Promise<void> => {
   await chrome.storage.local.set({ [STORAGE_KEYS.RESPONSE_ASSERTIONS]: assertions });
+};
+
+export const loadReplayArtifacts = async (): Promise<StoredReplayArtifact[]> => {
+  const stored = await chrome.storage.local.get(STORAGE_KEYS.REPLAY_ARTIFACTS);
+  return parseReplayArtifacts(stored[STORAGE_KEYS.REPLAY_ARTIFACTS]);
+};
+
+export const saveReplayArtifacts = async (artifacts: StoredReplayArtifact[]): Promise<void> => {
+  await chrome.storage.local.set({ [STORAGE_KEYS.REPLAY_ARTIFACTS]: artifacts });
 };

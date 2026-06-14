@@ -1,4 +1,5 @@
 # ADR-002: Centralized Storage Abstraction Layer
+<!-- markdownlint-disable MD040 -->
 
 **Status**: Accepted  
 **Date**: 2026-06-12  
@@ -32,6 +33,7 @@ storage/index.ts
 ```
 
 **Constraints enforced by architecture**:
+
 1. No feature module or background script may call `chrome.storage` directly.
 2. Parse functions (`parseRules`, `parseCapturedRequests`, …) live in `packages/rule-engine/src/storage-parsers.ts` as pure functions so they can be tested without `chrome`.
 3. All loaded data is validated through parse functions before returning typed values.
@@ -42,15 +44,18 @@ storage/index.ts
 ## Consequences
 
 **Positive**:
+
 - Single source of truth for key names, shapes, and defaults.
 - Parse functions are unit-tested (50 tests) without a browser.
 - Migration to a different storage backend (IndexedDB, Node.js fs) requires changing only this file.
 - Type errors at call sites surface immediately — no `unknown` escaping to features.
 
 **Negative / Trade-offs**:
+
 - Adds one indirection layer. Direct `chrome.storage` calls are 3-4 lines; abstracted calls are 1 line but require a function for each key.
 - All domain types must be declared in `StoredXxx` — new keys require updating this file.
 
 **When to extend**:
+
 - Adding a new persisted domain → add `STORAGE_KEYS.MY_KEY`, `StoredMyType`, `loadMyType`, `saveMyType`, and a matching `parseMyType` in `storage-parsers.ts`.
 - Never inline `chrome.storage` calls outside this module.
