@@ -1,4 +1,5 @@
 import type { InterceptedRequest, Rule } from "@qa-interceptor/shared-types";
+import { matchesCondition } from "./rule-index.js";
 
 export type MatchedRule = {
   ruleId: string;
@@ -39,20 +40,6 @@ const byPriorityThenCreatedAt = (a: Rule, b: Rule): number => {
   }
 
   return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-};
-
-const matchesCondition = (rule: Rule, request: InterceptedRequest): boolean => {
-  const condition = rule.condition;
-
-  if (condition.method && condition.method !== request.method) {
-    return false;
-  }
-
-  if (condition.urlContains && !request.url.includes(condition.urlContains)) {
-    return false;
-  }
-
-  return true;
 };
 
 export {

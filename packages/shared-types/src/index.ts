@@ -17,8 +17,7 @@ export type RuleType =
   | "mock-status"
   | "redirect"
   | "block"
-  | "delay"
-  | "validate-schema";
+  | "delay";
 
 export type Rule = {
   id: string;

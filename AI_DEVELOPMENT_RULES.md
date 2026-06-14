@@ -1,95 +1,95 @@
 # AI_DEVELOPMENT_RULES — QA.Interceptor Platform
 
-> Regras obrigatórias para qualquer sessão de IA (Copilot, Claude, GPT, Gemini, Cursor, etc.)
-> ou desenvolvedor humano que trabalhe neste repositório. O objetivo é evitar retrabalho,
-> código duplicado e implementações paralelas — problemas reais já encontrados neste projeto.
+> Mandatory rules for any AI session (Copilot, Claude, GPT, Gemini, Cursor, etc.) or human
+> developer working in this repository. The goal is to avoid rework, duplicated code, and
+> parallel implementations — real problems already found in this project.
 
 ---
 
-## 0. Antes de qualquer trabalho (gate obrigatório)
+## 0. Before any work (mandatory gate)
 
-1. **Leia `PROJECT_STATE.md`** — entenda o estado real, a arquitetura oficial e o que já existe.
-2. **Leia `BACKLOG_CONSOLIDATED.md`** — é o **único** backlog oficial. Não use outros.
-3. **Não confie na documentação histórica** (`docs/analysis/*`, `docs/planning/*`): são snapshots
-   datados e podem contradizer o código. O **código é a evidência principal**.
+1. **Read `PROJECT_STATE.md`** — understand the real state, the official architecture, and what already exists.
+2. **Read `BACKLOG_CONSOLIDATED.md`** — it is the **only** official backlog. Do not use others.
+3. **Do not trust historical docs** (`docs/analysis/*`, `docs/planning/*`): they are dated
+   snapshots and may contradict the code. **Code is the primary evidence.**
 
 ---
 
-## 1. Antes de criar qualquer funcionalidade
+## 1. Before creating any feature
 
-- **Verifique se já existe.** Pesquise em `packages/rule-engine/src`, `extension/src` e
-  `BACKLOG_CONSOLIDATED.md`. Vários engines já estão implementados mas **não conectados**
+- **Check whether it already exists.** Search `packages/rule-engine/src`, `extension/src`, and
+  `BACKLOG_CONSOLIDATED.md`. Several engines are implemented but **not wired**
   (schema-validator, contract-comparator, conflict-detector, conditional-mock-evaluator,
-  schema-inference). **Conecte o que existe; não recrie.**
-- **Nunca crie uma implementação paralela** para algo que já existe (foi a causa raiz da
-  camada React morta e dos dois motores de regra concorrentes).
-- **Priorize reutilização** antes de criar novo módulo, componente ou utilitário.
+  schema-inference). **Wire what exists; do not recreate.**
+- **Never create a parallel implementation** for something that already exists (this was the
+  root cause of the dead React layer and the two concurrent rule engines).
+- **Prioritize reuse** before creating a new module, component, or utility.
 
 ---
 
-## 2. Arquitetura — não violar
+## 2. Architecture — do not violate
 
-- **UI é TypeScript puro + DOM.** **Proibido reintroduzir React** sem um novo ADR aprovado.
-- **Lógica pura vai no `rule-engine`** (sem `chrome`/`window`/DOM). Tudo com teste.
-- **Tipos de domínio vivem em `shared-types`.** Não redefina `Rule`, `RuleCondition`,
-  `MockEnvVar`, etc. localmente — importe.
-- **Storage só via `extension/src/storage/index.ts`.**
-- **Um motor de regras só:** `evaluateRules`. Não criar motores concorrentes.
-- **Sem dependências circulares.** Direção: `shared-types ← rule-engine ← extension`.
-
----
-
-## 3. Backlog e documentação
-
-- **Nunca crie um novo backlog.** Atualize `BACKLOG_CONSOLIDATED.md`.
-- **Nenhuma tarefa pode existir em mais de um lugar.** IDs são únicos.
-- **Status só é "Done" com evidência:** código + build verde + teste/typecheck verde.
-  Layout/skeleton = "In Progress". Engine não conectado = "Engine pronto / não conectado".
-- **Atualize `PROJECT_STATE.md`** após concluir qualquer funcionalidade ou mudança de arquitetura.
-- Documentos em `docs/analysis/`, `docs/planning/` e backlogs antigos são **histórico read-only**.
+- **UI is plain TypeScript + DOM.** **Reintroducing React is forbidden** without a new approved ADR.
+- **Pure logic goes in `rule-engine`** (no `chrome`/`window`/DOM). Everything tested.
+- **Domain types live in `shared-types`.** Do not redefine `Rule`, `RuleCondition`,
+  `MockEnvVar`, etc. locally — import them.
+- **Storage only via `extension/src/storage/index.ts`.**
+- **Only one rule engine:** `evaluateRules`. Do not create concurrent engines.
+- **No circular dependencies.** Direction: `shared-types ← rule-engine ← extension`.
 
 ---
 
-## 4. Qualidade de código
+## 3. Backlog and documentation
 
-- Aplique **DRY, KISS e SOLID**. Prefira composição a herança. Módulos pequenos.
-- **Evite duplicação de código.** Se copiar lógica, pare e extraia para um módulo compartilhado.
-- TypeScript estrito. **Evite `any`.** Valide apenas nas fronteiras do sistema.
-- **Não** adicione comentários/docstrings/tipos a código que você não alterou.
-- **Não** crie helpers/abstrações para uso único.
-- **Não** adicione tratamento de erro para cenários impossíveis.
+- **Never create a new backlog.** Update `BACKLOG_CONSOLIDATED.md`.
+- **No task may exist in more than one place.** IDs are unique.
+- **A task is "Done" only with evidence:** code + green build + green test/typecheck.
+  Layout/skeleton = "In Progress". Unwired engine = "Engine ready / not wired".
+- **Update `PROJECT_STATE.md`** after finishing any feature or architectural change.
+- Documents in `docs/analysis/`, `docs/planning/`, and old backlogs are **read-only history**.
 
 ---
 
-## 5. Validação obrigatória antes de concluir
+## 4. Code quality
 
-Rode e garanta verde:
+- Apply **DRY, KISS, and SOLID**. Prefer composition over inheritance. Small modules.
+- **Avoid code duplication.** If you copy logic, stop and extract it into a shared module.
+- Strict TypeScript. **Avoid `any`.** Validate only at system boundaries.
+- **Do not** add comments/docstrings/types to code you did not change.
+- **Do not** create helpers/abstractions for one-time use.
+- **Do not** add error handling for impossible scenarios.
+
+---
+
+## 5. Mandatory validation before finishing
+
+Run and ensure green:
 
 ```
-npm run build         # build de extension + pacotes
-npm test              # testes do rule-engine (vitest)
-cd extension && npx tsc -p tsconfig.json --noEmit   # typecheck COMPLETO deve passar
+npm run build         # build extension + packages
+npm test              # rule-engine tests (vitest)
+cd extension && npx tsc -p tsconfig.json --noEmit   # FULL typecheck must pass
 ```
 
-Se adicionar lógica pura ao `rule-engine`, **adicione testes** (`*.test.ts`).
+If you add pure logic to `rule-engine`, **add tests** (`*.test.ts`).
 
 ---
 
-## 6. Segurança e escopo
+## 6. Security and scope
 
-- Tudo roda **localmente**. **Nunca** colete dados do usuário nem envie tráfego para serviços externos.
-- HTML é construído por concatenação de strings: **sempre** use `escapeHtml` em dados dinâmicos.
-- Não altere `manifest.json` (permissões) sem justificativa de segurança documentada.
+- Everything runs **locally**. **Never** collect user data or send traffic to external services.
+- HTML is built via string concatenation: **always** use `escapeHtml` on dynamic data.
+- Do not change `manifest.json` (permissions) without a documented security justification.
 
 ---
 
-## 7. Anti-padrões já cometidos neste projeto (não repetir)
+## 7. Anti-patterns already committed in this project (do not repeat)
 
-| Anti-padrão | O que aconteceu | Regra |
+| Anti-pattern | What happened | Rule |
 | --- | --- | --- |
-| Implementação paralela | Camada React inteira criada sem conectar ao runtime (~3.300 L mortas) | Nunca duas UIs/stacks |
-| Motor concorrente | `rule-index.ts` duplicou `evaluateRules` sem substituí-lo | Um motor só |
-| Cópia de tipos | `Rule`/`MockEnvVar` redefinidos em 4 lugares | Importe de `shared-types` |
-| Parsers duplicados | `storage-parsers.ts` copiou `storage/index.ts` | Fonte única |
-| "Done" sem execução | Engines marcados Done mas nunca conectados | Done = executa em runtime |
-| Backlogs múltiplos | 5 backlogs com status divergentes | Um backlog só |
+| Parallel implementation | An entire React layer created without wiring to runtime (~3,300 dead lines) | Never two UIs/stacks |
+| Concurrent engine | `rule-index.ts` duplicated `evaluateRules` without replacing it | One engine only |
+| Type copies | `Rule`/`MockEnvVar` redefined in 4 places | Import from `shared-types` |
+| Duplicated parsers | `storage-parsers.ts` copied `storage/index.ts` | Single source |
+| "Done" without execution | Engines marked Done but never wired | Done = runs at runtime |
+| Multiple backlogs | 5 backlogs with divergent statuses | One backlog only |

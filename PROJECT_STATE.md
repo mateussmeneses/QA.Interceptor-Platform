@@ -1,118 +1,118 @@
 # PROJECT_STATE — QA.Interceptor Platform
 
-> **Fonte única de verdade do projeto.** Toda sessão de IA ou desenvolvedor DEVE ler
-> este arquivo e `BACKLOG_CONSOLIDATED.md` antes de iniciar qualquer trabalho.
-> Atualize este documento sempre que concluir uma funcionalidade ou mudar a arquitetura.
+> **Single source of truth for the project.** Every AI session or developer MUST read
+> this file and `BACKLOG_CONSOLIDATED.md` before starting any work.
+> Update this document whenever you finish a feature or change the architecture.
 
-**Última auditoria:** 2026-06-13 (auditoria completa de 9 fases, evidência por código + build + testes)
-**Evidência de saúde atual:** `npm run build` ✅ · `tsc` completo ✅ (sem erros) · `npm test` ✅ 578 testes / 20 arquivos
-
----
-
-## 1. Objetivo do projeto
-
-Extensão de navegador (Manifest V3) **open-source** focada em QA e teste de APIs. Permite a
-analistas de QA interceptar, modificar, mockar e validar tráfego HTTP sem conhecimento de
-desenvolvimento. Meta de longo prazo: alternativa leve a Requestly / Charles / Burp,
-orientada a QA. Tudo roda **localmente**; nenhum dado é coletado ou enviado para fora.
+**Last audit:** 2026-06-13 (full 9-phase audit, evidence by code + build + tests)
+**Current health evidence:** `npm run build` ✅ · full `tsc` ✅ (no errors) · `npm test` ✅ 579 tests / 20 files
 
 ---
 
-## 2. Estado atual
+## 1. Project goal
 
-MVP funcional. O núcleo de interceptação, regras, mocks, captura, assertions e exportação de
-evidências funciona ponta a ponta. A auditoria de 2026-06-13 removeu a camada React morta
-(~3.300 linhas) e destravou o typecheck completo. Persistem engines implementados-mas-não-
-conectados e limitações de plataforma documentadas abaixo.
+Open-source browser extension (Manifest V3) focused on QA and API testing. It lets QA
+analysts intercept, modify, mock, and validate HTTP traffic without development knowledge.
+Long-term goal: a lightweight, QA-oriented alternative to Requestly / Charles / Burp.
+Everything runs **locally**; no data is collected or sent anywhere.
 
 ---
 
-## 3. Arquitetura oficial
+## 2. Current state
 
-**Decisão fechada (ADR-001/004 + auditoria):**
+Functional MVP. The interception, rules, mocks, capture, assertions, and evidence-export
+core works end to end. The 2026-06-13 audit removed the dead React layer (~3,300 lines) and
+unblocked the full typecheck. Implemented-but-not-wired engines and platform limitations
+remain, documented below.
 
-- **UI = TypeScript puro + DOM imperativo.** `extension/src/sidepanel/index.html` +
-  `features/*.ts`. **NÃO usar React.** A antiga camada `components/*.tsx` foi removida.
-- **Lógica pura = pacote bounded `@qa-interceptor/rule-engine`.** Sem `chrome`/`window`/DOM.
-- **Tipos = pacote `@qa-interceptor/shared-types`.** Fonte única de tipos de domínio e mensagens.
-- **Storage = camada única `extension/src/storage/index.ts`** sobre `chrome.storage.local`.
-- **Motor de regras oficial = `evaluateRules`** (`rule-engine/src/index.ts`).
+---
+
+## 3. Official architecture
+
+**Closed decision (ADR-001/004 + audit):**
+
+- **UI = plain TypeScript + imperative DOM.** `extension/src/sidepanel/index.html` +
+  `features/*.ts`. **Do NOT use React.** The old `components/*.tsx` layer was removed.
+- **Pure logic = bounded package `@qa-interceptor/rule-engine`.** No `chrome`/`window`/DOM.
+- **Types = package `@qa-interceptor/shared-types`.** Single source of domain types and messages.
+- **Storage = single layer `extension/src/storage/index.ts`** over `chrome.storage.local`.
+- **Official rule engine = `evaluateRules`** (`rule-engine/src/index.ts`).
 
 ```
 shared-types  ←  rule-engine  ←  extension (background / content / sidepanel / storage)
 ```
 
-Sem dependências circulares. Direção de import é unidirecional.
+No circular dependencies. Import direction is unidirectional.
 
 ---
 
-## 4. Funcionalidades
+## 4. Features
 
-### ✅ Funcionando (validado por código + build)
+### ✅ Working (validated by code + build)
 
-- Captura de requests via `webRequest` + render no inspector.
-- Regras via DNR (todo o tráfego): `rewrite-url`, `rewrite-header`, `redirect`, `block`, `rewrite-query`.
-- Mocks via fetch bridge (somente `window.fetch`): `mock-response`, `mock-status`, `rewrite-response`, `rewrite-request-body`, `delay`.
-- Replay (`REPEAT_REQUEST`), compose, clone de request.
-- Assertions de resposta (`evaluateAssertions` — conectado em `network.ts`).
-- Diff de resposta (`diffText` — conectado).
-- Grupos de regras (prioridade + filtro de grupo habilitado).
-- Import/export de regras (JSON), HAR import/export, cópia como cURL.
-- Export de evidência JSON / Markdown / HTML.
-- Propagação de edições sem reload (`storage.onChanged`).
-- Dynamic variables em templates de mock (`{{timestamp}}`, `{{uuid}}`, `{{method}}`, `{{url}}`, env vars).
+- Request capture via `webRequest` + render in the inspector.
+- Rules via DNR (all traffic): `rewrite-url`, `rewrite-header`, `redirect`, `block`, `rewrite-query`.
+- Mocks via fetch bridge (only `window.fetch`): `mock-response`, `mock-status`, `rewrite-response`, `rewrite-request-body`, `delay`.
+- Replay (`REPEAT_REQUEST`), compose, clone request.
+- Response assertions (`evaluateAssertions` — wired in `network.ts`).
+- Response diff (`diffText` — wired).
+- Rule groups (priority + enabled-group filtering).
+- Rule import/export (JSON), HAR import/export, copy as cURL.
+- Evidence export JSON / Markdown / HTML.
+- Live edit propagation without reload (`storage.onChanged`).
+- Dynamic variables in mock templates (`{{timestamp}}`, `{{uuid}}`, `{{method}}`, `{{url}}`, env vars).
 
-### 🟡 Parcialmente implementadas
+### 🟡 Partially implemented
 
-- `QP-006` Export HTML — existe, sem charts/waterfall completos.
-- `QP-007` Replay player — replay sequencial, sem timeline/scrubber.
-- `OBS-001` Diff UI — funcional, UX parcial.
-- `OBS-004` Execution trace — badges de conflito inline (não usa o engine `conflict-detector`).
-- Captura de corpo de resposta — só para respostas mockadas (limitação MV3 `webRequest`).
+- `QP-006` HTML export — exists, no full charts/waterfall.
+- `QP-007` Replay player — sequential replay, no timeline/scrubber.
+- `OBS-001` Diff UI — functional, partial UX.
+- `OBS-004` Execution trace — inline conflict badges (does not use the `conflict-detector` engine).
+- Response body capture — only for mocked responses (MV3 `webRequest` limitation).
 
-### 🟦 Implementadas como engine, NÃO conectadas ao runtime (valor pronto, falta wiring)
+### 🟦 Implemented as engines, NOT wired to runtime (value ready, wiring missing)
 
-> Estes módulos compilam e têm testes verdes, mas **nenhuma linha executa** na extensão
-> rodando. NÃO os recrie. Conecte-os (ver backlog INT-*).
+> These modules compile and have green tests, but **no line executes** in the running
+> extension. Do NOT recreate them. Wire them up (see backlog INT-*).
 
 - `schema-validator.ts` (JSON Schema draft-07) — QP-002.
-- `contract-comparator.ts` (drift de contrato) — QP-003.
-- `conflict-detector.ts` (4 tipos de conflito) — OBS-005.
-- `conditional-mock-evaluator.ts` (mock condicional) — MOCK-001.
-- `schema-inference.ts` (inferência de schema) — AI-001.
-- `rule-index.ts` (motor indexado concorrente) — TECH-001 (decidir: migrar ou remover).
+- `contract-comparator.ts` (contract drift) — QP-003.
+- `conflict-detector.ts` (4 conflict kinds) — OBS-005.
+- `conditional-mock-evaluator.ts` (conditional mock) — MOCK-001.
+- `schema-inference.ts` (schema inference) — AI-001.
+- `rule-index.ts` (concurrent indexed engine) — TECH-001 (decide: migrate or remove).
 
-### ❌ Não implementadas / fantasma
+### ❌ Not implemented / phantom
 
-- `validate-schema` — tipo de regra existe e é selecionável, mas **não tem handler** (no-op). Decidir: implementar via `schema-validator` ou remover o tipo.
-- Interceptação de `XMLHttpRequest` / WebSocket — mocks só pegam `fetch`.
-- Fase 4 (proxy desktop), Fase 5 (team/enterprise), Fase Futuro (AI/security) — não iniciadas.
+- `validate-schema` rule type — **REMOVED** (FIX-001). Will be reintroduced as a real feature by INT-001.
+- `XMLHttpRequest` / WebSocket interception — mocks only catch `fetch`.
+- Phase 4 (desktop proxy), Phase 5 (team/enterprise), Future Phase (AI/security) — not started.
 
 ---
 
-## 5. Estrutura oficial de diretórios
+## 5. Official directory structure
 
 ```
 extension/
   manifest.json              MV3: DNR, webRequest, sidePanel, content script
   scripts/build.mjs          esbuild: background, sidepanel/main, injector, mock-bridge
-  tsconfig.json              typecheck completo (deve passar)
-  tsconfig.runtime.json      escopo de runtime
+  tsconfig.json              full typecheck (must pass)
+  tsconfig.runtime.json      runtime scope
   src/
     background/index.ts      DNR sync + webRequest capture + replay
-    content/injector.ts      injeta bridge + relay de mensagens
-    content/mock-bridge.ts   patch de fetch (mocks/rewrites/delay) na página
-    storage/index.ts         camada única de storage (parsers + chaves)
-    storage/adapter.ts       ⚠️ ÓRFÃO (ver TECHNICAL_DEBT TD-003)
+    content/injector.ts      injects bridge + relays messages
+    content/mock-bridge.ts   patches fetch (mocks/rewrites/delay) on the page
+    storage/index.ts         single storage layer (parsers + keys)
+    storage/adapter.ts       ⚠️ ORPHAN (see TECHNICAL_DEBT TD-014)
     sidepanel/
-      main.ts                orquestrador
-      index.html             markup de todas as views
+      main.ts                orchestrator
+      index.html             markup for all views
       features/*.ts          rules, network, mocks, history, settings, navigation
       shared/                utils, modal-controller, theme-manager, types
       styles/                tokens, global, layout + styles/components/*.css
 packages/
-  shared-types/src/          index.ts (domínio) + messages.ts (contratos)
-  rule-engine/src/           lógica pura + testes (*.test.ts)
+  shared-types/src/          index.ts (domain) + messages.ts (contracts)
+  rule-engine/src/           pure logic + tests (*.test.ts)
 docs/
   adr/                       ADR-001..006
   architecture/ backlog/ planning/ analysis/ reference/
@@ -120,51 +120,53 @@ docs/
 
 ---
 
-## 6. Fluxos principais
+## 6. Main flows
 
-1. **Regras DNR:** sidepanel grava regra → `storage.onChanged` → background `syncDynamicRules` → `updateDynamicRules`. Aplica a todo o tráfego.
-2. **Mock/rewrite (fetch):** injector lê storage → `RULES_UPDATE` para a página → mock-bridge faz patch de `fetch` → ao casar, retorna `Response` sintética → `MOCK_APPLIED` → injector relay → background grava captura → sidepanel renderiza.
-3. **Replay/compose:** sidepanel → `REPEAT_REQUEST` → background faz `fetch` real → captura nova entrada.
-4. **Assertions/diff:** rodam no sidepanel (`network.ts`) usando `evaluateAssertions` e `diffText` do rule-engine.
-
----
-
-## 7. Dependências críticas
-
-- `esbuild` (bundling), `typescript`, `vitest` (testes do engine), `@types/chrome`.
-- Ferramentas de qualidade: eslint, prettier, husky, commitlint, lint-staged.
-- **Nenhuma dependência de runtime React** (removida). Não reintroduzir sem ADR.
+1. **DNR rules:** sidepanel saves a rule → `storage.onChanged` → background `syncDynamicRules` → `updateDynamicRules`. Applies to all traffic.
+2. **Mock/rewrite (fetch):** injector reads storage → `RULES_UPDATE` to the page → mock-bridge patches `fetch` → on match returns a synthetic `Response` → `MOCK_APPLIED` → injector relays → background stores capture → sidepanel renders.
+3. **Replay/compose:** sidepanel → `REPEAT_REQUEST` → background performs a real `fetch` → captures a new entry.
+4. **Assertions/diff:** run in the sidepanel (`network.ts`) using `evaluateAssertions` and `diffText` from rule-engine.
 
 ---
 
-## 8. Riscos conhecidos
+## 7. Critical dependencies
 
-- **R1 (Crítico):** mocks/delay só interceptam `fetch` → não funcionam em sites que usam XHR.
-- **R2 (Crítico):** 6 engines não conectados podem ser "recriados" por engano por sessões futuras.
-- **R3 (Médio):** `matchesCondition` divergente (case-sensitive no engine vs case-insensitive no bridge) → bug de matching de método.
-- **R4 (Médio):** `validate-schema` fantasma confunde usuários.
-- **R5 (Médio):** `buildDynamicRules` sem guarda para `condition.urlContains` vazio → regex inválido.
-- **R6 (Baixo):** CSS de componentes (`styles/components/*.css`) parcialmente órfão após remoção dos `.tsx` (exige limpeza classe-a-classe; `modal.css` é misto — não remover em bloco).
+- `esbuild` (bundling), `typescript`, `vitest` (engine tests), `@types/chrome`.
+- Quality tooling: eslint, prettier, husky, commitlint, lint-staged.
+- **No React runtime dependency** (removed). Do not reintroduce without an ADR.
 
 ---
 
-## 9. Próxima tarefa recomendada
+## 8. Known risks
 
-**INT-004 — Corrigir `matchesCondition` divergente (R3)** e **L-09 — resolver `validate-schema` fantasma (R4)**: ambos são correções pequenas, de alto valor e baixo risco. Em seguida, **INT-001 — conectar `schema-validator` ao tipo `validate-schema`** (transforma engine ocioso em feature real). Ver `BACKLOG_CONSOLIDATED.md`.
+- **R1 (Critical):** mocks/delay only intercept `fetch` → do not work on sites using XHR.
+- **R2 (Critical):** the 6 unwired engines may be "recreated" by mistake by future sessions.
+- **R3 (Medium):** ~~divergent `matchesCondition`~~ — **FIXED** (INT-004): unified and case-insensitive.
+- **R4 (Medium):** ~~phantom `validate-schema`~~ — **FIXED** (FIX-001): type removed until real implementation (INT-001).
+- **R5 (Medium):** ~~`buildDynamicRules` missing guard~~ — **ALREADY PROTECTED** (FIX-002): early-return prevents invalid regex. Residual limitation: method-only rules are ignored by DNR (CAP-004).
+- **R6 (Low):** component CSS (`styles/components/*.css`) is partially orphaned after the `.tsx` removal (needs class-by-class cleanup; `modal.css` is mixed — do not remove in bulk).
 
 ---
 
-## 10. Arquivos que DEVEM ser alterados (zonas de trabalho ativas)
+## 9. Recommended next task
 
-- `extension/src/sidepanel/features/*.ts` — UI e wiring.
-- `extension/src/background/index.ts` — pipeline DNR e captura.
-- `extension/src/content/mock-bridge.ts` — interceptação fetch.
-- `packages/rule-engine/src/*.ts` — lógica pura (+ testes obrigatórios).
-- `packages/shared-types/src/*.ts` — tipos e contratos.
+**INT-001 — wire `schema-validator` to the runtime** (reintroduces `validate-schema` as a real
+feature, with access to the response body and result display). Then **INT-003** (wire
+`conflict-detector`, replacing the inline counting in `network.ts`). See `BACKLOG_CONSOLIDATED.md`.
 
-## 11. Arquivos que NÃO devem ser alterados sem decisão arquitetural
+---
 
-- `extension/manifest.json` — mudar permissões só com justificativa de segurança.
-- `extension/scripts/build.mjs` — pipeline de build estável.
-- `docs/adr/*.md` — ADRs aceitos; criar novo ADR em vez de editar os antigos.
-- `extension/src/storage/adapter.ts` — órfão; **não usar nem deletar** sem decidir TD-003.
+## 10. Files that MAY be changed (active work zones)
+
+- `extension/src/sidepanel/features/*.ts` — UI and wiring.
+- `extension/src/background/index.ts` — DNR pipeline and capture.
+- `extension/src/content/mock-bridge.ts` — fetch interception.
+- `packages/rule-engine/src/*.ts` — pure logic (+ mandatory tests).
+- `packages/shared-types/src/*.ts` — types and contracts.
+
+## 11. Files that must NOT be changed without an architectural decision
+
+- `extension/manifest.json` — change permissions only with a security justification.
+- `extension/scripts/build.mjs` — stable build pipeline.
+- `docs/adr/*.md` — accepted ADRs; create a new ADR instead of editing old ones.
+- `extension/src/storage/adapter.ts` — orphan; **do not use or delete** without deciding TD-014.

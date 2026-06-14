@@ -136,13 +136,18 @@ export const evaluateRulesFromIndex = (
 };
 
 // ---------------------------------------------------------------------------
-// Condition matching (shared with index.ts, extracted for reuse)
+// Condition matching (canonical, shared by evaluateRules and evaluateRulesFromIndex)
 // ---------------------------------------------------------------------------
 
+/**
+ * Canonical rule-condition matcher.
+ * Method comparison is case-insensitive so behavior is consistent across the
+ * background DNR pipeline and the page fetch bridge.
+ */
 export const matchesCondition = (rule: Rule, request: InterceptedRequest): boolean => {
   const condition = rule.condition;
 
-  if (condition.method && condition.method !== request.method) {
+  if (condition.method && condition.method.toUpperCase() !== request.method.toUpperCase()) {
     return false;
   }
 

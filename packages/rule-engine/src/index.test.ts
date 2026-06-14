@@ -121,6 +121,15 @@ describe("condition: method", () => {
       expect(result.matchedRules).toHaveLength(1);
     }
   });
+
+  it("matches method case-insensitively (INT-004)", () => {
+    const rule = makeRule({ condition: { method: "POST" } });
+    const result = evaluateRules(
+      [rule],
+      makeRequest({ method: "post" as InterceptedRequest["method"] })
+    );
+    expect(result.matchedRules).toHaveLength(1);
+  });
 });
 
 // ---------------------------------------------------------------------------

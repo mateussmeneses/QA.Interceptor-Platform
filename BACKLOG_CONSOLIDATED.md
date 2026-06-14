@@ -1,118 +1,119 @@
 # BACKLOG_CONSOLIDATED — QA.Interceptor Platform
 
-> **Único backlog oficial do projeto.** Substitui e supera todos os outros backlogs.
-> Os arquivos `docs/backlog/BACKLOG_CANONICAL.md`, `BACKLOG.md`, `BACKLOG_EXPANDED.md` e
-> `BACKLOG_FRONTEND.md` são **histórico read-only** (catálogos), não status oficial.
-> Antes de trabalhar, leia também `PROJECT_STATE.md` e `AI_DEVELOPMENT_RULES.md`.
+> **The project's only official backlog.** It replaces and supersedes all other backlogs.
+> The files `docs/backlog/BACKLOG_CANONICAL.md`, `BACKLOG.md`, `BACKLOG_EXPANDED.md`, and
+> `BACKLOG_FRONTEND.md` are **read-only history** (catalogs), not official status.
+> Before working, also read `PROJECT_STATE.md` and `AI_DEVELOPMENT_RULES.md`.
 
-**Última consolidação:** 2026-06-13 (auditoria de 9 fases; status validado por código + build + 578 testes)
+**Last consolidation:** 2026-06-13 (9-phase audit; status validated by code + build + 579 tests)
 
-## Política de status
+## Status policy
 
-- **Done**: implementado E executando em runtime, com build + teste/typecheck verdes.
-- **Engine pronto / não conectado**: lógica pura implementada e testada, mas não executa na extensão.
-- **In Progress**: implementação parcial, skeleton, ou sem profundidade de aceitação.
-- **Todo**: não implementado.
+- **Done**: implemented AND running at runtime, with green build + test/typecheck.
+- **Engine ready / not wired**: pure logic implemented and tested, but not executing in the extension.
+- **In Progress**: partial implementation, skeleton, or lacking acceptance depth.
+- **Todo**: not implemented.
 
-## Taxonomia de fase (única)
+## Phase taxonomy (single)
 
-`Fase 1` MVP extensão · `Fase 2` ferramentas avançadas · `Fase 3` plataforma QA ·
-`Backlog Futuro` proxy desktop / team / AI / security. Esquemas antigos (3.5, 3.6, FE-x) foram aposentados.
+`Phase 1` extension MVP · `Phase 2` advanced tools · `Phase 3` QA platform ·
+`Future Backlog` desktop proxy / team / AI / security. Old schemes (3.5, 3.6, FE-x) are retired.
 
 ---
 
-## P0 — Imediato (estabilização e verdade de runtime)
+## P0 — Immediate (stabilization and runtime truth)
 
-| ID           | Título                                                                  | Status      | Por quê agora                                                  |
+| ID           | Title                                                                  | Status      | Why now                                                       |
 | ------------ | ----------------------------------------------------------------------- | ----------- | ------------------------------------------------------------- |
-| INT-004      | Unificar `matchesCondition` (corrigir case-sensitive vs insensitive)    | Todo        | Bug de matching de método entre engine e mock-bridge (R3)     |
-| FIX-001      | Resolver `validate-schema` fantasma (implementar via schema-validator OU remover tipo) | Todo | Regra selecionável que é no-op (R4)                     |
-| FIX-002      | Guardar `condition.urlContains` vazio em `buildDynamicRules`            | Todo        | Regex DNR inválido quando condição vazia (R5)                 |
-| ARCH-DEC-001 | Decisão de UI runtime (plain TS vs React)                               | **Done**    | Decidido: plain TS. React removido em 2026-06-13              |
-| QA-ARCH-001  | Remover subtree React órfão                                             | **Done**    | ~3.300 linhas removidas; `tsc` completo agora passa           |
-| QA-BUILD-001 | Typecheck completo da extensão deve passar                             | **Done**    | `tsc -p tsconfig.json` verde após remoção                     |
-| QA-DOC-001   | Consolidar/arquivar docs de status obsoletos                           | In Progress | PROJECT_STATE/AI_RULES criados; falta arquivar docs legados   |
+| INT-004      | Unify `matchesCondition` (fix case-sensitive vs insensitive)            | **Done**    | Engine unified + case-insensitive; new test (579 tests)       |
+| FIX-001      | Resolve phantom `validate-schema` (implement via schema-validator OR remove type) | **Done** | Phantom type removed from `RuleType`; to be reintroduced in INT-001 |
+| FIX-002      | Guard empty `condition.urlContains` in `buildDynamicRules`             | **Done**    | Already protected by early-return; no path to invalid regex   |
+| ARCH-DEC-001 | Runtime UI decision (plain TS vs React)                                 | **Done**    | Decided: plain TS. React removed on 2026-06-13                |
+| QA-ARCH-001  | Remove orphan React subtree                                            | **Done**    | ~3,300 lines removed; full `tsc` now passes                   |
+| QA-BUILD-001 | Full extension typecheck must pass                                      | **Done**    | `tsc -p tsconfig.json` green after removal                    |
+| QA-DOC-001   | Consolidate/archive obsolete status docs                               | In Progress | PROJECT_STATE/AI_RULES created; legacy docs still to archive  |
+| CAP-004      | Method-only rule (no urlContains) is ignored by DNR                    | Todo        | Limitation found during FIX-002; needs a semantics decision   |
 
-## P1 — Integração de engines prontos (alto valor, baixo custo)
+## P1 — Wiring ready engines (high value, low cost)
 
-> Engines já implementados e testados; falta apenas conectar ao runtime. **Não recriar.**
+> Engines already implemented and tested; only runtime wiring is missing. **Do not recreate.**
 
-| ID       | Título                                                                | Status | Engine fonte                            |
-| -------- | --------------------------------------------------------------------- | ------ | --------------------------------------- |
-| INT-001  | Conectar JSON Schema validation ao runtime (`validate-schema`)        | Todo   | `schema-validator.ts` (ex-QP-002)       |
-| INT-002  | Conectar contract snapshot comparison à UI                            | Todo   | `contract-comparator.ts` (ex-QP-003)    |
-| INT-003  | Conectar conflict detector à view network (substituir contagem inline)| Todo   | `conflict-detector.ts` (ex-OBS-005)     |
-| INT-005  | Conectar conditional mock evaluator ao mock-bridge                    | Todo   | `conditional-mock-evaluator.ts` (MOCK-001) |
-| INT-006  | Conectar schema inference (auto-gerar schema do tráfego)              | Todo   | `schema-inference.ts` (AI-001)          |
-| TECH-001 | Decidir motor de regras: migrar background p/ `rule-index` OU remover | Todo   | `rule-index.ts`                         |
+| ID       | Title                                                                  | Status | Source engine                              |
+| -------- | --------------------------------------------------------------------- | ------ | ------------------------------------------ |
+| INT-001  | Wire JSON Schema validation to runtime (`validate-schema`)            | Todo   | `schema-validator.ts` (ex-QP-002)          |
+| INT-002  | Wire contract snapshot comparison to the UI                           | Todo   | `contract-comparator.ts` (ex-QP-003)       |
+| INT-003  | Wire conflict detector to the network view (replace inline counting)  | Todo   | `conflict-detector.ts` (ex-OBS-005)        |
+| INT-005  | Wire conditional mock evaluator to the mock-bridge                    | Todo   | `conditional-mock-evaluator.ts` (MOCK-001) |
+| INT-006  | Wire schema inference (auto-generate schema from traffic)             | Todo   | `schema-inference.ts` (AI-001)             |
+| TECH-001 | Decide rule engine: migrate background to `rule-index` OR remove it   | Todo   | `rule-index.ts`                            |
 
-## P1 — Reporting & Observability (parciais a completar)
+## P1 — Reporting & Observability (partials to complete)
 
-| ID      | Título                                  | Status      | Notas                                       |
+| ID      | Title                                   | Status      | Notes                                       |
 | ------- | --------------------------------------- | ----------- | ------------------------------------------- |
-| QP-006  | Export evidência HTML (profissional)    | In Progress | Falta charts/waterfall/report viewer        |
-| QP-007  | Replay/playback UI completo             | In Progress | Falta timeline scrubber/controles           |
-| QP-008  | Salvar sessão como artefato replayável  | Todo        | Sem artefato offline dedicado               |
-| OBS-001 | Diff request/response (UX final)        | In Progress | Diff funcional via `diffText`               |
-| OBS-002 | Waterfall de requests (avançado)        | Todo        | Barras básicas hoje                         |
-| OBS-003 | Análise de tamanho de request           | Todo        | —                                           |
-| OBS-004 | Visualizador de trace de execução       | In Progress | Badges de conflito inline (ver INT-003)     |
-| OBS-006 | Captura e comparação de baseline        | Todo        | —                                           |
-| OBS-007 | Gerador de relatório de regressão       | Todo        | —                                           |
+| QP-006  | Evidence HTML export (professional)     | In Progress | Missing charts/waterfall/report viewer      |
+| QP-007  | Complete replay/playback UI             | In Progress | Missing timeline scrubber/controls          |
+| QP-008  | Save session as replayable artifact     | Todo        | No dedicated offline artifact               |
+| OBS-001 | Request/response diff (final UX)        | In Progress | Functional diff via `diffText`              |
+| OBS-002 | Request waterfall (advanced)            | Todo        | Basic bars today                            |
+| OBS-003 | Request size analysis                   | Todo        | —                                           |
+| OBS-004 | Execution trace visualizer              | In Progress | Inline conflict badges (see INT-003)        |
+| OBS-006 | Baseline capture and comparison         | Todo        | —                                           |
+| OBS-007 | Regression report generator             | Todo        | —                                           |
 
-## P1 — Cobertura de interceptação (limitações de plataforma)
+## P1 — Interception coverage (platform limitations)
 
-| ID      | Título                                       | Status | Notas                                       |
+| ID      | Title                                        | Status | Notes                                       |
 | ------- | -------------------------------------------- | ------ | ------------------------------------------- |
-| CAP-002 | Interceptar `XMLHttpRequest` além de `fetch` | Todo   | Mocks/delay hoje só pegam fetch (R1)        |
-| CAP-003 | Avaliar captura de WebSocket                 | Todo   | Fora do escopo atual                        |
+| CAP-002 | Intercept `XMLHttpRequest` besides `fetch`   | Todo   | Mocks/delay only catch fetch today (R1)     |
+| CAP-003 | Evaluate WebSocket capture                   | Todo   | Out of current scope                        |
 
-## P2 — Performance & Análise
+## P2 — Performance & Analysis
 
-| ID       | Título                          | Status |
-| -------- | ------------------------------- | ------ |
-| OBS-008  | Detecção de anomalia de tráfego | Todo   |
-| PERF-001 | Detecção de gargalo             | Todo   |
-| PERF-002 | Breakdown de timing de request  | Todo   |
-| PERF-003 | Profiler de banda               | Todo   |
+| ID       | Title                       | Status |
+| -------- | --------------------------- | ------ |
+| OBS-008  | Traffic anomaly detection   | Todo   |
+| PERF-001 | Bottleneck detection        | Todo   |
+| PERF-002 | Request timing breakdown    | Todo   |
+| PERF-003 | Bandwidth profiler          | Todo   |
 
-## Governança / Qualidade
+## Governance / Quality
 
-| ID         | Título                                                                    | Status | Notas                                                           |
+| ID         | Title                                                                     | Status | Notes                                                           |
 | ---------- | ------------------------------------------------------------------------- | ------ | --------------------------------------------------------------- |
-| QA-DOC-002 | Reparar links markdown quebrados + CI de link-check                       | Todo   | —                                                               |
-| QA-CSS-001 | Limpeza classe-a-classe de `styles/components/*.css` órfão                | Todo   | `modal.css` é misto — não remover em bloco (R6)                 |
-| QA-TEST-001| Definir estratégia de teste para UI plain-TS                              | Todo   | Testes `.tsx` foram removidos com o subtree                     |
-| TD-003     | Decidir `storage/adapter.ts` (adotar p/ Phase 4 ou remover)               | Todo   | Órfão hoje                                                      |
+| QA-DOC-002 | Repair broken markdown links + link-check CI                              | Todo   | —                                                               |
+| QA-CSS-001 | Class-by-class cleanup of orphan `styles/components/*.css`                | Todo   | `modal.css` is mixed — do not remove in bulk (R6)               |
+| QA-TEST-001| Define a test strategy for the plain-TS UI                                | Todo   | `.tsx` tests were removed with the subtree                      |
+| TD-014     | Decide `storage/adapter.ts` (adopt for Phase 4 or remove)                 | Todo   | Orphan today                                                    |
 
 ---
 
-## Backlog Futuro (não iniciar sem repriorização)
+## Future Backlog (do not start without reprioritization)
 
-- **Proxy desktop (Electron):** P4-001..P4-020 — ver `docs/backlog/BACKLOG_EXPANDED.md` (catálogo histórico).
+- **Desktop proxy (Electron):** P4-001..P4-020 — see `docs/backlog/BACKLOG_EXPANDED.md` (historical catalog).
 - **Team & Enterprise:** P5-001..P5-010.
 - **AI & Advanced:** AI-002..AI-006, MOCK-002..004, SEC-001..004.
 
 ---
 
-## Itens concluídos e verificados (evidência em código)
+## Completed and verified items (evidence in code)
 
-| ID         | Título                                                            | Evidência                                                       |
-| ---------- | ---------------------------------------------------------------- | -------------------------------------------------------------- |
-| Fase 1 MVP | Captura, regras DNR, mocks fetch, rewrite, block/delay/redirect  | `background/index.ts`, `mock-bridge.ts`                        |
-| RW-001..005| Rewrites url/header/query/request-body/response-body             | `background/index.ts`, `mock-bridge.ts`                        |
-| MK-001..002| Mock response + status                                           | `mock-bridge.ts`                                               |
-| NS-001..003| Block / delay / redirect                                         | `background/index.ts`, `mock-bridge.ts`                        |
+| ID          | Title                                                            | Evidence                                                       |
+| ----------- | ---------------------------------------------------------------- | -------------------------------------------------------------- |
+| Phase 1 MVP | Capture, DNR rules, fetch mocks, rewrite, block/delay/redirect  | `background/index.ts`, `mock-bridge.ts`                        |
+| RW-001..005 | Rewrites url/header/query/request-body/response-body            | `background/index.ts`, `mock-bridge.ts`                        |
+| MK-001..002 | Mock response + status                                          | `mock-bridge.ts`                                               |
+| NS-001..003 | Block / delay / redirect                                        | `background/index.ts`, `mock-bridge.ts`                        |
 | NET-001..008| Clear/HAR/cURL/repeat/compose/clone/edit-resend                | `features/network.ts`, `background/index.ts`                   |
-| MK-003     | Dynamic variables em templates                                   | `mock-bridge.ts` (`applyDynamicVariables`)                    |
-| RQ-001..002| Rule groups CRUD + enable/ordering                               | `features/rules.ts`, `background/index.ts`                     |
-| QP-001     | Assertion evaluation pipeline                                    | `evaluateAssertions` em `features/network.ts`                  |
-| QP-004/005 | Export evidência JSON/Markdown                                   | `shared/utils.ts`, `features/history.ts`                       |
+| MK-003      | Dynamic variables in templates                                  | `mock-bridge.ts` (`applyDynamicVariables`)                    |
+| RQ-001..002 | Rule groups CRUD + enable/ordering                              | `features/rules.ts`, `background/index.ts`                     |
+| QP-001      | Assertion evaluation pipeline                                   | `evaluateAssertions` in `features/network.ts`                 |
+| QP-004/005  | Evidence export JSON/Markdown                                   | `shared/utils.ts`, `features/history.ts`                       |
 | ARC-001..003| Feature modules + typed messages + storage layer               | `sidepanel/features/*`, `shared-types/messages.ts`, `storage/index.ts` |
-| TEST       | Suíte do rule-engine                                             | **578 testes / 20 arquivos** verdes (vitest)                  |
+| TEST        | Rule-engine suite                                               | **579 tests / 20 files** green (vitest)                        |
 
-> **Correção histórica:** contagens de teste antigas ("26", "198/469") são **falsas**.
-> O número real e validado é **578**.
+> **Historical correction:** old test counts ("26", "198/469") are **false**.
+> The real, validated number is **579** (578 + 1 case-insensitive test from INT-004).
 >
-> **Nota sobre engines:** QP-002, QP-003 e OBS-005 estavam marcados "Done" em backlogs antigos,
-> mas os engines **não estão conectados ao runtime**. Foram reclassificados como INT-001/002/003.
+> **Note on engines:** QP-002, QP-003, and OBS-005 were marked "Done" in old backlogs,
+> but the engines are **not wired to the runtime**. They were reclassified as INT-001/002/003.
