@@ -17,27 +17,7 @@
 /* 3. Layout & utility classes */
 @import "./layout.css";
 
-/* 4. Component styles (Phase FE-1) */
-@import "./components/button.css";
-@import "./components/input.css";
-@import "./components/search-input.css";
-@import "./components/select-dropdown.css";
-@import "./components/card.css";
-@import "./components/badge.css";
-@import "./components/status-indicator.css";
-@import "./components/spinner.css";
-@import "./components/tabs.css";
-@import "./components/accordion.css";
-@import "./components/toast.css";
-@import "./components/toggle.css";
-@import "./components/checkbox.css";
-@import "./components/textarea.css";
-@import "./components/radio-group.css";
-@import "./components/number-stepper-input.css";
-@import "./components/table.css";
-@import "./components/list-item.css";
-@import "./components/code-block.css";
+/* 4. Component styles (only the ones used by the plain-TS runtime).
+   The React component CSS was removed with the orphan .tsx subtree (QA-CSS-001). */
 @import "./components/diff-viewer.css";
 @import "./components/modal.css";
-@import "./components/popover.css";
-/* ... more components to follow ... */

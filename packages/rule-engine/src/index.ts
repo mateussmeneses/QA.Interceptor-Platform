@@ -74,21 +74,6 @@ export {
 } from "./schema-validator.js";
 
 export {
-  parseRules,
-  parseRuleGroups,
-  parseCapturedRequests,
-  parseResponseAssertions,
-  parseMockEnvVars,
-  parseRuleValidation,
-  type ParsedRule,
-  type ParsedRuleGroup,
-  type ParsedCapturedRequest,
-  type ParsedResponseAssertion,
-  type ParsedMockEnvVar,
-  type ParsedRuleValidation
-} from "./storage-parsers.js";
-
-export {
   compareContracts,
   compareContractStrings,
   type SnapshotDiffEntry,
@@ -134,3 +119,14 @@ export {
   mergeSchemas,
   type InferenceOptions
 } from "./schema-inference.js";
+
+export {
+  isContentRule,
+  isContentMockEnvVar,
+  isContentConditionalMock,
+  type ContentRule,
+  type ContentRuleCondition,
+  type ContentMockEnvVar,
+  type ContentConditionalMock,
+  type ContentConditionalMockBranch
+} from "./content-guards.js";

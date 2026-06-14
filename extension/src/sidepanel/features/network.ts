@@ -16,7 +16,8 @@ import {
   renderRuleChips,
   buildHar,
   readHarAsRequestRows,
-  buildCurlCommand
+  buildCurlCommand,
+  summarizeRuleAction
 } from "../shared/utils";
 import { createModalController, type ModalController } from "../shared/modal-controller";
 import { saveCapturedRequests } from "../../storage/index";
@@ -494,23 +495,6 @@ const renderNetworkExecutionTimeline = (row: RequestRow): string => {
   }
 
   return parts.join("");
-};
-
-const summarizeRuleAction = (type: string): string => {
-  const actions: Record<string, string> = {
-    "rewrite-url": "Action: URL rewritten before request dispatch.",
-    "rewrite-header": "Action: request headers adjusted by rewrite operations.",
-    "rewrite-query": "Action: query string modified by rule operations.",
-    "rewrite-response": "Action: synthetic response body returned for matched request.",
-    "rewrite-request-body": "Action: request body transformed before fetch execution.",
-    "mock-response": "Action: mocked response payload served to caller.",
-    "mock-status": "Action: mocked HTTP status code applied.",
-    delay: "Action: request delayed to simulate network latency.",
-    redirect: "Action: request redirected to configured destination.",
-    block: "Action: request blocked by interception rule."
-  };
-
-  return actions[type] ?? "Action: rule matched and applied in runtime pipeline.";
 };
 
 // ---------------------------------------------------------------------------

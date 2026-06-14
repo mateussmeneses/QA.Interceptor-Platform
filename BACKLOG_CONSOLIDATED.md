@@ -49,24 +49,24 @@
 
 ## P1 — Reporting & Observability (partials to complete)
 
-| ID      | Title                               | Status      | Notes                                                        |
-| ------- | ----------------------------------- | ----------- | ------------------------------------------------------------ |
-| QP-006  | Evidence HTML export (professional) | In Progress | Missing charts/waterfall/report viewer                       |
-| QP-007  | Complete replay/playback UI         | In Progress | Missing timeline scrubber/controls                           |
-| QP-008  | Save session as replayable artifact | Todo        | No dedicated offline artifact                                |
-| OBS-001 | Request/response diff (final UX)    | In Progress | Functional diff via `diffText`                               |
-| OBS-002 | Request waterfall (advanced)        | Todo        | Basic bars today                                             |
-| OBS-003 | Request size analysis               | Todo        | —                                                            |
-| OBS-004 | Execution trace visualizer          | In Progress | Now uses `detectConflicts` (INT-003); 4 conflict kinds shown |
-| OBS-006 | Baseline capture and comparison     | Todo        | —                                                            |
-| OBS-007 | Regression report generator         | Todo        | —                                                            |
+| ID      | Title                               | Status      | Notes                                                                                        |
+| ------- | ----------------------------------- | ----------- | -------------------------------------------------------------------------------------------- |
+| QP-006  | Evidence HTML export (professional) | **Done**    | Self-contained report: KPI cards, status bars, assertion table, traffic waterfall, printable |
+| QP-007  | Complete replay/playback UI         | In Progress | Missing timeline scrubber/controls                                                           |
+| QP-008  | Save session as replayable artifact | Todo        | No dedicated offline artifact                                                                |
+| OBS-001 | Request/response diff (final UX)    | In Progress | Functional diff via `diffText`                                                               |
+| OBS-002 | Request waterfall (advanced)        | Todo        | Basic bars today                                                                             |
+| OBS-003 | Request size analysis               | Todo        | —                                                                                            |
+| OBS-004 | Execution trace visualizer          | In Progress | Now uses `detectConflicts` (INT-003); 4 conflict kinds shown                                 |
+| OBS-006 | Baseline capture and comparison     | Todo        | —                                                                                            |
+| OBS-007 | Regression report generator         | Todo        | —                                                                                            |
 
 ## P1 — Interception coverage (platform limitations)
 
-| ID      | Title                                      | Status | Notes                                   |
-| ------- | ------------------------------------------ | ------ | --------------------------------------- |
-| CAP-002 | Intercept `XMLHttpRequest` besides `fetch` | Todo   | Mocks/delay only catch fetch today (R1) |
-| CAP-003 | Evaluate WebSocket capture                 | Todo   | Out of current scope                    |
+| ID      | Title                                      | Status   | Notes                                                                                    |
+| ------- | ------------------------------------------ | -------- | ---------------------------------------------------------------------------------------- |
+| CAP-002 | Intercept `XMLHttpRequest` besides `fetch` | **Done** | XHR open/send patched in mock-bridge; conditional + static mocks + delay now work on XHR |
+| CAP-003 | Evaluate WebSocket capture                 | Todo     | Out of current scope                                                                     |
 
 ## P2 — Performance & Analysis
 
@@ -79,14 +79,17 @@
 
 ## Governance / Quality
 
-| ID            | Title                                                      | Status   | Notes                                                                                 |
-| ------------- | ---------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------- |
-| QA-DOC-002    | Repair broken markdown links + link-check CI               | Todo     | —                                                                                     |
-| QA-CSS-001    | Class-by-class cleanup of orphan `styles/components/*.css` | Todo     | `modal.css` is mixed — do not remove in bulk (R6)                                     |
-| QA-TEST-001   | Define a test strategy for the plain-TS UI                 | Todo     | `.tsx` tests were removed with the subtree                                            |
-| QA-FMT-001    | Repo-wide Prettier formatting + green `format:check`       | **Done** | `npm run format` applied; `format:check` green                                        |
-| UI-ASSERT-001 | Assertion creation UI for typed assertions                 | **Done** | Type select + expected/path fields wired in `settings.ts`; unlocks INT-001 end-to-end |
-| TD-014        | Decide `storage/adapter.ts` (adopt for Phase 4 or remove)  | Todo     | Orphan today                                                                          |
+| ID            | Title                                                      | Status   | Notes                                                                                             |
+| ------------- | ---------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------- |
+| QA-DOC-002    | Repair broken markdown links + link-check CI               | Todo     | —                                                                                                 |
+| QA-CSS-001    | Class-by-class cleanup of orphan `styles/components/*.css` | **Done** | Removed 20 orphan component CSS (exact-token audit); kept `diff-viewer.css` + `modal.css`         |
+| QA-TEST-001   | Define a test strategy for the plain-TS UI                 | Todo     | `.tsx` tests were removed with the subtree                                                        |
+| QA-FMT-001    | Repo-wide Prettier formatting + green `format:check`       | **Done** | `npm run format` applied; `format:check` green                                                    |
+| UI-ASSERT-001 | Assertion creation UI for typed assertions                 | **Done** | Type select + expected/path fields wired in `settings.ts`; unlocks INT-001 end-to-end             |
+| TD-010        | Deduplicate storage parsers                                | **Done** | Removed stale `rule-engine/storage-parsers.ts` (+tests); `storage/index.ts` is single source      |
+| TD-011        | Dedupe content-script types/guards (D-04/D-05/D-07)        | **Done** | Shared `rule-engine/content-guards.ts` used by injector + mock-bridge; +14 tests                  |
+| TD-016        | Centralize rule-type label/action catalog (D-10)           | **Done** | `RULE_TYPE_CATALOG` in `shared/utils.ts`; `network.ts` consumes `summarizeRuleAction`             |
+| TD-014        | Decide `storage/adapter.ts` (adopt for Phase 4 or remove)  | **Done** | Removed orphan injectable adapter (YAGNI); ADR-002 amended. Reintroduce with consumers in Phase 4 |
 
 ---
 
@@ -112,10 +115,10 @@
 | QP-001       | Assertion evaluation pipeline                                  | `evaluateAssertions` in `features/network.ts`                          |
 | QP-004/005   | Evidence export JSON/Markdown                                  | `shared/utils.ts`, `features/history.ts`                               |
 | ARC-001..003 | Feature modules + typed messages + storage layer               | `sidepanel/features/*`, `shared-types/messages.ts`, `storage/index.ts` |
-| TEST         | Rule-engine suite                                              | **590 tests / 20 files** green (vitest)                                |
+| TEST         | Rule-engine suite                                              | **548 tests / 19 files** green (vitest)                                |
 
 > **Historical correction:** old test counts ("26", "198/469") are **false**.
-> The real, validated number is **590** (after INT-004 case-insensitive + INT-001 json-schema tests).
+> The current validated number is **548** (after removing stale duplicates and adding content-guards tests).
 >
 > **Note on engines:** all 6 rule-engine modules are now resolved. QP-002 (schema-validator) via INT-001;
 > OBS-005 (conflict-detector) via INT-003; QP-003 (contract-comparator) via INT-002; AI-001 (schema-inference)

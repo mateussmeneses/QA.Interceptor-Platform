@@ -5,7 +5,7 @@
 > Update this document whenever you finish a feature or change the architecture.
 
 **Last audit:** 2026-06-13 (full 9-phase audit, evidence by code + build + tests)
-**Current health evidence:** `npm run build` ✅ · full `tsc` ✅ (no errors) · `npm test` ✅ 590 tests / 20 files
+**Current health evidence:** `npm run build` ✅ · full `tsc` ✅ (no errors) · `npm test` ✅ 548 tests / 19 files
 
 ---
 
@@ -52,13 +52,13 @@ No circular dependencies. Import direction is unidirectional.
 
 - Request capture via `webRequest` + render in the inspector.
 - Rules via DNR (all traffic): `rewrite-url`, `rewrite-header`, `redirect`, `block`, `rewrite-query`.
-- Mocks via fetch bridge (only `window.fetch`): `mock-response`, `mock-status`, `rewrite-response`, `rewrite-request-body`, `delay`.
+- Mocks via page bridge: `mock-response`, `mock-status`, `delay`, and sequence mocks work on both `fetch` and `XMLHttpRequest` (CAP-002); `rewrite-response`/`rewrite-request-body` are `fetch`-only.
 - Replay (`REPEAT_REQUEST`), compose, clone request.
 - Response assertions (`evaluateAssertions` — wired in `network.ts`).
 - Response diff (`diffText` — wired).
 - Rule groups (priority + enabled-group filtering).
 - Rule import/export (JSON), HAR import/export, copy as cURL.
-- Evidence export JSON / Markdown / HTML.
+- Evidence export JSON / Markdown / HTML (HTML = professional report: KPIs, status bars, assertion table, traffic waterfall — QP-006).
 - Live edit propagation without reload (`storage.onChanged`).
 - Dynamic variables in mock templates (`{{timestamp}}`, `{{uuid}}`, `{{method}}`, `{{url}}`, env vars).
 - JSON Schema validation of responses (`schema-validator` via the `json-schema` assertion type — INT-001).
@@ -70,7 +70,6 @@ No circular dependencies. Import direction is unidirectional.
 
 ### 🟡 Partially implemented
 
-- `QP-006` HTML export — exists, no full charts/waterfall.
 - `QP-007` Replay player — sequential replay, no timeline/scrubber.
 - `OBS-001` Diff UI — functional, partial UX.
 - `OBS-004` Execution trace — uses `conflict-detector` (INT-003): 4 conflict kinds with descriptions/suggestions.
@@ -102,7 +101,6 @@ extension/
     content/injector.ts      injects bridge + relays messages
     content/mock-bridge.ts   patches fetch (mocks/rewrites/delay) on the page
     storage/index.ts         single storage layer (parsers + keys)
-    storage/adapter.ts       ⚠️ ORPHAN (see TECHNICAL_DEBT TD-014)
     sidepanel/
       main.ts                orchestrator
       index.html             markup for all views
@@ -139,20 +137,22 @@ docs/
 
 ## 8. Known risks
 
-- **R1 (Critical):** mocks/delay only intercept `fetch` → do not work on sites using XHR.
+- **R1 (Critical):** ~~mocks/delay only intercept `fetch`~~ — **MOSTLY FIXED** (CAP-002): conditional + static
+  mocks + delay now also work on `XMLHttpRequest`. Residual: `rewrite-response`/`rewrite-request-body` and
+  WebSocket remain fetch-only/uncovered.
 - **R2 (Critical):** the 6 unwired engines may be "recreated" by mistake by future sessions.
 - **R3 (Medium):** ~~divergent `matchesCondition`~~ — **FIXED** (INT-004): unified and case-insensitive.
 - **R4 (Medium):** ~~phantom `validate-schema`~~ — **FIXED** (FIX-001): type removed until real implementation (INT-001).
 - **R5 (Medium):** ~~`buildDynamicRules` missing guard~~ — **ALREADY PROTECTED** (FIX-002): early-return prevents invalid regex. Residual limitation: method-only rules are ignored by DNR (CAP-004).
-- **R6 (Low):** component CSS (`styles/components/*.css`) is partially orphaned after the `.tsx` removal (needs class-by-class cleanup; `modal.css` is mixed — do not remove in bulk).
+- **R6 (Low):** ~~component CSS partially orphaned~~ — **FIXED** (QA-CSS-001): removed 20 orphan files; only `diff-viewer.css` + `modal.css` remain.
 
 ---
 
 ## 9. Recommended next task
 
-**Reporting & Observability completion** — finish the partials: **QP-006** (HTML report with charts),
-**QP-007** (replay timeline/scrubber), **OBS-006/007** (baseline capture + regression report).
-All six rule-engine modules are now wired. See `BACKLOG_CONSOLIDATED.md`.
+**Reporting & Observability completion** — finish the remaining partials: **QP-007** (replay
+timeline/scrubber), **QP-008** (replayable artifact), **OBS-006/007** (baseline capture + regression
+report, which can reuse the already-wired `contract-comparator`). See `BACKLOG_CONSOLIDATED.md`.
 
 ---
 
@@ -169,4 +169,3 @@ All six rule-engine modules are now wired. See `BACKLOG_CONSOLIDATED.md`.
 - `extension/manifest.json` — change permissions only with a security justification.
 - `extension/scripts/build.mjs` — stable build pipeline.
 - `docs/adr/*.md` — accepted ADRs; create a new ADR instead of editing old ones.
-- `extension/src/storage/adapter.ts` — orphan; **do not use or delete** without deciding TD-014.

@@ -6,41 +6,14 @@ import {
   type ConditionalMockRule,
   type MockState
 } from "../../../packages/rule-engine/src/conditional-mock-evaluator";
-
-type RuleCondition = {
-  urlContains?: string;
-  method?: string;
-};
-
-type Rule = {
-  id: string;
-  name: string;
-  type:
-    | "rewrite-url"
-    | "rewrite-header"
-    | "rewrite-query"
-    | "rewrite-response"
-    | "rewrite-request-body"
-    | "mock-response"
-    | "mock-status"
-    | "redirect"
-    | "block"
-    | "delay";
-  enabled: boolean;
-  priority: number;
-  createdAt: string;
-  condition: RuleCondition;
-  payload: Record<string, unknown>;
-};
-
-type MockEnvVar = {
-  id: string;
-  name: string;
-  value: string;
-  scopeUrlContains?: string;
-  enabled: boolean;
-  createdAt: string;
-};
+import {
+  isContentMockEnvVar,
+  isContentConditionalMock,
+  type ContentRule as Rule,
+  type ContentRuleCondition as RuleCondition,
+  type ContentMockEnvVar as MockEnvVar,
+  type ContentConditionalMock as StoredConditionalMock
+} from "../../../packages/rule-engine/src/content-guards";
 
 type MockResponsePayload = {
   body: string;
@@ -65,17 +38,6 @@ type RewriteResponsePayload = {
 type RewriteRequestBodyPayload = {
   body: string;
   contentType?: string;
-};
-
-/** Stored shape of a sequence conditional mock (INT-005). */
-type StoredConditionalMock = {
-  id: string;
-  name: string;
-  enabled: boolean;
-  urlContains: string;
-  method?: string;
-  branches: Array<{ id: string; status: number; body: string }>;
-  createdAt: string;
 };
 
 declare global {
@@ -118,11 +80,11 @@ if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
     rules = payload.rules;
 
     if (Array.isArray(payload.envVars)) {
-      envVars = payload.envVars.filter(isMockEnvVar);
+      envVars = payload.envVars.filter(isContentMockEnvVar);
     }
 
     if (Array.isArray(payload.conditionalMocks)) {
-      conditionalMocks = payload.conditionalMocks.filter(isStoredConditionalMock);
+      conditionalMocks = payload.conditionalMocks.filter(isContentConditionalMock);
     }
   });
 
@@ -266,7 +228,101 @@ if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
       headers: responseHeaders
     });
   };
+
+  // CAP-002: intercept XMLHttpRequest so mocks/delay also work on XHR-based clients.
+  const XhrProto = window.XMLHttpRequest.prototype;
+  const originalOpen = XhrProto.open;
+  const originalSend = XhrProto.send;
+  const xhrMeta = new WeakMap<XMLHttpRequest, { method: string; url: string }>();
+
+  XhrProto.open = function (
+    this: XMLHttpRequest,
+    method: string,
+    url: string | URL,
+    ...rest: unknown[]
+  ): void {
+    xhrMeta.set(this, {
+      method: (method || "GET").toUpperCase(),
+      url: typeof url === "string" ? url : url.toString()
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (originalOpen as any).apply(this, [method, url, ...rest]);
+  };
+
+  XhrProto.send = function (this: XMLHttpRequest, body?: Document | XMLHttpRequestBodyInit | null) {
+    const meta = xhrMeta.get(this);
+
+    if (!meta) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (originalSend as any).apply(this, [body]);
+    }
+
+    const delayMs = resolveDelayMs(meta.url, meta.method);
+    const outcome = resolveMockOutcome(meta.url, meta.method);
+
+    if (!outcome) {
+      if (delayMs > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        window.setTimeout(() => (originalSend as any).apply(this, [body]), delayMs);
+        return;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (originalSend as any).apply(this, [body]);
+    }
+
+    const deliver = (): void => {
+      deliverMockedXhr(this, meta.url, outcome);
+      window.postMessage(
+        {
+          source: "qa-interceptor-page",
+          type: "MOCK_APPLIED",
+          payload: {
+            requestId: crypto.randomUUID(),
+            method: meta.method,
+            url: meta.url,
+            timestamp: new Date().toISOString(),
+            status: outcome.status,
+            durationMs: delayMs,
+            responseBody: outcome.body,
+            matchedRules: outcome.matchedRules
+          }
+        },
+        "*"
+      );
+    };
+
+    if (delayMs > 0) {
+      window.setTimeout(deliver, delayMs);
+    } else {
+      deliver();
+    }
+  };
 }
+
+/**
+ * CAP-002: deliver a synthetic XHR response by shadowing the read-only result
+ * properties on the instance and dispatching the standard lifecycle events.
+ */
+const deliverMockedXhr = (xhr: XMLHttpRequest, url: string, outcome: MockOutcome): void => {
+  const define = (prop: string, value: unknown): void => {
+    Object.defineProperty(xhr, prop, { configurable: true, get: () => value });
+  };
+
+  define("readyState", 4);
+  define("status", outcome.status);
+  define("statusText", outcome.status >= 200 && outcome.status < 300 ? "OK" : "Error");
+  define("responseText", outcome.body);
+  define("response", outcome.body);
+  define("responseURL", url);
+
+  const fire = (type: string): void => {
+    xhr.dispatchEvent(new Event(type));
+  };
+
+  fire("readystatechange");
+  fire("load");
+  fire("loadend");
+};
 
 const resolveUrl = (input: RequestInfo | URL): string => {
   if (typeof input === "string") {
@@ -600,41 +656,6 @@ const resolveScopedEnvVars = (url: string): Record<string, string> => {
   return map;
 };
 
-const isMockEnvVar = (value: unknown): value is MockEnvVar => {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const candidate = value as Record<string, unknown>;
-
-  return (
-    typeof candidate.id === "string" &&
-    typeof candidate.name === "string" &&
-    typeof candidate.value === "string" &&
-    (candidate.scopeUrlContains === undefined || typeof candidate.scopeUrlContains === "string") &&
-    typeof candidate.enabled === "boolean" &&
-    typeof candidate.createdAt === "string"
-  );
-};
-
-const isStoredConditionalMock = (value: unknown): value is StoredConditionalMock => {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const candidate = value as Record<string, unknown>;
-
-  return (
-    typeof candidate.id === "string" &&
-    typeof candidate.name === "string" &&
-    typeof candidate.enabled === "boolean" &&
-    typeof candidate.urlContains === "string" &&
-    (candidate.method === undefined || typeof candidate.method === "string") &&
-    typeof candidate.createdAt === "string" &&
-    Array.isArray(candidate.branches)
-  );
-};
-
 /**
  * INT-005: resolve a state-aware sequence mock for the given request.
  * Converts the stored shape into the rule-engine's ConditionalMockRule, where
@@ -689,4 +710,59 @@ const resolveConditionalMock = (
   }
 
   return null;
+};
+
+type MockOutcome = {
+  status: number;
+  body: string;
+  contentType: string;
+  matchedRules: Array<{
+    ruleId: string;
+    ruleName: string;
+    type: string;
+    payload: Record<string, unknown>;
+  }>;
+};
+
+/**
+ * CAP-002: resolve a synthetic mock response (conditional sequence mock or static
+ * mock-response/mock-status) for a request, independent of transport. Shared by the
+ * fetch bridge and the XMLHttpRequest bridge. Returns null when nothing mocks the request.
+ * Rewrite-response and request-body rewrites are not covered here because they need the
+ * real response/request flow (fetch path handles those).
+ */
+const resolveMockOutcome = (url: string, method: string): MockOutcome | null => {
+  const conditional = resolveConditionalMock(url, method);
+
+  if (conditional) {
+    return {
+      status: conditional.status,
+      body: conditional.body,
+      contentType: "application/json",
+      matchedRules: [
+        {
+          ruleId: conditional.id,
+          ruleName: conditional.name,
+          type: "mock-response",
+          payload: { status: conditional.status, body: conditional.body }
+        }
+      ]
+    };
+  }
+
+  const match = findMockMatch(url, method);
+
+  if (!match) {
+    return null;
+  }
+
+  const status = match.statusRule?.status ?? match.responseRule?.status ?? 200;
+  const body = applyDynamicVariables(match.responseRule?.body ?? "", {
+    method,
+    url,
+    envVars: resolveScopedEnvVars(url)
+  });
+  const contentType = match.responseRule?.contentType ?? "application/json";
+
+  return { status, body, contentType, matchedRules: match.matchedRules };
 };

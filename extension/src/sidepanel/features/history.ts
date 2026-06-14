@@ -28,7 +28,8 @@ import {
   computeAverageDuration,
   getUniqueMatchedRulesCount,
   buildEvidenceJson,
-  buildEvidenceMarkdown
+  buildEvidenceMarkdown,
+  buildEvidenceHtml
 } from "../shared/utils";
 import { createModalController, type ModalController } from "../shared/modal-controller";
 
@@ -526,43 +527,6 @@ const closeExportDialog = (): void => {
   historyExportModalController.close();
 };
 
-const buildEvidenceHtml = (session: HistorySession): string => {
-  const markdown = buildEvidenceMarkdown(session, _state.assertions);
-
-  return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QA Evidence Export</title>
-    <style>
-      body {
-        font-family: "Segoe UI", Arial, sans-serif;
-        margin: 24px;
-        color: #1f2937;
-      }
-
-      h1 {
-        margin-bottom: 12px;
-      }
-
-      pre {
-        white-space: pre-wrap;
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
-        padding: 16px;
-        background: #f9fafb;
-        line-height: 1.5;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>QA Evidence Export</h1>
-    <pre>${escapeHtml(markdown)}</pre>
-  </body>
-</html>`;
-};
-
 const buildExportData = (
   session: HistorySession,
   format: EvidenceExportFormat
@@ -577,7 +541,7 @@ const buildExportData = (
 
   if (format === "html") {
     return {
-      content: buildEvidenceHtml(session),
+      content: buildEvidenceHtml(session, _state.assertions),
       mimeType: "text/html",
       extension: "html"
     };

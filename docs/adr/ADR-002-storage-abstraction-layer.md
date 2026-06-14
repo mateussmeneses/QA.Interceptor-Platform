@@ -36,9 +36,23 @@ storage/index.ts
 **Constraints enforced by architecture**:
 
 1. No feature module or background script may call `chrome.storage` directly.
-2. Parse functions (`parseRules`, `parseCapturedRequests`, …) live in `packages/rule-engine/src/storage-parsers.ts` as pure functions so they can be tested without `chrome`.
+2. Parse functions (`parseRules`, `parseCapturedRequests`, …) and their type guards live in
+   `extension/src/storage/index.ts` as a single source of truth.
 3. All loaded data is validated through parse functions before returning typed values.
 4. Default values for empty/missing keys are defined here, not at call sites.
+
+---
+
+## Amendment (2026-06-14)
+
+- Constraint #2 originally placed the parse functions in `packages/rule-engine/src/storage-parsers.ts`.
+  That copy diverged from the real runtime parsers and was removed (TD-010). The parsers now live
+  only in `extension/src/storage/index.ts`, which is the single source.
+- An injectable `StorageAdapter` interface (`extension/src/storage/adapter.ts`) was prototyped for a
+  future Electron/Phase 4 backend but never wired to any consumer. It was removed (TD-014) under
+  YAGNI; reintroduce it with real consumers when Phase 4 begins.
+- The accepted decision (centralized `storage/index.ts` with `STORAGE_KEYS` + typed `loadXxx`/`saveXxx`)
+  remains in force and fully implemented.
 
 ---
 

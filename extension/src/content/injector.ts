@@ -1,41 +1,15 @@
 export {};
 
+import {
+  isContentRule,
+  isContentMockEnvVar,
+  isContentConditionalMock,
+  type ContentRule as Rule,
+  type ContentMockEnvVar as MockEnvVar,
+  type ContentConditionalMock as ConditionalMock
+} from "../../../packages/rule-engine/src/content-guards";
+
 const BRIDGE_SCRIPT_ID = "qa-interceptor-mock-bridge";
-
-type RuleCondition = {
-  urlContains?: string;
-  method?: string;
-};
-
-type Rule = {
-  id: string;
-  name: string;
-  type: string;
-  enabled: boolean;
-  priority: number;
-  createdAt: string;
-  condition: RuleCondition;
-  payload: Record<string, unknown>;
-};
-
-type MockEnvVar = {
-  id: string;
-  name: string;
-  value: string;
-  scopeUrlContains?: string;
-  enabled: boolean;
-  createdAt: string;
-};
-
-type ConditionalMock = {
-  id: string;
-  name: string;
-  enabled: boolean;
-  urlContains: string;
-  method?: string;
-  branches: Array<{ id: string; status: number; body: string }>;
-  createdAt: string;
-};
 
 type MockAppliedMessage = {
   source: "qa-interceptor-page";
@@ -77,26 +51,7 @@ const readRules = async (): Promise<Rule[]> => {
     return [];
   }
 
-  return value.filter((candidate): candidate is Rule => {
-    if (!candidate || typeof candidate !== "object") {
-      return false;
-    }
-
-    const normalized = candidate as Record<string, unknown>;
-
-    return (
-      typeof normalized.id === "string" &&
-      typeof normalized.name === "string" &&
-      typeof normalized.type === "string" &&
-      typeof normalized.enabled === "boolean" &&
-      typeof normalized.priority === "number" &&
-      typeof normalized.createdAt === "string" &&
-      typeof normalized.condition === "object" &&
-      normalized.condition !== null &&
-      typeof normalized.payload === "object" &&
-      normalized.payload !== null
-    );
-  });
+  return value.filter(isContentRule);
 };
 
 const readMockEnvVars = async (): Promise<MockEnvVar[]> => {
@@ -107,23 +62,7 @@ const readMockEnvVars = async (): Promise<MockEnvVar[]> => {
     return [];
   }
 
-  return value.filter((candidate): candidate is MockEnvVar => {
-    if (!candidate || typeof candidate !== "object") {
-      return false;
-    }
-
-    const normalized = candidate as Record<string, unknown>;
-
-    return (
-      typeof normalized.id === "string" &&
-      typeof normalized.name === "string" &&
-      typeof normalized.value === "string" &&
-      (normalized.scopeUrlContains === undefined ||
-        typeof normalized.scopeUrlContains === "string") &&
-      typeof normalized.enabled === "boolean" &&
-      typeof normalized.createdAt === "string"
-    );
-  });
+  return value.filter(isContentMockEnvVar);
 };
 
 const readConditionalMocks = async (): Promise<ConditionalMock[]> => {
@@ -134,22 +73,7 @@ const readConditionalMocks = async (): Promise<ConditionalMock[]> => {
     return [];
   }
 
-  return value.filter((candidate): candidate is ConditionalMock => {
-    if (!candidate || typeof candidate !== "object") {
-      return false;
-    }
-
-    const normalized = candidate as Record<string, unknown>;
-
-    return (
-      typeof normalized.id === "string" &&
-      typeof normalized.name === "string" &&
-      typeof normalized.enabled === "boolean" &&
-      typeof normalized.urlContains === "string" &&
-      typeof normalized.createdAt === "string" &&
-      Array.isArray(normalized.branches)
-    );
-  });
+  return value.filter(isContentConditionalMock);
 };
 
 const publishRules = async () => {
