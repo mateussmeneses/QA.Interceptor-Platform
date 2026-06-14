@@ -1,0 +1,131 @@
+/**
+ * QA.Interceptor — Table Component Styles
+ */
+
+.table-wrap {
+  width: 100%;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background-color: var(--surface-bg);
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--text-primary);
+  font-size: var(--font-sm);
+}
+
+.table-head {
+  background-color: var(--surface-alt);
+}
+
+.table-sticky-header .table-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.table-header-cell,
+.table-cell {
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.table-density-compact .table-header-cell,
+.table-density-compact .table-cell {
+  padding: var(--spacing-sm);
+}
+
+.table-density-spacious .table-header-cell,
+.table-density-spacious .table-cell {
+  padding: var(--spacing-m-sm) var(--spacing-m);
+}
+
+.table-header-button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  font-weight: var(--fw-semibold);
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  padding: 0;
+}
+
+.table-header-button:disabled {
+  cursor: default;
+}
+
+.table-header-cell-sortable .table-header-button:hover:not(:disabled) {
+  color: var(--primary);
+}
+
+.table-header-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+.table-sort-indicator {
+  color: var(--text-secondary);
+  font-size: var(--font-xs);
+}
+
+.table-row:hover {
+  background-color: var(--interactive-hover);
+}
+
+.table-empty {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: var(--spacing-xl);
+}
+
+.table-align-left {
+  text-align: left;
+}
+
+.table-align-center {
+  text-align: center;
+}
+
+.table-align-right {
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .table {
+    font-size: var(--font-xs);
+  }
+
+  .table-density-spacious .table-header-cell,
+  .table-density-spacious .table-cell {
+    padding: var(--spacing-sm);
+  }
+}
+
+@media (prefers-contrast: more) {
+  .table-wrap,
+  .table-header-cell,
+  .table-cell {
+    border-width: 2px;
+  }
+}
+
+@media print {
+  .table-wrap {
+    border: 1px solid #000;
+  }
+
+  .table {
+    color: black;
+    background-color: white;
+  }
+}

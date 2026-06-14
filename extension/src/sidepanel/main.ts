@@ -4,6 +4,7 @@
  */
 
 import type { AppState } from "./shared/types";
+import { initTheme } from "./shared/theme-manager";
 import { initNavigation } from "./features/navigation";
 import { initRules, renderRules } from "./features/rules";
 import { initNetwork, renderNetwork } from "./features/network";
@@ -18,6 +19,12 @@ import {
   parseRuleValidation,
   parseResponseAssertions,
 } from "../storage/index";
+
+// ---------------------------------------------------------------------------
+// Initialize theme on startup
+// ---------------------------------------------------------------------------
+
+initTheme();
 
 // ---------------------------------------------------------------------------
 // State loading

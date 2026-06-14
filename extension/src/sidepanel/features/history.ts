@@ -48,6 +48,7 @@ let historyExportMdButtonEl: HTMLButtonElement;
 // QP-007: Replay elements
 let historyReplayButtonEl: HTMLButtonElement;
 let historyReplayPanelEl: HTMLElement;
+let historyReplayDialogEl: HTMLElement;
 let historyReplayStatusEl: HTMLElement;
 let historyReplayCounterEl: HTMLElement;
 let historyReplayListEl: HTMLElement;
@@ -101,6 +102,7 @@ export function initHistory(): void {
   // QP-007: Replay elements
   historyReplayButtonEl = getEl("history-replay-button") as HTMLButtonElement;
   historyReplayPanelEl = getEl("history-replay-panel");
+  historyReplayDialogEl = getEl("history-replay-dialog");
   historyReplayStatusEl = getEl("history-replay-status");
   historyReplayCounterEl = getEl("history-replay-counter");
   historyReplayListEl = getEl("history-replay-list");
@@ -326,12 +328,25 @@ const bindEvents = (): void => {
     historyReplayPanelEl.classList.remove("hidden");
     renderReplayList(session.requests, []);
     setReplayStatus("ready");
+    historyReplayDialogEl.focus();
+    historyReplayStartButtonEl.focus();
   });
 
   historyReplayCloseButtonEl.addEventListener("click", () => {
-    replayAbortController?.abort();
-    replayAbortController = null;
-    historyReplayPanelEl.classList.add("hidden");
+    closeReplayPanel();
+  });
+
+  historyReplayPanelEl.addEventListener("mousedown", (event) => {
+    if (event.target === historyReplayPanelEl) {
+      closeReplayPanel();
+    }
+  });
+
+  historyReplayPanelEl.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeReplayPanel();
+    }
   });
 
   historyReplayStartButtonEl.addEventListener("click", () => {
@@ -352,6 +367,13 @@ const bindEvents = (): void => {
     historyReplayStartButtonEl.classList.remove("hidden");
     historyReplayCancelButtonEl.classList.add("hidden");
   });
+};
+
+const closeReplayPanel = (): void => {
+  replayAbortController?.abort();
+  replayAbortController = null;
+  historyReplayPanelEl.classList.add("hidden");
+  historyReplayButtonEl.focus();
 };
 
 // ---------------------------------------------------------------------------

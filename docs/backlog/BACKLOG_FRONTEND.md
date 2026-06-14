@@ -102,7 +102,7 @@
 | ID | Title | Owner | Priority | Effort | Status | Notes |
 |---|---|---|---|---|---|---|
 | **NET-UI-001** | Network list (agnóstic) | DEVELOPER | P0 | L | Not Started | Waterfall-style, columns: method / URL / status / time / size; sortable; filterable |
-| **NET-UI-002** | Request detail panel | DEVELOPER | P0 | M | Not Started | Tab structure: Headers / Body / Assertions / Rules Matched; agnóstic, mockable data |
+| **NET-UI-002** | Request detail panel | DEVELOPER | P0 | M | In Progress | Tab structure: Headers / Body / Assertions / Rules Matched; agnóstic, mockable data |
 | **NET-UI-003** | Response viewer (JSON / text) | DEVELOPER | P0 | L | Not Started | Syntax-highlighted code, copy button, format (pretty/minified toggle) |
 | **NET-UI-004** | Assertion visual builder | DEVELOPER | P0 | M | Not Started | Builder UI (select assertion type + condition), not connected to backend rules yet |
 | **NET-UI-005** | Diff panel (side-by-side) | DEVELOPER | P0 | L | Not Started | Baseline vs current, line-by-line diff, color-coded (added/removed) |
@@ -122,7 +122,7 @@
 | ID | Title | Owner | Priority | Effort | Status | Notes |
 |---|---|---|---|---|---|---|
 | **HST-UI-001** | Session list | DEVELOPER | P0 | M | Not Started | Cards: session name / date / request count / duration; preview thumbnails |
-| **HST-UI-002** | Session replay player UI | DEVELOPER | P0 | L | Not Started | Timeline + play/pause/step controls, playback speed, current-step highlight |
+| **HST-UI-002** | Session replay player UI | DEVELOPER | P0 | L | In Progress | Timeline + play/pause/step controls, playback speed, current-step highlight |
 | **HST-UI-003** | Evidence export dialog | DEVELOPER | P0 | M | Not Started | Format selector (JSON/Markdown/HTML) + preview + download button |
 | **HST-UI-004** | Report viewer (HTML/Markdown) | DEVELOPER | P0 | L | Not Started | Formatted evidence display, printable, professional layout |
 

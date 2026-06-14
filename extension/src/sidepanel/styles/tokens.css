@@ -1,0 +1,313 @@
+/**
+ * QA.Interceptor — Design System Tokens
+ * 
+ * This file defines all CSS custom properties (variables) for the design system.
+ * Organized by category: Colors, Typography, Spacing, Shadows, Animations
+ * 
+ * Usage:
+ *   - Light mode: <html data-theme="light">
+ *   - Dark mode: <html data-theme="dark">
+ *   - Access in CSS: var(--primary), var(--spacing-m), etc.
+ */
+
+/* ============================================================================
+   COLOR PALETTE — Semantic Colors
+   ============================================================================ */
+
+html {
+  /* Primary colors (CTAs, focus rings, active states) */
+  --primary: #2F6DC4;
+  --primary-hover: #1f4791;
+  --primary-active: #0d2d5e;
+
+  /* Success colors (assertions pass, enabled rules, 2xx responses) */
+  --success: #10B981;
+  --success-hover: #059669;
+  --success-active: #047857;
+
+  /* Warning colors (conflicts, 3xx responses, attention needed) */
+  --warning: #F59E0B;
+  --warning-hover: #D97706;
+  --warning-active: #B45309;
+
+  /* Error colors (assertions fail, errors, 4xx/5xx, disabled) */
+  --error: #EF4444;
+  --error-hover: #DC2626;
+  --error-active: #B91C1C;
+
+  /* Info colors (info badges, hints, rule type indicators) */
+  --info: #3B82F6;
+  --info-hover: #2563EB;
+  --info-active: #1D4ED8;
+
+  /* Neutrals — backgrounds, text, borders */
+  --surface-bg: #FFFFFF;
+  --surface-alt: #F3F4F6;
+  --surface-border: #E5E7EB;
+
+  --text-primary: #111827;
+  --text-secondary: #6B7280;
+  --text-tertiary: #9CA3AF;
+
+  --border: #E5E7EB;
+  --border-dark: #D1D5DB;
+
+  /* Additional semantic colors */
+  --disabled-bg: #F3F4F6;
+  --disabled-text: #9CA3AF;
+  --focus-ring: #2F6DC4;
+}
+
+/* Dark mode color overrides */
+html[data-theme="dark"] {
+  --primary: #5B9FFF;
+  --primary-hover: #4A8FFF;
+  --primary-active: #3A7FFF;
+
+  --success: #34D399;
+  --success-hover: #10B981;
+  --success-active: #059669;
+
+  --warning: #FBBF24;
+  --warning-hover: #F59E0B;
+  --warning-active: #D97706;
+
+  --error: #F87171;
+  --error-hover: #EF4444;
+  --error-active: #DC2626;
+
+  --info: #60A5FA;
+  --info-hover: #3B82F6;
+  --info-active: #2563EB;
+
+  --surface-bg: #1F2937;
+  --surface-alt: #111827;
+  --surface-border: #374151;
+
+  --text-primary: #F3F4F6;
+  --text-secondary: #D1D5DB;
+  --text-tertiary: #9CA3AF;
+
+  --border: #374151;
+  --border-dark: #4B5563;
+
+  --disabled-bg: #374151;
+  --disabled-text: #9CA3AF;
+  --focus-ring: #5B9FFF;
+}
+
+/* ============================================================================
+   TYPOGRAPHY
+   ============================================================================ */
+
+:root {
+  /* Font families */
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "Fira Code", "Source Code Pro", monospace;
+
+  /* Font sizes */
+  --font-xs: 12px;
+  --font-sm: 14px;
+  --font-base: 16px;
+  --font-lg: 18px;
+  --font-xl: 20px;
+  --font-2xl: 24px;
+  --font-3xl: 28px;
+
+  /* Line heights */
+  --lh-tight: 1.2;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.75;
+
+  /* Font weights */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+}
+
+/* ============================================================================
+   SPACING SCALE
+   ============================================================================ */
+
+:root {
+  --spacing-xs: 2px;
+  --spacing-2xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-m-sm: 12px;
+  --spacing-m: 16px;
+  --spacing-l: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+
+  /* Convenient aliases */
+  --gap-xs: var(--spacing-xs);
+  --gap-sm: var(--spacing-sm);
+  --gap-m: var(--spacing-m);
+  --gap-l: var(--spacing-l);
+  --gap-xl: var(--spacing-xl);
+
+  --padding-xs: var(--spacing-xs);
+  --padding-sm: var(--spacing-sm);
+  --padding-m: var(--spacing-m);
+  --padding-l: var(--spacing-l);
+  --padding-xl: var(--spacing-xl);
+}
+
+/* ============================================================================
+   BORDER RADIUS
+   ============================================================================ */
+
+:root {
+  --radius-sm: 4px;
+  --radius-m: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+}
+
+/* ============================================================================
+   SHADOWS
+   ============================================================================ */
+
+:root {
+  /* Subtle shadow for cards/panels */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+
+  /* Focus ring shadow (for focus-visible states) */
+  --shadow-focus: 0 0 0 3px rgba(47, 109, 196, 0.1);
+}
+
+/* Dark mode shadow adjustments */
+html[data-theme="dark"] {
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================================================
+   ANIMATIONS & TRANSITIONS
+   ============================================================================ */
+
+:root {
+  /* Animation durations */
+  --duration-micro: 100ms;
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+  --duration-slow: 500ms;
+
+  /* Easing functions */
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-linear: linear;
+}
+
+/* ============================================================================
+   RESPONSIVE BREAKPOINTS
+   ============================================================================ */
+
+:root {
+  /* Mobile-first approach */
+  --bp-mobile: 360px;
+  --bp-tablet: 768px;
+  --bp-laptop: 1024px;
+  --bp-desktop: 1440px;
+  --bp-xl: 1920px;
+}
+
+/* ============================================================================
+   COMPONENT-SPECIFIC TOKENS
+   ============================================================================ */
+
+:root {
+  /* Button sizes */
+  --btn-height-sm: 32px;
+  --btn-height-m: 40px;
+  --btn-height-lg: 48px;
+  --btn-padding-h-sm: 12px;
+  --btn-padding-h-m: 16px;
+  --btn-padding-h-lg: 24px;
+
+  /* Input sizes */
+  --input-height: 40px;
+  --input-padding-h: 12px;
+  --input-padding-v: 8px;
+  --input-font-size: var(--font-base);
+
+  /* Card sizes */
+  --card-padding: var(--spacing-m);
+  --card-radius: var(--radius-lg);
+  --card-shadow: var(--shadow-md);
+
+  /* Focus states */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring-color: var(--focus-ring);
+}
+
+/* ============================================================================
+   STATE-SPECIFIC COLORS
+   ============================================================================ */
+
+:root {
+  /* Hover/Active states */
+  --interactive-hover: rgba(47, 109, 196, 0.1);
+  --interactive-active: rgba(47, 109, 196, 0.2);
+
+  /* Placeholder & disabled */
+  --input-placeholder: var(--text-tertiary);
+  --input-disabled-bg: var(--disabled-bg);
+  --input-disabled-text: var(--disabled-text);
+
+  /* Status indicators */
+  --status-pending: var(--warning);
+  --status-complete: var(--success);
+  --status-failed: var(--error);
+}
+
+html[data-theme="dark"] {
+  --interactive-hover: rgba(91, 159, 255, 0.1);
+  --interactive-active: rgba(91, 159, 255, 0.2);
+}
+
+/* ============================================================================
+   ACCESSIBILITY & FOCUS STATES
+   ============================================================================ */
+
+:root {
+  /* Focus ring (outlines for keyboard navigation) */
+  --focus-outline: 2px solid var(--focus-ring);
+  --focus-outline-offset: 2px;
+}
+
+/* ============================================================================
+   PRINT STYLES TOKENS
+   ============================================================================ */
+
+@media print {
+  :root {
+    /* Print-friendly colors */
+    --text-primary: #000;
+    --text-secondary: #333;
+    --surface-bg: #fff;
+    --border: #ccc;
+  }
+}
+
+/* ============================================================================
+   DEPRECATED / LEGACY (kept for backward compatibility)
+   ============================================================================ */
+
+:root {
+  /* These will be phased out in favor of semantic tokens above */
+  --color-blue: var(--primary);
+  --color-green: var(--success);
+  --color-yellow: var(--warning);
+  --color-red: var(--error);
+}

@@ -54,6 +54,7 @@ let networkCopyCurlButtonEl: HTMLButtonElement;
 let networkClearButtonEl: HTMLButtonElement;
 let networkComposeButtonEl: HTMLButtonElement;
 let networkComposePanelEl: HTMLElement;
+let networkComposeDialogEl: HTMLElement;
 let networkComposeMethodEl: HTMLSelectElement;
 let networkComposeUrlEl: HTMLInputElement;
 let networkComposeHeadersEl: HTMLTextAreaElement;
@@ -177,6 +178,7 @@ export function initNetwork(): void {
   networkClearButtonEl = getEl("network-clear-button") as HTMLButtonElement;
   networkComposeButtonEl = getEl("network-compose-button") as HTMLButtonElement;
   networkComposePanelEl = getEl("network-compose-panel");
+  networkComposeDialogEl = getEl("network-compose-dialog");
   networkComposeMethodEl = getEl("network-compose-method") as HTMLSelectElement;
   networkComposeUrlEl = getEl("network-compose-url") as HTMLInputElement;
   networkComposeHeadersEl = getEl("network-compose-headers") as HTMLTextAreaElement;
@@ -554,7 +556,7 @@ const bindEvents = (): void => {
     const shouldOpen = networkComposePanelEl.classList.contains("hidden");
 
     if (!shouldOpen) {
-      networkComposePanelEl.classList.add("hidden");
+      closeComposePanel();
       return;
     }
 
@@ -570,7 +572,7 @@ const bindEvents = (): void => {
       setNetworkComposeStatus("Compose panel ready.", "neutral");
     }
 
-    networkComposePanelEl.classList.remove("hidden");
+    openComposePanel();
   });
 
   networkCloneRequestButtonEl.addEventListener("click", () => {
@@ -582,7 +584,7 @@ const bindEvents = (): void => {
     }
 
     fillComposeFromRequest(selectedRow);
-    networkComposePanelEl.classList.remove("hidden");
+    openComposePanel();
   });
 
   networkEditResendButtonEl.addEventListener("click", () => {
@@ -598,12 +600,24 @@ const bindEvents = (): void => {
       "Editing cloned request. Update fields and click Send Request.",
       "ok"
     );
-    networkComposePanelEl.classList.remove("hidden");
+    openComposePanel();
   });
 
   networkComposeCloseButtonEl.addEventListener("click", () => {
-    networkComposePanelEl.classList.add("hidden");
-    setNetworkComposeStatus("Compose panel closed.", "neutral");
+    closeComposePanel();
+  });
+
+  networkComposePanelEl.addEventListener("mousedown", (event) => {
+    if (event.target === networkComposePanelEl) {
+      closeComposePanel();
+    }
+  });
+
+  networkComposePanelEl.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeComposePanel();
+    }
   });
 
   networkComposeSendButtonEl.addEventListener("click", () => {
@@ -655,7 +669,10 @@ const bindEvents = (): void => {
         if (response?.ok) {
           const statusPart = typeof response.status === "number" ? ` (status ${String(response.status)})` : "";
           setNetworkComposeStatus(`Request sent successfully${statusPart}.`, "ok");
-          networkComposePanelEl.classList.add("hidden");
+          closeComposePanel({
+            statusMessage: undefined,
+            focusTrigger: false,
+          });
 
           // Auto-evaluate assertions against the compose response (QP-001)
           if (typeof response.status === "number") {
@@ -848,6 +865,31 @@ const fillComposeFromRequest = (row: RequestRow): void => {
   networkComposeHeadersEl.value = JSON.stringify(row.headers ?? {}, null, 2);
   networkComposeBodyEl.value = row.body ?? "";
   setNetworkComposeStatus("Compose pre-filled from selected request.", "ok");
+};
+
+const openComposePanel = (): void => {
+  networkComposePanelEl.classList.remove("hidden");
+  networkComposeDialogEl.focus();
+  setTimeout(() => {
+    networkComposeUrlEl.focus();
+  }, 0);
+};
+
+const closeComposePanel = (options?: {
+  statusMessage?: string;
+  focusTrigger?: boolean;
+}): void => {
+  networkComposePanelEl.classList.add("hidden");
+
+  if (options?.statusMessage !== undefined) {
+    setNetworkComposeStatus(options.statusMessage, "neutral");
+  } else if (!options) {
+    setNetworkComposeStatus("Compose panel closed.", "neutral");
+  }
+
+  if (options?.focusTrigger !== false) {
+    networkComposeButtonEl.focus();
+  }
 };
 
 const setNetworkComposeStatus = (message: string, tone: "neutral" | "ok" | "error"): void => {

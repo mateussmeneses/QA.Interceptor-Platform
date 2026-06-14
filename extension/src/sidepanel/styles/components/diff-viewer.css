@@ -1,0 +1,107 @@
+/**
+ * QA.Interceptor — Diff Viewer Component Styles
+ */
+
+.diff-viewer {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  background-color: var(--surface-bg);
+}
+
+.diff-viewer-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--surface-alt);
+}
+
+.diff-viewer-title {
+  padding: var(--spacing-sm) var(--spacing-m);
+  font-size: var(--font-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.diff-viewer-title:first-child {
+  border-right: 1px solid var(--border);
+}
+
+.diff-viewer-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.diff-viewer-pane {
+  overflow: auto;
+}
+
+.diff-viewer-pane:first-child {
+  border-right: 1px solid var(--border);
+}
+
+.diff-line {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  align-items: start;
+  border-bottom: 1px solid var(--border);
+}
+
+.diff-line-number {
+  padding: var(--spacing-2xs) var(--spacing-sm);
+  color: var(--text-tertiary);
+  font-size: var(--font-xs);
+  text-align: right;
+  border-right: 1px solid var(--border);
+  user-select: none;
+}
+
+.diff-line-code {
+  padding: var(--spacing-2xs) var(--spacing-sm);
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+  line-height: var(--lh-normal);
+  white-space: pre;
+  color: var(--text-primary);
+}
+
+.diff-line-unchanged {
+  background-color: transparent;
+}
+
+.diff-line-added {
+  background-color: rgba(16, 185, 129, 0.08);
+}
+
+.diff-line-removed {
+  background-color: rgba(239, 68, 68, 0.08);
+}
+
+@media (max-width: 768px) {
+  .diff-viewer-body {
+    grid-template-columns: 1fr;
+  }
+
+  .diff-viewer-pane:first-child {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+@media (prefers-contrast: more) {
+  .diff-viewer,
+  .diff-viewer-header,
+  .diff-line,
+  .diff-line-number {
+    border-width: 2px;
+  }
+}
+
+@media print {
+  .diff-viewer {
+    border: 1px solid #000;
+    color: black;
+    background-color: white;
+  }
+}

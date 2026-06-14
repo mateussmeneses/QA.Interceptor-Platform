@@ -1,0 +1,154 @@
+/**
+ * QA.Interceptor — Status Indicator Component Styles
+ * 
+ * Status indicator with pulse animation for active states
+ */
+
+/* ============================================================================
+   BASE STATUS INDICATOR
+   ============================================================================ */
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2xs);
+  font-size: var(--font-sm);
+  line-height: var(--lh-tight);
+  user-select: none;
+}
+
+/* ============================================================================
+   STATUS DOT
+   ============================================================================ */
+
+.status-dot {
+  display: inline-flex;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ============================================================================
+   STATUS SIZES
+   ============================================================================ */
+
+.status-sm .status-dot {
+  width: 8px;
+  height: 8px;
+}
+
+.status-m .status-dot {
+  width: 12px;
+  height: 12px;
+}
+
+.status-lg .status-dot {
+  width: 16px;
+  height: 16px;
+}
+
+/* ============================================================================
+   STATUS STATES
+   ============================================================================ */
+
+/* Active state */
+.status-active .status-dot {
+  background-color: var(--success);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+/* Inactive state */
+.status-inactive .status-dot {
+  background-color: var(--border-dark);
+  box-shadow: none;
+}
+
+/* Pending state */
+.status-pending .status-dot {
+  background-color: var(--warning);
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2);
+}
+
+/* Error state */
+.status-error .status-dot {
+  background-color: var(--error);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+/* ============================================================================
+   PULSE ANIMATION
+   ============================================================================ */
+
+.status-pulse .status-dot {
+  animation: pulse var(--duration-slow) var(--ease-in-out) infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 currentColor;
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+    opacity: 0;
+  }
+}
+
+/* ============================================================================
+   STATUS LABEL
+   ============================================================================ */
+
+.status-label {
+  color: var(--text-primary);
+  font-weight: var(--fw-normal);
+}
+
+.status-active .status-label {
+  color: var(--success);
+}
+
+.status-inactive .status-label {
+  color: var(--text-secondary);
+}
+
+.status-pending .status-label {
+  color: var(--warning);
+}
+
+.status-error .status-label {
+  color: var(--error);
+}
+
+/* ============================================================================
+   DARK MODE
+   ============================================================================ */
+
+html[data-theme="dark"] .status-indicator {
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] .status-label {
+  color: var(--text-primary);
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .status-indicator {
+    font-size: var(--font-xs);
+  }
+}
+
+/* ============================================================================
+   PRINT STYLES
+   ============================================================================ */
+
+@media print {
+  .status-pulse .status-dot {
+    animation: none;
+  }
+}

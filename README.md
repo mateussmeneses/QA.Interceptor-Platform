@@ -20,15 +20,17 @@ Help QA professionals validate frontend behavior, backend integrations, API cont
 
 ## Documentation Map
 
-- Vision and value: `PRODUCT_VISION.md`
-- Non-negotiable rules: `PROJECT_RULES.md`
-- Architecture baseline: `ARCHITECTURE.md`
-- Milestones and phases: `ROADMAP.md`
-- Prioritized work items: `BACKLOG.md`
-- Contribution workflow: `CONTRIBUTING.md`
-- Versioning policy: `VERSIONING.md`
-- Project principles manifesto: `MANIFEST.md`
-- Document ownership and anti-duplication guide: `DOCUMENTATION_STRUCTURE.md`
+**👉 [Navegação centralizada: INDEX.md](INDEX.md)** - Use este arquivo como ponto de entrada para toda documentação.
+
+Quick links:
+- Vision and value: [PRODUCT_VISION.md](PRODUCT_VISION.md)
+- Non-negotiable rules: [PROJECT_RULES.md](PROJECT_RULES.md)
+- Architecture baseline: [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)
+- Milestones and phases: [docs/planning/ROADMAP.md](docs/planning/ROADMAP.md)
+- Prioritized work items: [docs/backlog/BACKLOG.md](docs/backlog/BACKLOG.md)
+- Contribution workflow: [docs/reference/CONTRIBUTING.md](docs/reference/CONTRIBUTING.md)
+- Versioning policy: [docs/reference/VERSIONING.md](docs/reference/VERSIONING.md)
+- Project principles manifesto: [MANIFEST.md](MANIFEST.md)
 
 ## Suggested MVP Workspace Structure
 

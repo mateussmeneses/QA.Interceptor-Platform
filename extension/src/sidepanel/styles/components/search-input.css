@@ -1,0 +1,35 @@
+/**
+ * QA.Interceptor — Search Input Field Styles
+ */
+
+.search-input-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.search-input-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: searchInputSpin var(--duration-slow) linear infinite;
+}
+
+@keyframes searchInputSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-input-spinner {
+    animation: none;
+  }
+}

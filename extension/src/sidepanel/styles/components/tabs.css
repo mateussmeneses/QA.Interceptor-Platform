@@ -1,0 +1,123 @@
+/**
+ * QA.Interceptor — Tabs Component Styles
+ */
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-m);
+  width: 100%;
+}
+
+.tabs-list {
+  display: inline-flex;
+  align-items: stretch;
+  gap: var(--spacing-2xs);
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.tabs-vertical {
+  flex-direction: row;
+}
+
+.tabs-vertical .tabs-list {
+  flex-direction: column;
+  min-width: 180px;
+  overflow-x: visible;
+}
+
+.tabs-trigger {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  font-weight: var(--fw-medium);
+  padding: var(--spacing-sm) var(--spacing-m-sm);
+  border-radius: var(--radius-m);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  transition: color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.tabs-line .tabs-trigger {
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+}
+
+.tabs-line .tabs-trigger-active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.tabs-pill .tabs-trigger-active {
+  color: var(--primary);
+  background-color: var(--interactive-hover);
+}
+
+.tabs-trigger:hover:not(.tabs-trigger-disabled) {
+  color: var(--text-primary);
+  background-color: var(--interactive-hover);
+}
+
+.tabs-trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.tabs-trigger-disabled {
+  color: var(--disabled-text);
+  cursor: not-allowed;
+}
+
+.tabs-badge {
+  font-size: var(--font-xs);
+  line-height: 1;
+  padding: 2px var(--spacing-2xs);
+  border-radius: var(--radius-full);
+  background-color: var(--surface-alt);
+}
+
+.tabs-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  padding: var(--spacing-m);
+  background-color: var(--surface-bg);
+  color: var(--text-primary);
+  min-height: 84px;
+}
+
+@media (max-width: 768px) {
+  .tabs-vertical {
+    flex-direction: column;
+  }
+
+  .tabs-vertical .tabs-list {
+    min-width: 0;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .tabs-panel,
+  .tabs-trigger {
+    border-width: 2px;
+  }
+}
+
+@media print {
+  .tabs-list {
+    display: none;
+  }
+
+  .tabs-panel {
+    border: 1px solid #000;
+    color: black;
+    background-color: white;
+  }
+}

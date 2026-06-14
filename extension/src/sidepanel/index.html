@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>QA.Interceptor</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <!-- Main design system & styles -->
+    <link rel="stylesheet" href="./styles/index.css" />
   </head>
   <body>
     <main class="app-shell">
@@ -298,10 +299,18 @@
               <input id="network-import-har-input" type="file" accept=".har,.json,application/json" class="hidden" aria-hidden="true" />
             </div>
 
-            <section id="network-compose-panel" class="network-compose-panel hidden" aria-label="compose request panel">
+            <section id="network-compose-panel" class="modal-backdrop hidden" aria-label="compose request panel">
+              <div
+                id="network-compose-dialog"
+                class="modal network-compose-dialog"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="network-compose-title"
+                tabindex="-1"
+              >
               <div class="section-head compact">
                 <div>
-                  <h4>Compose Request</h4>
+                  <h4 id="network-compose-title">Compose Request</h4>
                   <p>Build and send a custom HTTP request directly from the inspector.</p>
                 </div>
               </div>
@@ -341,20 +350,20 @@
                 </label>
 
                 <label class="field-block" for="network-compose-collection">
-               label class="field-block" for="network-compose-tags-input">
+                  <span>Collection</span>
+                  <select id="network-compose-collection">
+                    <option value="">Unassigned</option>
+                  </select>
+                </label>
+              </div>
+
+              <label class="field-block" for="network-compose-tags-input">
                 <span>Tags (comma-separated)</span>
                 <input id="network-compose-tags-input" type="text" placeholder="smoke-test, checkout" />
               </label>
               <ul id="network-compose-tags-list" class="tags-list">
                 <li class="placeholder">No tags assigned.</li>
               </ul>
-
-              <   <span>Collection</span>
-                  <select id="network-compose-collection">
-                    <option value="">Unassigned</option>
-                  </select>
-                </label>
-              </div>
 
               <div class="editor-actions">
                 <button id="network-compose-send-button" type="button" class="action-btn primary">Send Request</button>
@@ -381,6 +390,7 @@
                     <li class="placeholder">No assertions added. Add one to validate responses.</li>
                   </ul>
                 </section>
+              </div>
             </section>
 
             <div class="network-layout">
@@ -798,16 +808,28 @@
                     <div class="editor-actions">
                       <button id="history-replay-button" type="button" class="action-btn">Replay Session</button>
                     </div>
-                    <div id="history-replay-panel" class="history-replay-panel hidden">
-                      <div class="history-replay-progress">
-                        <span id="history-replay-status" class="history-replay-status">Ready</span>
-                        <span id="history-replay-counter" class="pill muted">0 / 0</span>
+                    <div id="history-replay-panel" class="modal-backdrop hidden" aria-label="history replay panel">
+                      <div
+                        id="history-replay-dialog"
+                        class="modal history-replay-dialog"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="history-replay-title"
+                        tabindex="-1"
+                      >
+                      <div class="history-replay-panel-body">
+                        <div class="history-replay-progress">
+                          <h5 id="history-replay-title" class="history-replay-title">Session Replay</h5>
+                          <span id="history-replay-status" class="history-replay-status">Ready</span>
+                          <span id="history-replay-counter" class="pill muted">0 / 0</span>
+                        </div>
+                        <ul id="history-replay-list" class="history-replay-list"></ul>
+                        <div class="editor-actions">
+                          <button id="history-replay-start-button" type="button" class="action-btn ok">Start</button>
+                          <button id="history-replay-cancel-button" type="button" class="action-btn client hidden">Cancel</button>
+                          <button id="history-replay-close-button" type="button" class="action-btn muted">Close</button>
+                        </div>
                       </div>
-                      <ul id="history-replay-list" class="history-replay-list"></ul>
-                      <div class="editor-actions">
-                        <button id="history-replay-start-button" type="button" class="action-btn ok">Start</button>
-                        <button id="history-replay-cancel-button" type="button" class="action-btn client hidden">Cancel</button>
-                        <button id="history-replay-close-button" type="button" class="action-btn muted">Close</button>
                       </div>
                     </div>
                   </section>

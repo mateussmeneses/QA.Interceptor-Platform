@@ -1,0 +1,143 @@
+/**
+ * QA.Interceptor — Radio Group Component Styles
+ */
+
+.radio-group {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.radio-group-label {
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--font-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-primary);
+}
+
+.radio-group-options {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.radio-group-vertical .radio-group-options {
+  flex-direction: column;
+}
+
+.radio-group-horizontal .radio-group-options {
+  flex-wrap: wrap;
+}
+
+.radio-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+}
+
+.radio-option-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.radio-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.radio-control {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  background-color: var(--surface-bg);
+  flex-shrink: 0;
+  transition: border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+}
+
+.radio-control::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background-color: var(--primary);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.radio-input:checked + .radio-control {
+  border-color: var(--primary);
+}
+
+.radio-input:checked + .radio-control::after {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.radio-input:focus-visible + .radio-control {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.radio-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.radio-option-label {
+  font-size: var(--font-sm);
+  color: var(--text-primary);
+}
+
+.radio-option-description,
+.radio-group-helper-text,
+.radio-group-error-message {
+  font-size: var(--font-xs);
+  line-height: var(--lh-tight);
+}
+
+.radio-option-description,
+.radio-group-helper-text {
+  color: var(--text-secondary);
+}
+
+.radio-group-error .radio-control {
+  border-color: var(--error);
+}
+
+.radio-group-error-message {
+  margin-top: var(--spacing-2xs);
+  color: var(--error);
+  font-weight: var(--fw-medium);
+}
+
+.radio-group-helper-text {
+  margin-top: var(--spacing-2xs);
+}
+
+@media (max-width: 768px) {
+  .radio-group-horizontal .radio-group-options {
+    flex-direction: column;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .radio-control {
+    border-width: 3px;
+  }
+}
+
+@media print {
+  .radio-control {
+    border: 1px solid #000;
+  }
+}

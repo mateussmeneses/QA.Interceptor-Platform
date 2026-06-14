@@ -1,0 +1,577 @@
+/**
+ * QA.Interceptor — Global Styles
+ * 
+ * CSS Reset + Base Styles using Design Tokens
+ * - Normalize browser defaults
+ * - Apply typography system
+ * - Set up dark mode
+ * - Keyboard focus states
+ * - Print styles for evidence export
+ */
+
+@import "./tokens.css";
+
+/* ============================================================================
+   RESET & NORMALIZATION
+   ============================================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  /* Default to light theme */
+  color-scheme: light;
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--font-base);
+  line-height: var(--lh-normal);
+  color: var(--text-primary);
+  background-color: var(--surface-bg);
+  transition: background-color var(--duration-base) var(--ease-in-out),
+              color var(--duration-base) var(--ease-in-out);
+}
+
+/* ============================================================================
+   TYPOGRAPHY — BASE STYLES
+   ============================================================================ */
+
+h1 {
+  font-size: var(--font-3xl);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  margin-bottom: var(--spacing-m);
+}
+
+h2 {
+  font-size: var(--font-2xl);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  margin-bottom: var(--spacing-m-sm);
+}
+
+h3 {
+  font-size: var(--font-xl);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  margin-bottom: var(--spacing-m-sm);
+}
+
+h4,
+h5,
+h6 {
+  font-size: var(--font-base);
+  font-weight: var(--fw-semibold);
+  margin-bottom: var(--spacing-sm);
+}
+
+p {
+  margin-bottom: var(--spacing-m);
+  color: var(--text-primary);
+}
+
+small {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}
+
+strong {
+  font-weight: var(--fw-bold);
+}
+
+em {
+  font-style: italic;
+}
+
+/* ============================================================================
+   LINKS & TEXT SEMANTICS
+   ============================================================================ */
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+a:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+a:visited {
+  color: var(--primary);
+}
+
+/* ============================================================================
+   CODE & PRE-FORMATTED TEXT
+   ============================================================================ */
+
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+}
+
+code {
+  background-color: var(--surface-alt);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  color: var(--error);
+}
+
+pre {
+  background-color: var(--surface-alt);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-m);
+  overflow-x: auto;
+  margin-bottom: var(--spacing-m);
+}
+
+pre code {
+  background-color: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+/* ============================================================================
+   LISTS
+   ============================================================================ */
+
+ul,
+ol {
+  margin-bottom: var(--spacing-m);
+  margin-left: var(--spacing-l);
+}
+
+li {
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Remove default list style from elements with data attributes */
+[role="list"] {
+  list-style: none;
+  margin-left: 0;
+}
+
+[role="listitem"] {
+  margin-bottom: 0;
+}
+
+/* ============================================================================
+   FORM ELEMENTS — BASE STYLES
+   ============================================================================ */
+
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="url"],
+input[type="number"],
+textarea,
+select {
+  width: 100%;
+  padding: var(--input-padding-v) var(--input-padding-h);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background-color: var(--surface-bg);
+  color: var(--text-primary);
+  transition: border-color var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out);
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+input[type="url"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(47, 109, 196, 0.1);
+}
+
+/* Disabled state */
+input:disabled,
+textarea:disabled,
+select:disabled {
+  background-color: var(--input-disabled-bg);
+  color: var(--input-disabled-text);
+  cursor: not-allowed;
+}
+
+/* Placeholder */
+input::placeholder,
+textarea::placeholder {
+  color: var(--input-placeholder);
+}
+
+/* ============================================================================
+   BUTTONS — BASE STYLES
+   ============================================================================ */
+
+button {
+  cursor: pointer;
+  border: none;
+  transition: background-color var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out),
+              transform var(--duration-micro) var(--ease-out);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ============================================================================
+   IMAGES & MEDIA
+   ============================================================================ */
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+svg {
+  fill: currentColor;
+}
+
+/* ============================================================================
+   TABLES
+   ============================================================================ */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--spacing-m);
+}
+
+th,
+td {
+  padding: var(--spacing-sm) var(--spacing-m-sm);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  background-color: var(--surface-alt);
+  font-weight: var(--fw-semibold);
+}
+
+tr:hover {
+  background-color: var(--interactive-hover);
+}
+
+/* ============================================================================
+   FOCUS STATES — KEYBOARD NAVIGATION
+   ============================================================================ */
+
+/* Show focus ring only for keyboard navigation (not mouse) */
+*:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
+/* Remove focus ring for mouse users (will be re-added by :focus-visible) */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ============================================================================
+   SCROLLBAR STYLING (WebKit browsers)
+   ============================================================================ */
+
+/* Scrollbar thumb */
+::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--border-dark);
+}
+
+/* Scrollbar track */
+::-webkit-scrollbar-track {
+  background-color: var(--surface-bg);
+}
+
+/* Scrollbar dimensions */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+/* ============================================================================
+   SELECTION STYLES
+   ============================================================================ */
+
+::selection {
+  background-color: var(--primary);
+  color: white;
+}
+
+::-moz-selection {
+  background-color: var(--primary);
+  color: white;
+}
+
+/* ============================================================================
+   DARK MODE SUPPORT
+   ============================================================================ */
+
+html[data-theme="dark"] {
+  background-color: var(--surface-bg);
+}
+
+html[data-theme="dark"] body {
+  background-color: var(--surface-bg);
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] input[type="text"],
+html[data-theme="dark"] input[type="email"],
+html[data-theme="dark"] input[type="password"],
+html[data-theme="dark"] input[type="search"],
+html[data-theme="dark"] input[type="url"],
+html[data-theme="dark"] input[type="number"],
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select {
+  background-color: var(--surface-bg);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
+
+/* Visually hidden but accessible to screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Clearfix */
+.clearfix::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* ============================================================================
+   PRINT STYLES
+   ============================================================================ */
+
+@media print {
+  * {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  body {
+    background-color: white;
+    color: black;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  /* Hide UI elements when printing */
+  nav,
+  aside,
+  .no-print,
+  button,
+  .actions {
+    display: none !important;
+  }
+
+  /* Full width for content */
+  main,
+  .container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Page breaks */
+  h1,
+  h2,
+  h3 {
+    page-break-after: avoid;
+  }
+
+  p,
+  ul,
+  ol {
+    page-break-inside: avoid;
+  }
+
+  /* Show URLs in printed links */
+  a {
+    text-decoration: underline;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 10pt;
+  }
+
+  /* Borders for tables */
+  table,
+  th,
+  td {
+    border: 1px solid #999;
+  }
+
+  /* Image max width for print */
+  img {
+    max-width: 100%;
+  }
+}
+
+/* ============================================================================
+   ANIMATIONS — COMMON PATTERNS
+   ============================================================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToTop {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slideOutToBottom {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ============================================================================
+   RESPONSIVE UTILITIES
+   ============================================================================ */
+
+/* Mobile-first responsive classes */
+@media (max-width: 768px) {
+  /* Adjust spacing on mobile */
+  body {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: var(--font-2xl);
+  }
+
+  h2 {
+    font-size: var(--font-xl);
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Desktop adjustments */
+  body {
+    font-size: var(--font-base);
+  }
+}

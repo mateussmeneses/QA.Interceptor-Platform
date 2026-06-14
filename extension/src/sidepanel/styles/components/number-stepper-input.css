@@ -1,0 +1,182 @@
+/**
+ * QA.Interceptor — Number Stepper Input Styles
+ */
+
+.number-stepper-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2xs);
+  width: 100%;
+}
+
+.number-stepper-label {
+  font-size: var(--font-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-primary);
+}
+
+.number-stepper-required {
+  color: var(--error);
+  margin-left: 2px;
+}
+
+.number-stepper-container {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  width: 100%;
+}
+
+.number-stepper-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  background-color: var(--surface-alt);
+  color: var(--text-primary);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.number-stepper-btn:hover:not(:disabled) {
+  background-color: var(--interactive-hover);
+  border-color: var(--border-dark);
+}
+
+.number-stepper-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.number-stepper-btn-decrement {
+  border-top-left-radius: var(--radius-m);
+  border-bottom-left-radius: var(--radius-m);
+  border-right: 0;
+}
+
+.number-stepper-btn-increment {
+  border-top-right-radius: var(--radius-m);
+  border-bottom-right-radius: var(--radius-m);
+  border-left: 0;
+}
+
+.number-stepper-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  text-align: center;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  background-color: var(--surface-bg);
+  transition: border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+}
+
+.number-stepper-input::-webkit-outer-spin-button,
+.number-stepper-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.number-stepper-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.number-stepper-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(47, 109, 196, 0.1);
+  z-index: 1;
+}
+
+.number-stepper-sm .number-stepper-btn,
+.number-stepper-sm.number-stepper-input {
+  height: var(--btn-height-sm);
+  min-width: var(--btn-height-sm);
+  font-size: var(--font-sm);
+}
+
+.number-stepper-sm.number-stepper-input {
+  padding: 0 var(--spacing-sm);
+}
+
+.number-stepper-m .number-stepper-btn,
+.number-stepper-m.number-stepper-input {
+  height: var(--btn-height-m);
+  min-width: var(--btn-height-m);
+  font-size: var(--font-base);
+}
+
+.number-stepper-m.number-stepper-input {
+  padding: 0 var(--spacing-sm);
+}
+
+.number-stepper-lg .number-stepper-btn,
+.number-stepper-lg.number-stepper-input {
+  height: var(--btn-height-lg);
+  min-width: var(--btn-height-lg);
+  font-size: var(--font-lg);
+}
+
+.number-stepper-lg.number-stepper-input {
+  padding: 0 var(--spacing-m);
+}
+
+.number-stepper-error {
+  border-color: var(--error);
+}
+
+.number-stepper-error:focus {
+  border-color: var(--error-hover);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.number-stepper-success {
+  border-color: var(--success);
+}
+
+.number-stepper-success:focus {
+  border-color: var(--success-hover);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.number-stepper-disabled,
+.number-stepper-input:disabled {
+  background-color: var(--input-disabled-bg);
+  color: var(--input-disabled-text);
+}
+
+.number-stepper-helper-text,
+.number-stepper-error-message {
+  font-size: var(--font-xs);
+  line-height: var(--lh-tight);
+}
+
+.number-stepper-helper-text {
+  color: var(--text-secondary);
+}
+
+.number-stepper-error-message {
+  color: var(--error);
+  font-weight: var(--fw-medium);
+}
+
+@media (prefers-contrast: more) {
+  .number-stepper-btn,
+  .number-stepper-input {
+    border-width: 2px;
+  }
+}
+
+@media print {
+  .number-stepper-btn,
+  .number-stepper-input {
+    border: 1px solid #000;
+    color: black;
+    background-color: white;
+  }
+}
