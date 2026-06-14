@@ -17,7 +17,10 @@ import {
   buildHar,
   readHarAsRequestRows,
   buildCurlCommand,
-  summarizeRuleAction
+  summarizeRuleAction,
+  byteLength,
+  formatBytes,
+  formatThroughput
 } from "../shared/utils";
 import { createModalController, type ModalController } from "../shared/modal-controller";
 import { saveCapturedRequests } from "../../storage/index";
@@ -32,12 +35,25 @@ import {
 } from "../../../../packages/rule-engine/src/conflict-detector";
 import { compareContractStrings } from "../../../../packages/rule-engine/src/contract-comparator";
 import { inferSchemaFromString } from "../../../../packages/rule-engine/src/schema-inference";
+import {
+  detectBottlenecks,
+  type BottleneckFinding
+} from "../../../../packages/rule-engine/src/bottleneck-detector";
+import { profileBandwidth } from "../../../../packages/rule-engine/src/bandwidth-profiler";
+import {
+  detectAnomalies,
+  type AnomalySeverity
+} from "../../../../packages/rule-engine/src/anomaly-detector";
 
 // ---------------------------------------------------------------------------
 // DOM references
 // ---------------------------------------------------------------------------
 
 let networkRequestListEl: HTMLElement;
+let bandwidthSummaryEl: HTMLElement;
+let bandwidthListEl: HTMLElement;
+let anomalySummaryEl: HTMLElement;
+let anomalyListEl: HTMLElement;
 let networkSearchEl: HTMLInputElement;
 let networkMethodFilterEl: HTMLSelectElement;
 let networkStatusFilterEl: HTMLSelectElement;
@@ -52,9 +68,14 @@ let networkDetailDurationEl: HTMLElement;
 let networkDetailSourceEl: HTMLElement;
 let networkDetailResourceEl: HTMLElement;
 let networkDetailTabEl: HTMLElement;
+let networkDetailReqSizeEl: HTMLElement;
+let networkDetailResSizeEl: HTMLElement;
 let networkDetailRulesEl: HTMLElement;
 let networkTimelineBarEl: HTMLElement;
 let networkTimelineCaptionEl: HTMLElement;
+let networkPhaseWaitingEl: HTMLElement;
+let networkPhaseDownloadEl: HTMLElement;
+let networkBottleneckNoteEl: HTMLElement;
 let networkDetailBodySectionEl: HTMLElement;
 let networkDetailBodyEl: HTMLElement;
 let networkInferSchemaButtonEl: HTMLButtonElement | null = null;
@@ -156,6 +177,8 @@ let networkMethodFilter = "all";
 let networkStatusFilter: NetworkStatusFilter = "all";
 // OBS-001: Pinned request for diff
 let pinnedRequestId: string | null = null;
+// PERF-001: bottleneck findings for the currently visible traffic, keyed by request id.
+let bottleneckFindings = new Map<string, BottleneckFinding>();
 
 // ---------------------------------------------------------------------------
 // Init
@@ -173,6 +196,10 @@ export function initNetwork(): void {
   };
 
   networkRequestListEl = getEl("network-request-list");
+  bandwidthSummaryEl = getEl("bandwidth-summary");
+  bandwidthListEl = getEl("bandwidth-list");
+  anomalySummaryEl = getEl("anomaly-summary");
+  anomalyListEl = getEl("anomaly-list");
   networkSearchEl = getEl("network-search") as HTMLInputElement;
   networkMethodFilterEl = getEl("network-method-filter") as HTMLSelectElement;
   networkStatusFilterEl = getEl("network-status-filter") as HTMLSelectElement;
@@ -187,9 +214,14 @@ export function initNetwork(): void {
   networkDetailSourceEl = getEl("network-detail-source");
   networkDetailResourceEl = getEl("network-detail-resource");
   networkDetailTabEl = getEl("network-detail-tab");
+  networkDetailReqSizeEl = getEl("network-detail-req-size");
+  networkDetailResSizeEl = getEl("network-detail-res-size");
   networkDetailRulesEl = getEl("network-detail-rules");
   networkTimelineBarEl = getEl("network-timeline-bar");
   networkTimelineCaptionEl = getEl("network-timeline-caption");
+  networkPhaseWaitingEl = getEl("network-phase-waiting");
+  networkPhaseDownloadEl = getEl("network-phase-download");
+  networkBottleneckNoteEl = getEl("network-bottleneck-note");
   networkDetailBodySectionEl = getEl("network-detail-body-section");
   networkDetailBodyEl = getEl("network-detail-body");
   networkInferSchemaButtonEl = document.getElementById(
@@ -257,8 +289,110 @@ export function renderNetwork(state: AppState): void {
   renderNetworkInspector(state.requests);
 }
 
+// PERF-003: aggregate response payload bytes per endpoint and surface the
+// heaviest consumers with their effective throughput (download-rate honest).
+const renderBandwidthProfile = (rows: RequestRow[]): void => {
+  const report = profileBandwidth(
+    rows
+      .filter((row) => Boolean(row.response))
+      .map((row) => ({
+        method: row.method,
+        url: row.url,
+        bytes: byteLength(row.response?.body),
+        durationMs: row.response?.durationMs,
+        downloadMs: row.response?.downloadMs
+      }))
+  );
+
+  if (report.totalBytes <= 0) {
+    bandwidthSummaryEl.textContent = "No response payloads captured yet.";
+    bandwidthListEl.innerHTML = '<li class="placeholder">No response payloads captured yet.</li>';
+    return;
+  }
+
+  bandwidthSummaryEl.textContent = `${formatBytes(report.totalBytes)} across ${String(report.measuredRequests)} response${report.measuredRequests === 1 ? "" : "s"}`;
+
+  bandwidthListEl.innerHTML = report.endpoints
+    .filter((endpoint) => endpoint.totalBytes > 0)
+    .slice(0, 5)
+    .map((endpoint) => {
+      const sharePct = Math.round(endpoint.byteShare * 100);
+      const throughput = formatThroughput(endpoint.throughputBytesPerSec);
+
+      return (
+        `<li class="bandwidth-row">` +
+        `<div class="bandwidth-row-main">` +
+        `<span class="status-chip">${escapeHtml(endpoint.method)}</span>` +
+        `<span class="bandwidth-url" title="${escapeHtml(endpoint.url)}">${escapeHtml(endpoint.url)}</span>` +
+        `<span class="bandwidth-bytes">${escapeHtml(formatBytes(endpoint.totalBytes))}</span>` +
+        `</div>` +
+        `<div class="bandwidth-meta">` +
+        `<div class="bandwidth-bar"><span style="width:${escapeHtml(String(sharePct))}%"></span></div>` +
+        `<small>${escapeHtml(String(sharePct))}% · ${escapeHtml(throughput)} · ${escapeHtml(String(endpoint.requestCount))}×</small>` +
+        `</div>` +
+        `</li>`
+      );
+    })
+    .join("");
+};
+
+// OBS-008: surface in-session traffic anomalies (error spikes, latency/payload
+// outliers) computed with robust statistics over the visible traffic.
+const renderAnomalies = (rows: RequestRow[]): void => {
+  const report = detectAnomalies(
+    rows
+      .filter((row) => Boolean(row.response))
+      .map((row) => ({
+        method: row.method,
+        url: row.url,
+        status: row.response?.status,
+        durationMs: row.response?.durationMs,
+        bytes: byteLength(row.response?.body)
+      }))
+  );
+
+  if (report.findings.length === 0) {
+    anomalySummaryEl.textContent =
+      report.analyzedRequests > 0
+        ? `No anomalies across ${String(report.analyzedEndpoints)} endpoint${report.analyzedEndpoints === 1 ? "" : "s"}.`
+        : "No traffic captured yet.";
+    anomalyListEl.innerHTML = '<li class="placeholder">No anomalies detected.</li>';
+    return;
+  }
+
+  const errorCount = report.findings.filter((f) => f.severity === "error").length;
+  anomalySummaryEl.textContent = `${String(report.findings.length)} anomal${report.findings.length === 1 ? "y" : "ies"} detected${errorCount > 0 ? ` (${String(errorCount)} critical)` : ""}.`;
+
+  const severityLabel: Record<AnomalySeverity, string> = {
+    error: "Critical",
+    warning: "Warning",
+    info: "Info"
+  };
+
+  anomalyListEl.innerHTML = report.findings
+    .map((finding) => {
+      return (
+        `<li class="anomaly-row anomaly-${escapeHtml(finding.severity)}">` +
+        `<div class="anomaly-row-main">` +
+        `<span class="anomaly-badge">${escapeHtml(severityLabel[finding.severity])}</span>` +
+        `<span class="status-chip">${escapeHtml(finding.method)}</span>` +
+        `<span class="anomaly-url" title="${escapeHtml(finding.url)}">${escapeHtml(finding.url)}</span>` +
+        `</div>` +
+        `<small>${escapeHtml(finding.detail)}</small>` +
+        `</li>`
+      );
+    })
+    .join("");
+};
+
 const renderNetworkInspector = (rows: RequestRow[]): void => {
   const filteredRows = applyNetworkFilters(rows);
+
+  // PERF-003: bandwidth profile across the currently visible traffic.
+  renderBandwidthProfile(filteredRows);
+
+  // OBS-008: in-session anomaly detection across the currently visible traffic.
+  renderAnomalies(filteredRows);
 
   if (filteredRows.length > 0) {
     const hasSelection = selectedNetworkRequestId
@@ -279,13 +413,49 @@ const renderNetworkInspector = (rows: RequestRow[]): void => {
     return;
   }
 
+  const maxVisibleDuration = Math.max(
+    1,
+    ...filteredRows.map((row) => row.response?.durationMs ?? 0)
+  );
+
+  // PERF-001: flag bottleneck requests across the currently visible traffic.
+  bottleneckFindings = new Map(
+    detectBottlenecks(
+      filteredRows
+        .filter((row) => typeof row.response?.durationMs === "number")
+        .map((row) => ({
+          id: row.id,
+          method: row.method,
+          url: row.url,
+          durationMs: row.response?.durationMs ?? 0,
+          waitingMs: row.response?.waitingMs,
+          downloadMs: row.response?.downloadMs,
+          bytes: byteLength(row.response?.body)
+        }))
+    ).findings.map((finding) => [finding.id, finding])
+  );
+
   networkRequestListEl.innerHTML = filteredRows
     .map((row) => {
       const isActive = selectedNetworkRequestId === row.id;
       const statusValue = row.response ? String(row.response.status) : "Pending";
       const durationLabel = row.response ? formatDuration(row.response.durationMs) : "-";
 
-      return `<li class="network-row${isActive ? " active" : ""}" data-network-request-id="${escapeHtml(row.id)}"><div class="network-row-main"><span class="status-chip">${escapeHtml(row.method)}</span><span class="network-row-url" title="${escapeHtml(row.url)}">${escapeHtml(row.url)}</span><span class="status-chip ${escapeHtml(getStatusToneClass(row.response?.status))}">${escapeHtml(statusValue)}</span><span class="network-row-time">${escapeHtml(durationLabel)}</span></div><div class="network-waterfall"><span style="width:${escapeHtml(String(getTimelineWidthPercent(row.response?.durationMs)))}%"></span></div></li>`;
+      // OBS-002: waterfall scaled to the slowest request in the current view.
+      const durationMs = row.response?.durationMs ?? 0;
+      const widthPct =
+        maxVisibleDuration > 0 ? Math.round((durationMs / maxVisibleDuration) * 100) : 0;
+      const barWidth = durationMs > 0 ? Math.max(2, widthPct) : 0;
+      const tone = getStatusToneClass(row.response?.status);
+      const resBytes = byteLength(row.response?.body);
+      const sizeLabel = resBytes > 0 ? ` · ${formatBytes(resBytes)}` : "";
+      // PERF-001: slow-request badge for the row.
+      const bottleneck = bottleneckFindings.get(row.id);
+      const bottleneckBadge = bottleneck
+        ? `<span class="bottleneck-badge" title="${escapeHtml(bottleneck.detail)}">slow</span>`
+        : "";
+
+      return `<li class="network-row${isActive ? " active" : ""}" data-network-request-id="${escapeHtml(row.id)}"><div class="network-row-main"><span class="status-chip">${escapeHtml(row.method)}</span><span class="network-row-url" title="${escapeHtml(row.url)}">${escapeHtml(row.url)}</span>${bottleneckBadge}<span class="status-chip ${escapeHtml(tone)}">${escapeHtml(statusValue)}</span><span class="network-row-time">${escapeHtml(durationLabel)}${escapeHtml(sizeLabel)}</span></div><div class="network-waterfall" title="${escapeHtml(durationLabel)}"><span class="wf-${escapeHtml(tone)}" style="width:${escapeHtml(String(barWidth))}%"></span></div></li>`;
     })
     .join("");
 
@@ -318,6 +488,12 @@ const renderNetworkDetail = (row: RequestRow | null): void => {
   networkDetailTabEl.textContent =
     typeof row.tabId === "number" && row.tabId >= 0 ? String(row.tabId) : "n/a";
 
+  // OBS-003: request/response payload size analysis
+  const reqBytes = byteLength(row.body);
+  const resBytes = byteLength(row.response?.body);
+  networkDetailReqSizeEl.textContent = row.body ? formatBytes(reqBytes) : "—";
+  networkDetailResSizeEl.textContent = row.response?.body ? formatBytes(resBytes) : "—";
+
   networkDetailStatusEl.className = `status-chip ${getStatusToneClass(row.response?.status)}`;
   networkDetailMethodEl.className = "status-chip";
 
@@ -327,6 +503,20 @@ const renderNetworkDetail = (row: RequestRow | null): void => {
   networkTimelineCaptionEl.textContent = row.response
     ? `Response completed in ${formatDuration(row.response.durationMs)}.`
     : "No response timing yet.";
+
+  // PERF-002: honest two-phase breakdown (waiting = time-to-first-byte,
+  // download = transfer time) when webRequest exposed the first-byte signal.
+  renderTimingPhases(row);
+
+  // PERF-001: surface the bottleneck classification for the selected request.
+  const bottleneck = bottleneckFindings.get(row.id);
+  if (bottleneck) {
+    networkBottleneckNoteEl.textContent = `Bottleneck (${bottleneck.reason}): ${bottleneck.detail}`;
+    networkBottleneckNoteEl.classList.remove("hidden");
+  } else {
+    networkBottleneckNoteEl.textContent = "";
+    networkBottleneckNoteEl.classList.add("hidden");
+  }
 
   const body = row.response?.body;
 
@@ -401,6 +591,30 @@ const renderContractDiff = (expectedBody: string, actualBody: string): string =>
       );
     })
     .join("");
+};
+
+const renderTimingPhases = (row: RequestRow): void => {
+  const waitingMs = row.response?.waitingMs;
+  const downloadMs = row.response?.downloadMs;
+  const hasBreakdown = typeof waitingMs === "number" && typeof downloadMs === "number";
+
+  if (!hasBreakdown) {
+    networkPhaseWaitingEl.style.width = "0%";
+    networkPhaseDownloadEl.style.width = "0%";
+    networkPhaseWaitingEl.title = "";
+    networkPhaseDownloadEl.title = "";
+    return;
+  }
+
+  const total = waitingMs + downloadMs;
+  const waitingPct = total > 0 ? Math.round((waitingMs / total) * 100) : 0;
+  const downloadPct = total > 0 ? 100 - waitingPct : 0;
+
+  networkPhaseWaitingEl.style.width = `${String(waitingPct)}%`;
+  networkPhaseDownloadEl.style.width = `${String(downloadPct)}%`;
+  networkPhaseWaitingEl.title = `Waiting (TTFB): ${formatDuration(waitingMs)}`;
+  networkPhaseDownloadEl.title = `Download: ${formatDuration(downloadMs)}`;
+  networkTimelineCaptionEl.textContent = `Waiting ${formatDuration(waitingMs)} · Download ${formatDuration(downloadMs)}`;
 };
 
 const renderNetworkExecutionTimeline = (row: RequestRow): string => {

@@ -16,6 +16,7 @@ type CapturedRequest = InterceptedRequest & {
   resourceType?: string;
   tabId?: number;
   startedAtMs: number;
+  firstByteAtMs?: number;
   matchedRules: MatchedRule[];
   response?: CapturedResponse;
 };
@@ -26,6 +27,8 @@ type CapturedResponse = {
   timestamp: string;
   body?: string;
   headers?: Record<string, string>;
+  waitingMs?: number;
+  downloadMs?: number;
 };
 
 type RewriteUrlPayload = {
@@ -292,6 +295,37 @@ chrome.webRequest.onBeforeRequest.addListener(
   { urls: ["<all_urls>"] }
 );
 
+chrome.webRequest.onResponseStarted.addListener(
+  (details) => {
+    void (async () => {
+      if (!isCapturableRequest(details)) {
+        return;
+      }
+
+      // PERF-002: onResponseStarted fires when the first byte of the response
+      // arrives, letting us derive an honest time-to-first-byte signal.
+      const stored = await chrome.storage.local.get(CAPTURED_REQUESTS_KEY);
+      const existing = readCapturedRequests(stored[CAPTURED_REQUESTS_KEY]);
+      let changed = false;
+      const updated = existing.map((request) => {
+        if (request.id !== details.requestId || typeof request.firstByteAtMs === "number") {
+          return request;
+        }
+
+        changed = true;
+        return { ...request, firstByteAtMs: details.timeStamp };
+      });
+
+      if (changed) {
+        await chrome.storage.local.set({
+          [CAPTURED_REQUESTS_KEY]: updated
+        });
+      }
+    })();
+  },
+  { urls: ["<all_urls>"] }
+);
+
 chrome.webRequest.onCompleted.addListener(
   (details) => {
     void (async () => {
@@ -307,19 +341,33 @@ chrome.webRequest.onCompleted.addListener(
           Array.isArray(values) ? values.join(",") : values
         ])
       );
-      const updated = existing.map((request) =>
-        request.id === details.requestId
-          ? {
-              ...request,
-              response: {
-                status: details.statusCode,
-                durationMs: Math.max(0, Math.round(details.timeStamp - request.startedAtMs)),
-                timestamp: new Date(details.timeStamp).toISOString(),
-                headers: responseHeaders
+      const updated = existing.map((request) => {
+        if (request.id !== details.requestId) {
+          return request;
+        }
+
+        const durationMs = Math.max(0, Math.round(details.timeStamp - request.startedAtMs));
+        // PERF-002: split total time into waiting (time-to-first-byte) and download
+        // (transfer) using the onResponseStarted signal, when available.
+        const timing =
+          typeof request.firstByteAtMs === "number"
+            ? {
+                waitingMs: Math.max(0, Math.round(request.firstByteAtMs - request.startedAtMs)),
+                downloadMs: Math.max(0, Math.round(details.timeStamp - request.firstByteAtMs))
               }
-            }
-          : request
-      );
+            : {};
+
+        return {
+          ...request,
+          response: {
+            status: details.statusCode,
+            durationMs,
+            timestamp: new Date(details.timeStamp).toISOString(),
+            headers: responseHeaders,
+            ...timing
+          }
+        };
+      });
 
       await chrome.storage.local.set({
         [CAPTURED_REQUESTS_KEY]: updated

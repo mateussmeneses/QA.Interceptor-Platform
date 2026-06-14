@@ -5,7 +5,7 @@
 > Update this document whenever you finish a feature or change the architecture.
 
 **Last audit:** 2026-06-13 (full 9-phase audit, evidence by code + build + tests)
-**Current health evidence:** `npm run build` ✅ · full `tsc` ✅ (no errors) · `npm test` ✅ 548 tests / 19 files
+**Current health evidence:** `npm run build` ✅ · full `tsc` ✅ (no errors) · `npm test` ✅ 628 engine + 28 extension tests
 
 ---
 
@@ -59,6 +59,13 @@ No circular dependencies. Import direction is unidirectional.
 - Rule groups (priority + enabled-group filtering).
 - Rule import/export (JSON), HAR import/export, copy as cURL.
 - Evidence export JSON / Markdown / HTML (HTML = professional report: KPIs, status bars, assertion table, traffic waterfall — QP-006).
+- Traffic baseline capture + regression report (`regression-detector` — OBS-006/007): missing/new endpoints, status changes, contract drift.
+- Network waterfall scaled to slowest request + payload size analysis (OBS-002/003).
+- Request timing breakdown: honest waiting (TTFB) vs download phases derived from `webRequest.onResponseStarted` (PERF-002).
+- Bottleneck detection: flags slow requests (absolute + p90 relative) and classifies the cause (server-latency / transfer-size / mixed) — `bottleneck-detector` engine surfaced in the Network view (PERF-001).
+- Bandwidth profiler: aggregates response bytes per endpoint with byte share and effective throughput (download-rate honest) — `bandwidth-profiler` engine surfaced in the Network view (PERF-003).
+- Traffic anomaly detection: in-session error-rate spikes + latency/payload outliers via robust median+MAD statistics — `anomaly-detector` engine surfaced in the Network view (OBS-008).
+- Session replay with playback speed + replayable artifact (frozen requests + baseline response/timing, drift detection — QP-007/008).
 - Live edit propagation without reload (`storage.onChanged`).
 - Dynamic variables in mock templates (`{{timestamp}}`, `{{uuid}}`, `{{method}}`, `{{url}}`, env vars).
 - JSON Schema validation of responses (`schema-validator` via the `json-schema` assertion type — INT-001).
@@ -70,7 +77,6 @@ No circular dependencies. Import direction is unidirectional.
 
 ### 🟡 Partially implemented
 
-- `QP-007` Replay player — sequential replay, no timeline/scrubber.
 - `OBS-001` Diff UI — functional, partial UX.
 - `OBS-004` Execution trace — uses `conflict-detector` (INT-003): 4 conflict kinds with descriptions/suggestions.
 - Response body capture — only for mocked responses (MV3 `webRequest` limitation).
@@ -129,17 +135,40 @@ docs/
 
 ## 7. Critical dependencies
 
-- `esbuild` (bundling), `typescript`, `vitest` (engine tests), `@types/chrome`.
+- `esbuild` (bundling), `typescript`, `vitest` (tests for engine + extension utils), `@types/chrome`.
 - Quality tooling: eslint, prettier, husky, commitlint, lint-staged.
 - **No React runtime dependency** (removed). Do not reintroduce without an ADR.
+
+---
+
+## 7b. Testing strategy (QA-TEST-001)
+
+The plain-TS UI keeps all business logic in **pure, side-effect-free functions** so it can be
+unit-tested in a Node (vitest) environment without a DOM:
+
+- **Rule-engine package** (`packages/rule-engine/*`): the analytical/decision core (matching,
+  assertions, schema, contract, conflicts, regression, bottleneck, bandwidth, anomaly). Fully
+  unit-tested (628 tests / 28 files).
+- **UI helper layer** (`extension/src/sidepanel/shared/utils.ts`): pure formatters, view-model
+  builders, and evidence/report generators. Unit-tested in `utils.test.ts` (26 tests). `document`
+  is only referenced inside function bodies (e.g. `triggerDownload`), never at module load, so the
+  module is Node-importable. Other pure shared helpers follow the same rule and are tested
+  alongside (e.g. `theme-manager.ts`'s `resolveTheme`).
+- **DOM wiring layer** (`features/*.ts`): thin imperative glue that reads/writes the DOM and
+  delegates to the two layers above. It is validated by `tsc` (full typecheck) and `npm run build`
+  (esbuild) rather than unit tests; jsdom is intentionally NOT a dependency.
+
+Rule of thumb: when adding UI behavior, put the decision/format logic in a pure helper or in the
+rule-engine and cover it with tests; keep `features/*.ts` limited to DOM plumbing.
 
 ---
 
 ## 8. Known risks
 
 - **R1 (Critical):** ~~mocks/delay only intercept `fetch`~~ — **MOSTLY FIXED** (CAP-002): conditional + static
-  mocks + delay now also work on `XMLHttpRequest`. Residual: `rewrite-response`/`rewrite-request-body` and
-  WebSocket remain fetch-only/uncovered.
+  mocks + delay now also work on `XMLHttpRequest`. Residual: `rewrite-response`/`rewrite-request-body` remain
+  fetch-only; WebSocket frames are uncovered by design (see ADR-007 / CAP-003 — only in-page patching can
+  read frames; tracked as future CAP-005).
 - **R2 (Critical):** the 6 unwired engines may be "recreated" by mistake by future sessions.
 - **R3 (Medium):** ~~divergent `matchesCondition`~~ — **FIXED** (INT-004): unified and case-insensitive.
 - **R4 (Medium):** ~~phantom `validate-schema`~~ — **FIXED** (FIX-001): type removed until real implementation (INT-001).
@@ -150,9 +179,9 @@ docs/
 
 ## 9. Recommended next task
 
-**Reporting & Observability completion** — finish the remaining partials: **QP-007** (replay
-timeline/scrubber), **QP-008** (replayable artifact), **OBS-006/007** (baseline capture + regression
-report, which can reuse the already-wired `contract-comparator`). See `BACKLOG_CONSOLIDATED.md`.
+**Reporting & Observability is complete.** Remaining backlog is mostly platform coverage
+(CAP-003 WebSocket, explicitly out of current scope). Performance/analytics (OBS-008, PERF-001..003)
+and the plain-TS UI test strategy (QA-TEST-001) are done. Pick by priority in `BACKLOG_CONSOLIDATED.md`.
 
 ---
 

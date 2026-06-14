@@ -1,4 +1,4 @@
-# QA.Interceptor Platform — Documentation Index
+﻿# QA.Interceptor Platform — Documentation Index
 
 This is the central entry point for the project documentation.
 
@@ -30,8 +30,8 @@ This is the central entry point for the project documentation.
 - **[docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)** — system layers.
 - **[docs/adr/](docs/adr/)** — Architecture Decision Records (ADR-001..006).
 
-> Note: the `docs/architecture/FRONTEND_*` and `DESIGN_SYSTEM*` documents describe the **removed**
-> React component layer and are kept only as historical design references.
+> Note: the former `FRONTEND_*` and `DESIGN_SYSTEM*` documents describe the **removed**
+> React component layer and now live under `docs/_archive/architecture/` as historical references.
 
 ---
 
@@ -48,8 +48,8 @@ This is the central entry point for the project documentation.
 ## Archived (historical, read-only)
 
 Dated snapshots that **do not match the current code** live in
-**[docs/\_archive/](docs/_archive/README.md)** (analysis, planning, superseded backlogs, PT summary).
-Do not use them for active development.
+**[docs/\_archive/](docs/_archive/README.md)** (analysis, planning, superseded backlogs, frontend
+design docs, PT summary). Do not use them for active development.
 
 ---
 
@@ -66,57 +66,14 @@ QA.Interceptor Platform/
 │
 ├── docs/
 │   ├── adr/                    # Architecture Decision Records
-│   ├── architecture/           # ARCHITECTURE.md (+ historical FRONTEND_* design refs)
+│   ├── architecture/           # ARCHITECTURE.md
 │   ├── planning/               # ROADMAP.md
-│   ├── reference/              # CONTRIBUTING, VERSIONING, DOCUMENTATION_*
+│   ├── reference/              # CONTRIBUTING, VERSIONING, DOCUMENTATION_STRUCTURE
 │   ├── requestly-benchmark-analysis.md
-│   └── _archive/               # historical, read-only (analysis, planning, old backlogs)
+│   └── _archive/               # historical, read-only (analysis, planning, backlogs, frontend)
 │
 ├── extension/                  # MV3 extension source (background, content, sidepanel, storage)
 └── packages/
     ├── shared-types/           # domain types + message contracts
     └── rule-engine/            # pure logic + tests
-```
-
-│ └── src/
-│ ├── background/
-│ ├── content/
-│ ├── sidepanel/
-│ ├── popup/
-│ └── ...
-│
-├── packages/ # Pacotes reutilizáveis
-│ ├── rule-engine/
-│ └── shared-types/
-│
-└── .github/
-└── agents/ # Agentes de coordenação
-
-```
-
----
-
-## 🎯 Proximos Passos
-
-1. **Frontend Phase FE-0 Complete** ✅ - [FRONTEND_PHASE_FE0_SUMMARY.md](FRONTEND_PHASE_FE0_SUMMARY.md)
-2. **Continuar com atividades de backlog** - Veja [docs/backlog/](docs/backlog/)
-3. **Revisar arquitetura** - Veja [docs/architecture/](docs/architecture/)
-4. **Verificar status atual** - Veja [docs/planning/CURRENT_PHASE.md](docs/planning/CURRENT_PHASE.md)
-5. **Entender análises** - Veja [docs/analysis/](docs/analysis/)
-
----
-
-## 📝 Legendas
-
-- 📋 = Documentação administrativa
-- 🎯 = Planejamento e estratégia
-- 🏗️ = Arquitetura e design
-- 📊 = Análise e dados
-- 📖 = Referência e guias
-- 📁 = Estrutura de pastas
-
----
-
-**Última atualização:** 2026-06-12
-**Mantido por:** Product Owner Agent
 ```

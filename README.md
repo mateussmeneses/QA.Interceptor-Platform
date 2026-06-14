@@ -20,15 +20,17 @@ Help QA professionals validate frontend behavior, backend integrations, API cont
 
 ## Documentation Map
 
-**👉 [Navegação centralizada: INDEX.md](INDEX.md)** - Use este arquivo como ponto de entrada para toda documentação.
+**👉 [Central navigation: INDEX.md](INDEX.md)** — use this file as the entry point for all documentation.
 
 Quick links:
 
+- Source of truth: [PROJECT_STATE.md](PROJECT_STATE.md)
+- Official backlog: [BACKLOG_CONSOLIDATED.md](BACKLOG_CONSOLIDATED.md)
+- AI/dev rules: [AI_DEVELOPMENT_RULES.md](AI_DEVELOPMENT_RULES.md)
 - Vision and value: [PRODUCT_VISION.md](PRODUCT_VISION.md)
 - Non-negotiable rules: [PROJECT_RULES.md](PROJECT_RULES.md)
 - Architecture baseline: [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)
 - Milestones and phases: [docs/planning/ROADMAP.md](docs/planning/ROADMAP.md)
-- Prioritized work items: [docs/backlog/BACKLOG.md](docs/backlog/BACKLOG.md)
 - Contribution workflow: [docs/reference/CONTRIBUTING.md](docs/reference/CONTRIBUTING.md)
 - Versioning policy: [docs/reference/VERSIONING.md](docs/reference/VERSIONING.md)
 - Project principles manifesto: [MANIFEST.md](MANIFEST.md)

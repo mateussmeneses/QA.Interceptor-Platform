@@ -5,7 +5,8 @@
 
 import type { AppState, ResponseAssertionRow, RuleRow } from "../shared/types";
 import { escapeHtml, generateId } from "../shared/utils";
-import { saveResponseAssertions, saveRules, loadRules } from "../../storage/index";
+import { wireThemeSelect } from "../shared/theme-manager";
+import { saveResponseAssertions, saveRules, loadRules, resetWorkspace } from "../../storage/index";
 
 // ---------------------------------------------------------------------------
 // Error simulation profiles (RQ-010)
@@ -93,6 +94,8 @@ let assertionPathInputEl: HTMLInputElement;
 let assertionPathFieldEl: HTMLElement;
 let assertionPathLabelEl: HTMLElement;
 let assertionExpectedLabelEl: HTMLElement;
+let resetWorkspaceButtonEl: HTMLButtonElement;
+let resetStatusEl: HTMLElement;
 
 // ---------------------------------------------------------------------------
 // Local state
@@ -131,6 +134,12 @@ export function initSettings(): void {
   assertionPathFieldEl = assertionPathInputEl.closest(".field-inline") as HTMLElement;
   assertionPathLabelEl = getEl("assertion-path-label");
   assertionExpectedLabelEl = getEl("assertion-expected-label");
+
+  // TD-006: wire the real theme selector (light/dark/system) via theme-manager.
+  wireThemeSelect(getEl("settings-theme") as HTMLSelectElement);
+
+  resetWorkspaceButtonEl = getEl("settings-reset-workspace-button") as HTMLButtonElement;
+  resetStatusEl = getEl("settings-reset-status");
 
   bindEvents();
 }
@@ -331,9 +340,71 @@ const syncAssertionFormFields = (): void => {
   }
 };
 
+// TD-006: Danger Zone — Reset Workspace with a two-step inline confirmation.
+const RESET_CONFIRM_TIMEOUT_MS = 4000;
+
+let resetArmed = false;
+let resetArmTimer: ReturnType<typeof setTimeout> | null = null;
+
+const setResetStatus = (message: string, tone: "neutral" | "error" | "success"): void => {
+  resetStatusEl.textContent = message;
+  resetStatusEl.classList.remove("hidden", "status-error", "status-success");
+
+  if (tone === "error") {
+    resetStatusEl.classList.add("status-error");
+  } else if (tone === "success") {
+    resetStatusEl.classList.add("status-success");
+  }
+};
+
+const disarmReset = (): void => {
+  resetArmed = false;
+  resetWorkspaceButtonEl.textContent = "Reset Workspace";
+  resetWorkspaceButtonEl.classList.remove("armed");
+
+  if (resetArmTimer !== null) {
+    clearTimeout(resetArmTimer);
+    resetArmTimer = null;
+  }
+};
+
+const bindResetWorkspace = (): void => {
+  resetWorkspaceButtonEl.addEventListener("click", () => {
+    void (async () => {
+      if (!resetArmed) {
+        // First click: arm the action and ask for explicit confirmation.
+        resetArmed = true;
+        resetWorkspaceButtonEl.textContent = "Click again to confirm";
+        resetWorkspaceButtonEl.classList.add("armed");
+        setResetStatus(
+          "This will delete all rules, mocks, captured traffic, and evidence. Click again to confirm.",
+          "neutral"
+        );
+        resetArmTimer = setTimeout(disarmReset, RESET_CONFIRM_TIMEOUT_MS);
+        return;
+      }
+
+      // Second click within the window: perform the reset.
+      disarmReset();
+      resetWorkspaceButtonEl.disabled = true;
+
+      try {
+        await resetWorkspace();
+        setResetStatus("Workspace reset. All local data was cleared.", "success");
+      } catch {
+        setResetStatus("Failed to reset the workspace. Please try again.", "error");
+      } finally {
+        resetWorkspaceButtonEl.disabled = false;
+      }
+    })();
+  });
+};
+
 const bindEvents = (): void => {
   assertionTypeSelectEl.addEventListener("change", syncAssertionFormFields);
   syncAssertionFormFields();
+
+  bindResetWorkspace();
 
   assertionsAddButtonEl.addEventListener("click", () => {
     const type = assertionTypeSelectEl.value as ResponseAssertionRow["type"];

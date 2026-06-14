@@ -130,3 +130,39 @@ export {
   type ContentConditionalMock,
   type ContentConditionalMockBranch
 } from "./content-guards.js";
+
+export {
+  detectRegressions,
+  type TrafficSnapshotEntry,
+  type RegressionFinding,
+  type RegressionReport,
+  type RegressionKind,
+  type RegressionSeverity
+} from "./regression-detector.js";
+
+export {
+  detectBottlenecks,
+  type BottleneckEntry,
+  type BottleneckFinding,
+  type BottleneckReport,
+  type BottleneckStats,
+  type BottleneckReason,
+  type BottleneckOptions
+} from "./bottleneck-detector.js";
+
+export {
+  profileBandwidth,
+  type BandwidthEntry,
+  type BandwidthEndpointProfile,
+  type BandwidthReport
+} from "./bandwidth-profiler.js";
+
+export {
+  detectAnomalies,
+  type AnomalyEntry,
+  type AnomalyFinding,
+  type AnomalyReport,
+  type AnomalyKind,
+  type AnomalySeverity,
+  type AnomalyOptions
+} from "./anomaly-detector.js";

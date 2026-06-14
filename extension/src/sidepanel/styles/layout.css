@@ -667,3 +667,352 @@
   display: flex;
   gap: 4px;
 }
+
+/* OBS-006/007: regression report list */
+.history-regression-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.history-regression-list .regression-ok {
+  color: var(--success);
+  font-size: 13px;
+}
+
+.history-regression-list .regression-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-left: 3px solid var(--warning);
+  background: var(--surface-alt);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+
+.history-regression-list .regression-item.error {
+  border-left-color: var(--error);
+}
+
+.history-regression-list .regression-item.info {
+  border-left-color: var(--text-secondary);
+}
+
+.history-regression-list .regression-kind {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.history-regression-list .regression-endpoint {
+  font-family: var(--font-mono, monospace);
+  color: var(--text-secondary);
+}
+
+/* OBS-002: network waterfall bar (scaled to slowest visible request) */
+.network-waterfall {
+  height: 6px;
+  margin-top: 4px;
+  background: var(--surface-alt, #f3f4f6);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.network-waterfall > span {
+  display: block;
+  height: 100%;
+  background: #3b82f6;
+  transition: width 0.2s ease;
+}
+
+.network-waterfall > span.wf-ok {
+  background: var(--success);
+}
+.network-waterfall > span.wf-redirect {
+  background: #3b82f6;
+}
+.network-waterfall > span.wf-client {
+  background: var(--warning);
+}
+.network-waterfall > span.wf-server {
+  background: var(--error);
+}
+.network-waterfall > span.wf-pending {
+  background: var(--text-secondary);
+}
+
+/* PERF-002: two-phase timing breakdown (waiting/download) */
+.network-timeline-phases {
+  display: flex;
+  height: 6px;
+  margin-top: 4px;
+  background: var(--surface-alt, #f3f4f6);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.network-timeline-phases > .timeline-phase {
+  display: block;
+  height: 100%;
+  transition: width 0.2s ease;
+}
+
+.network-timeline-phases > .timeline-phase-waiting {
+  background: var(--warning);
+}
+
+.network-timeline-phases > .timeline-phase-download {
+  background: var(--success);
+}
+
+/* PERF-001: bottleneck badge + detail note */
+.bottleneck-badge {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: var(--warning);
+}
+
+.bottleneck-note {
+  margin: 6px 0 0;
+  padding: 6px 8px;
+  border-left: 3px solid var(--warning);
+  background: var(--surface-alt, #f3f4f6);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* PERF-003: bandwidth profile panel */
+.bandwidth-panel {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+}
+
+.bandwidth-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.bandwidth-head h4 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.bandwidth-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bandwidth-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bandwidth-row-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bandwidth-url {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.bandwidth-bytes {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bandwidth-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bandwidth-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--surface-alt, #f3f4f6);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bandwidth-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent, #6366f1);
+}
+
+.bandwidth-meta small {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* OBS-008: traffic anomaly panel */
+.anomaly-panel {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+}
+
+.anomaly-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.anomaly-head h4 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.anomaly-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.anomaly-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 8px;
+  border-left: 3px solid var(--border, #e5e7eb);
+}
+
+.anomaly-row.anomaly-error {
+  border-left-color: var(--error);
+}
+
+.anomaly-row.anomaly-warning {
+  border-left-color: var(--warning);
+}
+
+.anomaly-row.anomaly-info {
+  border-left-color: var(--accent, #6366f1);
+}
+
+.anomaly-row-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.anomaly-url {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.anomaly-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 6px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--text-secondary);
+}
+
+.anomaly-error .anomaly-badge {
+  background: var(--error);
+}
+
+.anomaly-warning .anomaly-badge {
+  background: var(--warning);
+}
+
+.anomaly-info .anomaly-badge {
+  background: var(--accent, #6366f1);
+}
+
+.anomaly-row small {
+  color: var(--text-secondary);
+}
+
+/* TD-006: Danger Zone — Reset Workspace */
+.action-btn.danger {
+  color: #fff;
+  background: var(--error);
+  border-color: var(--error);
+}
+
+.action-btn.danger:hover {
+  background: var(--error-hover, #dc2626);
+  border-color: var(--error-hover, #dc2626);
+}
+
+.action-btn.danger.armed {
+  background: var(--error-active, #b91c1c);
+  border-color: var(--error-active, #b91c1c);
+}
+
+.settings-reset-status {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.settings-reset-status.status-error {
+  color: var(--error);
+}
+
+.settings-reset-status.status-success {
+  color: var(--success);
+}
+
+/* QP-008: replay baseline vs live drift indicators */
+.history-replay-item .replay-baseline {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+.history-replay-item .replay-result {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.history-replay-item.drifted {
+  border-left: 3px solid var(--warning);
+}
+
+.history-replay-item.drifted .replay-result {
+  color: var(--warning);
+}

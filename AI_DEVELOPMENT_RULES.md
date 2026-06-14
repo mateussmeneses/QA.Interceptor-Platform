@@ -67,11 +67,14 @@ Run and ensure green:
 
 ```
 npm run build         # build extension + packages
-npm test              # rule-engine tests (vitest)
+npm test              # vitest: rule-engine + extension pure-utils suites
 cd extension && npx tsc -p tsconfig.json --noEmit   # FULL typecheck must pass
 ```
 
-If you add pure logic to `rule-engine`, **add tests** (`*.test.ts`).
+For documentation changes, also run `npm run check:links` (validated in CI).
+
+If you add pure logic to `rule-engine`, **add tests** (`*.test.ts`). Pure helpers in
+`extension/src/sidepanel/shared/utils.ts` are also unit-tested (vitest, node env).
 
 ---
 

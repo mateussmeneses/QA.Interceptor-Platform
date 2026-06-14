@@ -11,8 +11,9 @@
     "build": "npm run build -w @qa-interceptor/extension && npm run build -w @qa-interceptor/shared-types && npm run build -w @qa-interceptor/rule-engine",
     "typecheck": "npm run typecheck:runtime",
     "typecheck:runtime": "npm run typecheck:runtime -w @qa-interceptor/extension && npm run build -w @qa-interceptor/shared-types && npm run build -w @qa-interceptor/rule-engine",
-    "test": "npm run test -w @qa-interceptor/rule-engine",
+    "test": "npm run test -w @qa-interceptor/rule-engine && npm run test -w @qa-interceptor/extension",
     "lint": "eslint . --ext .ts,.js,.mjs --max-warnings=0",
+    "check:links": "node scripts/check-md-links.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "commitlint": "commitlint --from=HEAD~1 --to=HEAD --verbose"

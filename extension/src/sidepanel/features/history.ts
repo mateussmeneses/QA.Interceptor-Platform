@@ -14,9 +14,17 @@ import { isHistoryOutcomeFilter } from "../shared/types";
 import {
   loadReplayArtifacts,
   saveReplayArtifacts,
+  loadTrafficBaseline,
+  saveTrafficBaseline,
   type StoredReplayArtifact,
-  type StoredReplayArtifactRequest
+  type StoredReplayArtifactRequest,
+  type StoredTrafficBaseline,
+  type StoredBaselineEntry
 } from "../../storage/index";
+import {
+  detectRegressions,
+  type RegressionFinding
+} from "../../../../packages/rule-engine/src/regression-detector";
 import {
   escapeHtml,
   formatTimestamp,
@@ -71,10 +79,16 @@ let historyReplayDeleteArtifactButtonEl: HTMLButtonElement;
 let historyReplayStartButtonEl: HTMLButtonElement;
 let historyReplayCancelButtonEl: HTMLButtonElement;
 let historyReplayCloseButtonEl: HTMLButtonElement;
+let historyReplaySpeedEl: HTMLSelectElement;
 let historyReplayArtifactStatusEl: HTMLElement;
 let historyExportModalController: ModalController;
 let historyReplayModalController: ModalController;
 let activeHistoryExportTriggerEl: HTMLElement | null = null;
+// OBS-006/007: baseline & regression elements
+let historyBaselineSaveButtonEl: HTMLButtonElement;
+let historyBaselineCompareButtonEl: HTMLButtonElement;
+let historyBaselineStatusEl: HTMLElement;
+let historyRegressionListEl: HTMLElement;
 
 // ---------------------------------------------------------------------------
 // Local state
@@ -175,6 +189,12 @@ export function initHistory(): void {
     initialFocusEl: () => historyReplayStartButtonEl,
     defaultRestoreFocusEl: () => historyReplayButtonEl
   });
+
+  historyBaselineSaveButtonEl = getEl("history-baseline-save-button") as HTMLButtonElement;
+  historyBaselineCompareButtonEl = getEl("history-baseline-compare-button") as HTMLButtonElement;
+  historyBaselineStatusEl = getEl("history-baseline-status");
+  historyRegressionListEl = getEl("history-regression-list");
+  historyReplaySpeedEl = getEl("history-replay-speed") as HTMLSelectElement;
 
   bindEvents();
 }
@@ -475,6 +495,90 @@ const bindEvents = (): void => {
     historyReplayStartButtonEl.classList.remove("hidden");
     historyReplayCancelButtonEl.classList.add("hidden");
   });
+
+  // OBS-006: save the selected session as a regression baseline
+  historyBaselineSaveButtonEl.addEventListener("click", () => {
+    const session = getSelectedHistorySession();
+
+    if (!session) {
+      historyBaselineStatusEl.textContent = "Select a session before saving a baseline.";
+      return;
+    }
+
+    const baseline: StoredTrafficBaseline = {
+      label: session.label,
+      capturedAt: new Date().toISOString(),
+      entries: sessionToBaselineEntries(session)
+    };
+
+    void saveTrafficBaseline(baseline);
+    historyBaselineStatusEl.textContent = `Baseline saved from "${session.label}" (${String(baseline.entries.length)} endpoints).`;
+    historyRegressionListEl.innerHTML = "";
+  });
+
+  // OBS-007: compare the selected session against the saved baseline
+  historyBaselineCompareButtonEl.addEventListener("click", () => {
+    const session = getSelectedHistorySession();
+
+    if (!session) {
+      historyBaselineStatusEl.textContent = "Select a session before comparing.";
+      return;
+    }
+
+    void (async () => {
+      const baseline = await loadTrafficBaseline();
+
+      if (!baseline) {
+        historyBaselineStatusEl.textContent = "No baseline saved yet. Save one first.";
+        return;
+      }
+
+      const report = detectRegressions(baseline.entries, sessionToBaselineEntries(session));
+      renderRegressionReport(baseline, report.findings, report.hasErrors, report.hasWarnings);
+    })();
+  });
+};
+
+const sessionToBaselineEntries = (session: HistorySession): StoredBaselineEntry[] =>
+  session.requests.map((row) => ({
+    method: row.method,
+    url: row.url,
+    ...(row.response ? { status: row.response.status } : {}),
+    ...(row.response?.body ? { body: row.response.body } : {})
+  }));
+
+const renderRegressionReport = (
+  baseline: StoredTrafficBaseline,
+  findings: RegressionFinding[],
+  hasErrors: boolean,
+  hasWarnings: boolean
+): void => {
+  const header = hasErrors
+    ? "Regressions detected"
+    : hasWarnings
+      ? "Warnings detected"
+      : "No regressions";
+  historyBaselineStatusEl.textContent = `${header} vs baseline "${baseline.label}" (${String(findings.length)} findings).`;
+
+  if (findings.length === 0) {
+    historyRegressionListEl.innerHTML =
+      '<li class="regression-ok">✓ Current session matches the baseline contract.</li>';
+    return;
+  }
+
+  const icon = (severity: RegressionFinding["severity"]): string =>
+    severity === "error" ? "⛔" : severity === "warning" ? "⚠" : "ℹ";
+
+  historyRegressionListEl.innerHTML = findings
+    .map(
+      (f) =>
+        `<li class="regression-item ${escapeHtml(f.severity)}">` +
+        `<span class="regression-kind">${icon(f.severity)} ${escapeHtml(f.kind)}</span>` +
+        `<code class="regression-endpoint">${escapeHtml(f.method)} ${escapeHtml(f.url)}</code>` +
+        `<small>${escapeHtml(f.detail)}</small>` +
+        `</li>`
+    )
+    .join("");
 };
 
 const closeReplayPanel = (): void => {
@@ -581,7 +685,15 @@ const toReplayArtifactRequest = (row: RequestRow): StoredReplayArtifactRequest =
   method: row.method,
   url: row.url,
   headers: row.headers ?? {},
-  ...(typeof row.body === "string" ? { body: row.body } : {})
+  ...(typeof row.body === "string" ? { body: row.body } : {}),
+  // QP-008: freeze the baseline response so the artifact is a full evidence snapshot.
+  ...(row.response
+    ? {
+        baselineStatus: row.response.status,
+        baselineDurationMs: row.response.durationMs,
+        ...(typeof row.response.body === "string" ? { baselineBody: row.response.body } : {})
+      }
+    : {})
 });
 
 const buildReplayArtifact = (session: HistorySession): StoredReplayArtifact => {
@@ -681,11 +793,20 @@ const renderReplayList = (rows: StoredReplayArtifactRequest[], results: ReplayRe
             ? "Error"
             : "";
 
-      return `<li class="history-replay-item ${escapeHtml(itemStatus)}">
+      // QP-008: show the frozen baseline status and flag drift vs the live replay.
+      const baselineLabel =
+        row.baselineStatus != null ? `baseline ${String(row.baselineStatus)}` : "";
+      const drifted =
+        row.baselineStatus != null &&
+        result?.responseStatus != null &&
+        row.baselineStatus !== result.responseStatus;
+
+      return `<li class="history-replay-item ${escapeHtml(itemStatus)}${drifted ? " drifted" : ""}">
         <span class="replay-indicator"></span>
         <span class="replay-method">${escapeHtml(row.method)}</span>
         <span class="replay-url">${escapeHtml(row.url)}</span>
-        ${responseLabel ? `<span class="replay-result">${escapeHtml(responseLabel)}</span>` : ""}
+        ${baselineLabel ? `<span class="replay-baseline">${escapeHtml(baselineLabel)}</span>` : ""}
+        ${responseLabel ? `<span class="replay-result">${escapeHtml(responseLabel)}${drifted ? " \u26a0" : ""}</span>` : ""}
       </li>`;
     })
     .join("");
@@ -760,9 +881,14 @@ const startReplay = async (rows: StoredReplayArtifactRequest[]): Promise<void> =
 
     renderReplayList(rows, results);
 
-    // Small delay between requests to avoid overwhelming the server
+    // QP-007: inter-request delay scaled by the selected playback speed.
     if (i < rows.length - 1 && !signal.aborted) {
-      await delay(120);
+      const speed = Number.parseFloat(historyReplaySpeedEl.value);
+      const baseDelay = 120;
+      const scaled = !Number.isFinite(speed) || speed <= 0 ? 0 : Math.round(baseDelay / speed);
+      if (scaled > 0) {
+        await delay(scaled);
+      }
     }
   }
 

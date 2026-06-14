@@ -6,11 +6,13 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "typecheck:runtime": "tsc -p tsconfig.runtime.json --noEmit",
+    "test": "vitest run",
     "watch": "node scripts/build.mjs --watch"
   },
   "devDependencies": {
     "@types/chrome": "^0.1.29",
     "esbuild": "^0.25.5",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.8"
   }
 }

@@ -145,6 +145,42 @@ export const getTimelineWidthPercent = (durationMs: number | undefined): number 
 };
 
 // ---------------------------------------------------------------------------
+// Size analysis (OBS-003)
+// ---------------------------------------------------------------------------
+
+/** UTF-8 byte length of a string (matches what is sent/received on the wire). */
+export const byteLength = (value: string | undefined): number => {
+  if (!value) {
+    return 0;
+  }
+
+  // TextEncoder is available in the sidepanel (DOM) context.
+  return new TextEncoder().encode(value).length;
+};
+
+export const formatBytes = (bytes: number): string => {
+  if (bytes <= 0) {
+    return "0 B";
+  }
+
+  const units = ["B", "KB", "MB"];
+  const exponent = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+  const value = bytes / Math.pow(1024, exponent);
+  const rounded = exponent === 0 ? String(bytes) : value.toFixed(value >= 10 ? 0 : 1);
+
+  return `${rounded} ${units[exponent]}`;
+};
+
+// PERF-003: human-readable transfer rate (bytes/sec) using the byte formatter.
+export const formatThroughput = (bytesPerSec: number | null): string => {
+  if (bytesPerSec === null || bytesPerSec <= 0) {
+    return "—";
+  }
+
+  return `${formatBytes(bytesPerSec)}/s`;
+};
+
+// ---------------------------------------------------------------------------
 // Matched rule chips
 // ---------------------------------------------------------------------------
 

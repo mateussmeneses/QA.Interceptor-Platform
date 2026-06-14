@@ -18,7 +18,8 @@ export const STORAGE_KEYS = {
   RESPONSE_ASSERTIONS: "responseAssertions",
   MOCK_ENV_VARS: "mockEnvVars",
   REPLAY_ARTIFACTS: "replayArtifacts",
-  CONDITIONAL_MOCKS: "conditionalMocks"
+  CONDITIONAL_MOCKS: "conditionalMocks",
+  TRAFFIC_BASELINE: "trafficBaseline"
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
@@ -70,6 +71,9 @@ export type StoredCapturedResponse = {
   timestamp: string;
   body?: string;
   headers?: Record<string, string>;
+  /** PERF-002 timing breakdown derived from webRequest signals. */
+  waitingMs?: number;
+  downloadMs?: number;
 };
 
 export type StoredCapturedRequest = {
@@ -93,6 +97,10 @@ export type StoredReplayArtifactRequest = {
   url: string;
   headers: Record<string, string>;
   body?: string;
+  /** Baseline response captured at artifact-save time (QP-008 evidence snapshot). */
+  baselineStatus?: number;
+  baselineDurationMs?: number;
+  baselineBody?: string;
 };
 
 export type StoredReplayArtifact = {
@@ -123,6 +131,20 @@ export type StoredConditionalMock = {
   method?: string;
   branches: StoredConditionalMockBranch[];
   createdAt: string;
+};
+
+/** Captured traffic baseline for regression comparison (OBS-006/007). */
+export type StoredBaselineEntry = {
+  method: string;
+  url: string;
+  status?: number;
+  body?: string;
+};
+
+export type StoredTrafficBaseline = {
+  label: string;
+  capturedAt: string;
+  entries: StoredBaselineEntry[];
 };
 
 // ---------------------------------------------------------------------------
@@ -186,7 +208,10 @@ const isStoredReplayArtifactRequest = (value: unknown): value is StoredReplayArt
     typeof value.method === "string" &&
     typeof value.url === "string" &&
     isObject(value.headers) &&
-    (value.body === undefined || typeof value.body === "string")
+    (value.body === undefined || typeof value.body === "string") &&
+    (value.baselineStatus === undefined || typeof value.baselineStatus === "number") &&
+    (value.baselineDurationMs === undefined || typeof value.baselineDurationMs === "number") &&
+    (value.baselineBody === undefined || typeof value.baselineBody === "string")
   );
 };
 
@@ -449,6 +474,40 @@ export const saveConditionalMocks = async (mocks: StoredConditionalMock[]): Prom
   await chrome.storage.local.set({ [STORAGE_KEYS.CONDITIONAL_MOCKS]: mocks });
 };
 
+export const parseTrafficBaseline = (raw: unknown): StoredTrafficBaseline | null => {
+  if (!isObject(raw)) {
+    return null;
+  }
+
+  if (
+    typeof raw.label !== "string" ||
+    typeof raw.capturedAt !== "string" ||
+    !Array.isArray(raw.entries)
+  ) {
+    return null;
+  }
+
+  const entries = (raw.entries as unknown[]).filter(
+    (e): e is StoredBaselineEntry =>
+      isObject(e) &&
+      typeof e.method === "string" &&
+      typeof e.url === "string" &&
+      (e.status === undefined || typeof e.status === "number") &&
+      (e.body === undefined || typeof e.body === "string")
+  );
+
+  return { label: raw.label, capturedAt: raw.capturedAt, entries };
+};
+
+export const loadTrafficBaseline = async (): Promise<StoredTrafficBaseline | null> => {
+  const stored = await chrome.storage.local.get(STORAGE_KEYS.TRAFFIC_BASELINE);
+  return parseTrafficBaseline(stored[STORAGE_KEYS.TRAFFIC_BASELINE]);
+};
+
+export const saveTrafficBaseline = async (baseline: StoredTrafficBaseline): Promise<void> => {
+  await chrome.storage.local.set({ [STORAGE_KEYS.TRAFFIC_BASELINE]: baseline });
+};
+
 export const loadReplayArtifacts = async (): Promise<StoredReplayArtifact[]> => {
   const stored = await chrome.storage.local.get(STORAGE_KEYS.REPLAY_ARTIFACTS);
   return parseReplayArtifacts(stored[STORAGE_KEYS.REPLAY_ARTIFACTS]);
@@ -456,4 +515,13 @@ export const loadReplayArtifacts = async (): Promise<StoredReplayArtifact[]> => 
 
 export const saveReplayArtifacts = async (artifacts: StoredReplayArtifact[]): Promise<void> => {
   await chrome.storage.local.set({ [STORAGE_KEYS.REPLAY_ARTIFACTS]: artifacts });
+};
+
+/**
+ * Removes all workspace data (rules, groups, captured traffic, mocks,
+ * assertions, baselines, artifacts) from local storage. Theme/UI preferences
+ * are kept (they live in localStorage, not chrome.storage).
+ */
+export const resetWorkspace = async (): Promise<void> => {
+  await chrome.storage.local.remove(Object.values(STORAGE_KEYS));
 };

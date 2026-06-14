@@ -49,47 +49,48 @@
 
 ## P1 — Reporting & Observability (partials to complete)
 
-| ID      | Title                               | Status      | Notes                                                                                        |
-| ------- | ----------------------------------- | ----------- | -------------------------------------------------------------------------------------------- |
-| QP-006  | Evidence HTML export (professional) | **Done**    | Self-contained report: KPI cards, status bars, assertion table, traffic waterfall, printable |
-| QP-007  | Complete replay/playback UI         | In Progress | Missing timeline scrubber/controls                                                           |
-| QP-008  | Save session as replayable artifact | Todo        | No dedicated offline artifact                                                                |
-| OBS-001 | Request/response diff (final UX)    | In Progress | Functional diff via `diffText`                                                               |
-| OBS-002 | Request waterfall (advanced)        | Todo        | Basic bars today                                                                             |
-| OBS-003 | Request size analysis               | Todo        | —                                                                                            |
-| OBS-004 | Execution trace visualizer          | In Progress | Now uses `detectConflicts` (INT-003); 4 conflict kinds shown                                 |
-| OBS-006 | Baseline capture and comparison     | Todo        | —                                                                                            |
-| OBS-007 | Regression report generator         | Todo        | —                                                                                            |
+| ID      | Title                               | Status   | Notes                                                                                                                           |
+| ------- | ----------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| QP-006  | Evidence HTML export (professional) | **Done** | Self-contained report: KPI cards, status bars, assertion table, traffic waterfall, printable                                    |
+| QP-007  | Complete replay/playback UI         | **Done** | Sequential replay + per-item status + playback speed control (0.5×/1×/2×/no-delay)                                              |
+| QP-008  | Save session as replayable artifact | **Done** | Artifact freezes requests + baseline response/timing; replay flags drift vs baseline                                            |
+| OBS-001 | Request/response diff (final UX)    | **Done** | Pin + compare two requests; side-by-side `diffText` with added/removed counts; contract diff (INT-002)                          |
+| OBS-002 | Request waterfall (advanced)        | **Done** | Waterfall bars scaled to slowest visible request + status color                                                                 |
+| OBS-003 | Request size analysis               | **Done** | UTF-8 byte size of request/response bodies in detail + row; `formatBytes`/`byteLength`                                          |
+| OBS-004 | Execution trace visualizer          | **Done** | Timeline: capture → matched rules (with conflict hints) → conflict summary → response/pending; uses `detectConflicts` (INT-003) |
+| OBS-006 | Baseline capture and comparison     | **Done** | Save session as baseline (storage); compare via `regression-detector` engine                                                    |
+| OBS-007 | Regression report generator         | **Done** | `detectRegressions`: missing/new endpoints, status changes, contract drift; History UI                                          |
 
 ## P1 — Interception coverage (platform limitations)
 
-| ID      | Title                                      | Status   | Notes                                                                                    |
-| ------- | ------------------------------------------ | -------- | ---------------------------------------------------------------------------------------- |
-| CAP-002 | Intercept `XMLHttpRequest` besides `fetch` | **Done** | XHR open/send patched in mock-bridge; conditional + static mocks + delay now work on XHR |
-| CAP-003 | Evaluate WebSocket capture                 | Todo     | Out of current scope                                                                     |
+| ID      | Title                                      | Status   | Notes                                                                                                                                                                                                 |
+| ------- | ------------------------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CAP-002 | Intercept `XMLHttpRequest` besides `fetch` | **Done** | XHR open/send patched in mock-bridge; conditional + static mocks + delay now work on XHR                                                                                                              |
+| CAP-003 | Evaluate WebSocket capture                 | **Done** | Decision recorded in [ADR-007](docs/adr/ADR-007-websocket-capture-feasibility.md): MV3 cannot read WS frames at the network layer; future support must use in-page `WebSocket` patching (see CAP-005) |
 
 ## P2 — Performance & Analysis
 
 | ID       | Title                     | Status |
 | -------- | ------------------------- | ------ |
-| OBS-008  | Traffic anomaly detection | Todo   |
-| PERF-001 | Bottleneck detection      | Todo   |
-| PERF-002 | Request timing breakdown  | Todo   |
-| PERF-003 | Bandwidth profiler        | Todo   |
+| OBS-008  | Traffic anomaly detection | Done   |
+| PERF-001 | Bottleneck detection      | Done   |
+| PERF-002 | Request timing breakdown  | Done   |
+| PERF-003 | Bandwidth profiler        | Done   |
 
 ## Governance / Quality
 
-| ID            | Title                                                      | Status   | Notes                                                                                             |
-| ------------- | ---------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------- |
-| QA-DOC-002    | Repair broken markdown links + link-check CI               | Todo     | —                                                                                                 |
-| QA-CSS-001    | Class-by-class cleanup of orphan `styles/components/*.css` | **Done** | Removed 20 orphan component CSS (exact-token audit); kept `diff-viewer.css` + `modal.css`         |
-| QA-TEST-001   | Define a test strategy for the plain-TS UI                 | Todo     | `.tsx` tests were removed with the subtree                                                        |
-| QA-FMT-001    | Repo-wide Prettier formatting + green `format:check`       | **Done** | `npm run format` applied; `format:check` green                                                    |
-| UI-ASSERT-001 | Assertion creation UI for typed assertions                 | **Done** | Type select + expected/path fields wired in `settings.ts`; unlocks INT-001 end-to-end             |
-| TD-010        | Deduplicate storage parsers                                | **Done** | Removed stale `rule-engine/storage-parsers.ts` (+tests); `storage/index.ts` is single source      |
-| TD-011        | Dedupe content-script types/guards (D-04/D-05/D-07)        | **Done** | Shared `rule-engine/content-guards.ts` used by injector + mock-bridge; +14 tests                  |
-| TD-016        | Centralize rule-type label/action catalog (D-10)           | **Done** | `RULE_TYPE_CATALOG` in `shared/utils.ts`; `network.ts` consumes `summarizeRuleAction`             |
-| TD-014        | Decide `storage/adapter.ts` (adopt for Phase 4 or remove)  | **Done** | Removed orphan injectable adapter (YAGNI); ADR-002 amended. Reintroduce with consumers in Phase 4 |
+| ID            | Title                                                      | Status   | Notes                                                                                                                                                                                 |
+| ------------- | ---------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| QA-DOC-002    | Repair broken markdown links + link-check CI               | **Done** | `scripts/check-md-links.mjs` (zero deps) + CI job; fixed INDEX/README; archived dead frontend docs                                                                                    |
+| QA-CSS-001    | Class-by-class cleanup of orphan `styles/components/*.css` | **Done** | Removed 20 orphan component CSS (exact-token audit); kept `diff-viewer.css` + `modal.css`                                                                                             |
+| QA-TEST-001   | Define a test strategy for the plain-TS UI                 | **Done** | Strategy documented (PROJECT_STATE §7b); pure helpers/view-models unit-tested in `utils.test.ts` (26 tests)                                                                           |
+| QA-FMT-001    | Repo-wide Prettier formatting + green `format:check`       | **Done** | `npm run format` applied; `format:check` green                                                                                                                                        |
+| UI-ASSERT-001 | Assertion creation UI for typed assertions                 | **Done** | Type select + expected/path fields wired in `settings.ts`; unlocks INT-001 end-to-end                                                                                                 |
+| TD-010        | Deduplicate storage parsers                                | **Done** | Removed stale `rule-engine/storage-parsers.ts` (+tests); `storage/index.ts` is single source                                                                                          |
+| TD-011        | Dedupe content-script types/guards (D-04/D-05/D-07)        | **Done** | Shared `rule-engine/content-guards.ts` used by injector + mock-bridge; +14 tests                                                                                                      |
+| TD-016        | Centralize rule-type label/action catalog (D-10)           | **Done** | `RULE_TYPE_CATALOG` in `shared/utils.ts`; `network.ts` consumes `summarizeRuleAction`                                                                                                 |
+| TD-014        | Decide `storage/adapter.ts` (adopt for Phase 4 or remove)  | **Done** | Removed orphan injectable adapter (YAGNI); ADR-002 amended. Reintroduce with consumers in Phase 4                                                                                     |
+| TD-006        | Remove phantom preview-only controls from functional views | **Done** | Removed dead `(Preview)` buttons + misleading pills from Rules/Mocks/History + header; real theme selector (light/dark/system) wired via `theme-manager`; Settings panel pill removed; Danger Zone "Reset Workspace" wired (`resetWorkspace` + two-step confirm) |
 
 ---
 
@@ -98,27 +99,32 @@
 - **Desktop proxy (Electron):** P4-001..P4-020 — see `docs/_archive/backlog/BACKLOG_EXPANDED.md` (historical catalog).
 - **Team & Enterprise:** P5-001..P5-010.
 - **AI & Advanced:** AI-002..AI-006, MOCK-002..004, SEC-001..004.
+- **Interception coverage:** CAP-005 — WebSocket frame capture via in-page `WebSocket` patching (per [ADR-007](docs/adr/ADR-007-websocket-capture-feasibility.md)).
 
 ---
 
 ## Completed and verified items (evidence in code)
 
-| ID           | Title                                                          | Evidence                                                               |
-| ------------ | -------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Phase 1 MVP  | Capture, DNR rules, fetch mocks, rewrite, block/delay/redirect | `background/index.ts`, `mock-bridge.ts`                                |
-| RW-001..005  | Rewrites url/header/query/request-body/response-body           | `background/index.ts`, `mock-bridge.ts`                                |
-| MK-001..002  | Mock response + status                                         | `mock-bridge.ts`                                                       |
-| NS-001..003  | Block / delay / redirect                                       | `background/index.ts`, `mock-bridge.ts`                                |
-| NET-001..008 | Clear/HAR/cURL/repeat/compose/clone/edit-resend                | `features/network.ts`, `background/index.ts`                           |
-| MK-003       | Dynamic variables in templates                                 | `mock-bridge.ts` (`applyDynamicVariables`)                             |
-| RQ-001..002  | Rule groups CRUD + enable/ordering                             | `features/rules.ts`, `background/index.ts`                             |
-| QP-001       | Assertion evaluation pipeline                                  | `evaluateAssertions` in `features/network.ts`                          |
-| QP-004/005   | Evidence export JSON/Markdown                                  | `shared/utils.ts`, `features/history.ts`                               |
-| ARC-001..003 | Feature modules + typed messages + storage layer               | `sidepanel/features/*`, `shared-types/messages.ts`, `storage/index.ts` |
-| TEST         | Rule-engine suite                                              | **548 tests / 19 files** green (vitest)                                |
+| ID           | Title                                                            | Evidence                                                               |
+| ------------ | ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Phase 1 MVP  | Capture, DNR rules, fetch mocks, rewrite, block/delay/redirect   | `background/index.ts`, `mock-bridge.ts`                                |
+| RW-001..005  | Rewrites url/header/query/request-body/response-body             | `background/index.ts`, `mock-bridge.ts`                                |
+| MK-001..002  | Mock response + status                                           | `mock-bridge.ts`                                                       |
+| NS-001..003  | Block / delay / redirect                                         | `background/index.ts`, `mock-bridge.ts`                                |
+| NET-001..008 | Clear/HAR/cURL/repeat/compose/clone/edit-resend                  | `features/network.ts`, `background/index.ts`                           |
+| MK-003       | Dynamic variables in templates                                   | `mock-bridge.ts` (`applyDynamicVariables`)                             |
+| RQ-001..002  | Rule groups CRUD + enable/ordering                               | `features/rules.ts`, `background/index.ts`                             |
+| QP-001       | Assertion evaluation pipeline                                    | `evaluateAssertions` in `features/network.ts`                          |
+| QP-004/005   | Evidence export JSON/Markdown                                    | `shared/utils.ts`, `features/history.ts`                               |
+| ARC-001..003 | Feature modules + typed messages + storage layer                 | `sidepanel/features/*`, `shared-types/messages.ts`, `storage/index.ts` |
+| PERF-002     | Request timing breakdown (waiting/download)                      | `background/index.ts` (`onResponseStarted`), `features/network.ts`     |
+| PERF-001     | Bottleneck detection (slow-request flags + reason)               | `rule-engine/src/bottleneck-detector.ts`, `features/network.ts`        |
+| PERF-003     | Bandwidth profiler (per-endpoint bytes + throughput)             | `rule-engine/src/bandwidth-profiler.ts`, `features/network.ts`         |
+| OBS-008      | Traffic anomaly detection (error spike, latency/payload outlier) | `rule-engine/src/anomaly-detector.ts`, `features/network.ts`           |
+| TEST         | Rule-engine suite                                                | **628 tests / 28 files** green (vitest)                                |
 
 > **Historical correction:** old test counts ("26", "198/469") are **false**.
-> The current validated number is **548** (after removing stale duplicates and adding content-guards tests).
+> The current validated number is **628** (added anomaly-detector tests for OBS-008).
 >
 > **Note on engines:** all 6 rule-engine modules are now resolved. QP-002 (schema-validator) via INT-001;
 > OBS-005 (conflict-detector) via INT-003; QP-003 (contract-comparator) via INT-002; AI-001 (schema-inference)

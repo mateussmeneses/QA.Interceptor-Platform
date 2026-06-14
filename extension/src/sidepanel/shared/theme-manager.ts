@@ -1,11 +1,28 @@
 /**
  * QA.Interceptor — Theme Manager
  *
- * Handles light/dark mode theme switching with localStorage persistence
- * and system preference detection.
+ * Handles theme switching (light/dark/system) with localStorage persistence
+ * and live system-preference detection. localStorage is used (not
+ * chrome.storage) so the theme can be applied synchronously at boot, avoiding
+ * a flash of the wrong theme.
  */
 
 export type Theme = "light" | "dark";
+
+/** User-facing preference. "system" follows the OS and keeps following it. */
+export type ThemePreference = "light" | "dark" | "system";
+
+/**
+ * Pure resolver: maps a stored preference to the concrete theme to apply.
+ * "system" defers to the OS preference (passed in for testability).
+ */
+export const resolveTheme = (preference: ThemePreference, prefersDark: boolean): Theme => {
+  if (preference === "system") {
+    return prefersDark ? "dark" : "light";
+  }
+
+  return preference;
+};
 
 interface ThemeConfig {
   storageKey: string;
@@ -16,6 +33,7 @@ interface ThemeConfig {
 class ThemeManager {
   private config: ThemeConfig;
   private currentTheme: Theme = "light";
+  private preference: ThemePreference = "system";
 
   constructor(config: Partial<ThemeConfig> = {}) {
     this.config = {
@@ -30,26 +48,24 @@ class ThemeManager {
 
   /**
    * Initialize theme on app startup
-   * - Check localStorage for saved preference
-   * - Fall back to system preference
-   * - Fall back to light mode
+   * - Read the saved preference (light/dark/system)
+   * - Resolve it against the system preference
+   * - Apply and start following system changes
    */
   private init(): void {
-    const savedTheme = this.getSavedTheme();
-    const systemTheme = this.getSystemTheme();
-    const themeToApply = savedTheme || systemTheme || "light";
-
-    this.applyTheme(themeToApply);
+    this.preference = this.getSavedPreference() ?? "system";
+    this.applyResolvedTheme();
     this.listenToSystemThemeChanges();
   }
 
   /**
-   * Get theme saved in localStorage
+   * Get the saved preference from localStorage. Accepts the tri-state value;
+   * legacy stored values of "light"/"dark" remain valid preferences.
    */
-  private getSavedTheme(): Theme | null {
+  private getSavedPreference(): ThemePreference | null {
     try {
       const saved = localStorage.getItem(this.config.storageKey);
-      if (saved === "light" || saved === "dark") {
+      if (saved === "light" || saved === "dark" || saved === "system") {
         return saved;
       }
     } catch (error) {
@@ -59,17 +75,14 @@ class ThemeManager {
   }
 
   /**
-   * Get system theme preference
+   * Whether the OS currently prefers a dark color scheme.
    */
-  private getSystemTheme(): Theme {
-    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      return "dark";
-    }
-    return "light";
+  private systemPrefersDark(): boolean {
+    return Boolean(window.matchMedia?.("(prefers-color-scheme: dark)").matches);
   }
 
   /**
-   * Listen to system theme changes and update if no user preference is set
+   * Listen to system theme changes and update if the preference is "system".
    */
   private listenToSystemThemeChanges(): void {
     if (!window.matchMedia) {
@@ -78,14 +91,11 @@ class ThemeManager {
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = () => {
-      // Only update if user hasn't saved a preference
-      if (!this.getSavedTheme()) {
-        const newTheme = this.getSystemTheme();
-        this.applyTheme(newTheme);
+      if (this.preference === "system") {
+        this.applyResolvedTheme();
       }
     };
 
-    // Modern API
     if (mediaQuery.addEventListener) {
       mediaQuery.addEventListener("change", handleChange);
     } else {
@@ -95,44 +105,62 @@ class ThemeManager {
   }
 
   /**
-   * Apply theme to HTML element and save to localStorage
+   * Resolve the current preference and apply the concrete theme to the DOM.
    */
-  private applyTheme(theme: Theme): void {
+  private applyResolvedTheme(): void {
+    const theme = resolveTheme(this.preference, this.systemPrefersDark());
     this.currentTheme = theme;
     this.config.htmlElement.setAttribute(this.config.themeAttribute, theme);
+  }
+
+  /**
+   * Persist the current preference to localStorage.
+   */
+  private savePreference(): void {
     try {
-      localStorage.setItem(this.config.storageKey, theme);
+      localStorage.setItem(this.config.storageKey, this.preference);
     } catch (error) {
       console.warn("Failed to save theme to localStorage:", error);
     }
   }
 
   /**
-   * Get current theme
+   * Get the resolved (concrete) current theme.
    */
   public getCurrentTheme(): Theme {
     return this.currentTheme;
   }
 
   /**
-   * Toggle between light and dark themes
+   * Get the user-facing preference (light/dark/system).
    */
-  public toggleTheme(): Theme {
-    const newTheme = this.currentTheme === "light" ? "dark" : "light";
-    this.applyTheme(newTheme);
-    this.notifyThemeChanged(newTheme);
-    return newTheme;
+  public getPreference(): ThemePreference {
+    return this.preference;
   }
 
   /**
-   * Set specific theme
+   * Toggle between light and dark themes (sets an explicit preference).
+   */
+  public toggleTheme(): Theme {
+    this.setPreference(this.currentTheme === "light" ? "dark" : "light");
+    return this.currentTheme;
+  }
+
+  /**
+   * Set an explicit concrete theme (light/dark) as the preference.
    */
   public setTheme(theme: Theme): void {
-    if (theme === this.currentTheme) {
-      return;
-    }
-    this.applyTheme(theme);
-    this.notifyThemeChanged(theme);
+    this.setPreference(theme);
+  }
+
+  /**
+   * Set the preference (light/dark/system), persist it, apply and notify.
+   */
+  public setPreference(preference: ThemePreference): void {
+    this.preference = preference;
+    this.savePreference();
+    this.applyResolvedTheme();
+    this.notifyThemeChanged(this.currentTheme);
   }
 
   /**
@@ -170,10 +198,17 @@ export function initTheme(): ThemeManager {
 }
 
 /**
- * Get current theme
+ * Get current resolved theme
  */
 export function getCurrentTheme(): Theme {
   return getThemeManager().getCurrentTheme();
+}
+
+/**
+ * Get the user-facing preference (light/dark/system)
+ */
+export function getThemePreference(): ThemePreference {
+  return getThemeManager().getPreference();
 }
 
 /**
@@ -184,8 +219,30 @@ export function toggleTheme(): Theme {
 }
 
 /**
- * Set theme explicitly
+ * Set theme explicitly (concrete light/dark)
  */
 export function setTheme(theme: Theme): void {
   getThemeManager().setTheme(theme);
+}
+
+/**
+ * Set the user-facing preference (light/dark/system)
+ */
+export function setThemePreference(preference: ThemePreference): void {
+  getThemeManager().setPreference(preference);
+}
+
+/**
+ * Wire a <select> control to the theme preference: reflects the current value
+ * and updates the theme when the user changes it.
+ */
+export function wireThemeSelect(select: HTMLSelectElement): void {
+  const manager = getThemeManager();
+  select.value = manager.getPreference();
+  select.addEventListener("change", () => {
+    const value = select.value;
+    if (value === "light" || value === "dark" || value === "system") {
+      manager.setPreference(value);
+    }
+  });
 }
