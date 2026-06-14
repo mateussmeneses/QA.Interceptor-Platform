@@ -1,5 +1,21 @@
 # QA.Interceptor - AI Development Rules
 
+> ## ⛔ MANDATORY ONBOARDING — READ BEFORE ANY WORK
+>
+> Before writing or changing ANY code, you MUST read, in order:
+>
+> 1. **`PROJECT_STATE.md`** (repo root) — real state, official architecture, what already exists.
+> 2. **`BACKLOG_CONSOLIDATED.md`** (repo root) — the ONLY official backlog. Pick tasks from here.
+> 3. **`AI_DEVELOPMENT_RULES.md`** (repo root) — rules to avoid duplication and rework.
+>
+> Do NOT trust historical docs in `docs/analysis/` or `docs/planning/` — they are dated snapshots.
+> **Code is the primary evidence.** Update `PROJECT_STATE.md` and `BACKLOG_CONSOLIDATED.md` after finishing any task.
+>
+> Hard rules: UI is **plain TypeScript + DOM** (no React without an ADR). Six rule-engine
+> modules are implemented but NOT wired (schema-validator, contract-comparator, conflict-detector,
+> conditional-mock-evaluator, schema-inference, rule-index) — **connect them, do not recreate**.
+> Validate every change with: `npm run build`, `cd extension && npx tsc -p tsconfig.json --noEmit`, `npm test`.
+
 You are contributing to QA.Interceptor.
 
 QA.Interceptor is an open-source browser extension focused on Quality Assurance and API testing.
