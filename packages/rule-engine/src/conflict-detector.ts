@@ -23,10 +23,10 @@ import type { Rule } from "@qa-interceptor/shared-types";
 export type ConflictSeverity = "error" | "warning" | "info";
 
 export type ConflictKind =
-  | "same-dimension-overlap"  // two rules write the same field for the same URL scope
-  | "url-shadow"              // one rule's URL pattern is a strict subset of another's
-  | "priority-tie"            // two rules have identical priority and overlapping conditions
-  | "terminal-unreachable";   // a block/redirect makes subsequent rules unreachable
+  | "same-dimension-overlap" // two rules write the same field for the same URL scope
+  | "url-shadow" // one rule's URL pattern is a strict subset of another's
+  | "priority-tie" // two rules have identical priority and overlapping conditions
+  | "terminal-unreachable"; // a block/redirect makes subsequent rules unreachable
 
 export type RuleConflict = {
   kind: ConflictKind;
@@ -102,7 +102,7 @@ export const detectConflicts = (rules: Rule[]): ConflictReport => {
     conflicts,
     hasErrors: conflicts.some((c) => c.severity === "error"),
     hasWarnings: conflicts.some((c) => c.severity === "warning"),
-    affectedRuleIds,
+    affectedRuleIds
   };
 };
 
@@ -150,9 +150,9 @@ const checkDimensionConflict = (a: Rule, b: Rule): RuleConflict | null => {
     "rewrite-request-body": "request body",
     "mock-response": "response body",
     "mock-status": "response status code",
-    "redirect": "request destination",
-    "block": "request lifecycle",
-    "delay": "request timing",
+    redirect: "request destination",
+    block: "request lifecycle",
+    delay: "request timing"
   };
 
   if (a.type !== b.type) {
@@ -166,7 +166,7 @@ const checkDimensionConflict = (a: Rule, b: Rule): RuleConflict | null => {
         ruleIds: [a.id, b.id],
         ruleNames: [a.name, b.name],
         description: `"${a.name}" (${a.type}) and "${b.name}" (${b.type}) both modify the response body for overlapping URLs. The higher-priority rule's effect will overwrite the other.`,
-        suggestion: `Ensure the rules have non-overlapping URL conditions, or consolidate them into a single rule with combined logic.`,
+        suggestion: `Ensure the rules have non-overlapping URL conditions, or consolidate them into a single rule with combined logic.`
       };
     }
 
@@ -185,7 +185,7 @@ const checkDimensionConflict = (a: Rule, b: Rule): RuleConflict | null => {
     ruleIds: [a.id, b.id],
     ruleNames: [a.name, b.name],
     description: `"${a.name}" and "${b.name}" are both of type "${a.type}" and can match the same requests. They write to the same dimension (${dimension}). The last applied rule will take effect.`,
-    suggestion: `Separate their URL conditions so they apply to distinct request sets, or merge them into one rule.`,
+    suggestion: `Separate their URL conditions so they apply to distinct request sets, or merge them into one rule.`
   };
 };
 
@@ -196,7 +196,10 @@ const checkDimensionConflict = (a: Rule, b: Rule): RuleConflict | null => {
 const checkShadowConflict = (a: Rule, b: Rule): RuleConflict | null => {
   const terminalTypes = new Set(["block", "redirect"]);
 
-  for (const [terminal, shadowed] of [[a, b], [b, a]] as const) {
+  for (const [terminal, shadowed] of [
+    [a, b],
+    [b, a]
+  ] as const) {
     if (!terminalTypes.has(terminal.type)) {
       continue;
     }
@@ -212,7 +215,7 @@ const checkShadowConflict = (a: Rule, b: Rule): RuleConflict | null => {
         ruleIds: [terminal.id, shadowed.id],
         ruleNames: [terminal.name, shadowed.name],
         description: `"${terminal.name}" (${terminal.type}, no URL filter) applies to all requests and may shadow "${shadowed.name}" depending on execution order.`,
-        suggestion: `Add a URL condition to "${terminal.name}" to limit its scope, or adjust priorities so "${shadowed.name}" runs first when needed.`,
+        suggestion: `Add a URL condition to "${terminal.name}" to limit its scope, or adjust priorities so "${shadowed.name}" runs first when needed.`
       };
     }
   }
@@ -235,7 +238,7 @@ const checkPriorityTie = (a: Rule, b: Rule): RuleConflict | null => {
     ruleIds: [a.id, b.id],
     ruleNames: [a.name, b.name],
     description: `"${a.name}" and "${b.name}" share priority ${String(a.priority)} with overlapping conditions. Execution order is resolved by creation time (oldest first), which may be unintentional.`,
-    suggestion: `Assign distinct priorities to make execution order explicit and predictable.`,
+    suggestion: `Assign distinct priorities to make execution order explicit and predictable.`
   };
 };
 
@@ -246,7 +249,10 @@ const checkPriorityTie = (a: Rule, b: Rule): RuleConflict | null => {
 const checkTerminalConflict = (a: Rule, b: Rule): RuleConflict | null => {
   const terminalTypes = new Set(["block", "redirect"]);
 
-  for (const [terminal, other] of [[a, b], [b, a]] as const) {
+  for (const [terminal, other] of [
+    [a, b],
+    [b, a]
+  ] as const) {
     if (!terminalTypes.has(terminal.type)) {
       continue;
     }
@@ -259,7 +265,7 @@ const checkTerminalConflict = (a: Rule, b: Rule): RuleConflict | null => {
         ruleIds: [terminal.id, other.id],
         ruleNames: [terminal.name, other.name],
         description: `"${terminal.name}" (${terminal.type}, priority ${String(terminal.priority)}) runs before "${other.name}" (priority ${String(other.priority)}) and terminates the request lifecycle. "${other.name}" will never execute for matching requests.`,
-        suggestion: `Increase the priority of "${other.name}" above ${String(terminal.priority)}, or add a narrower URL condition to "${terminal.name}" so it does not apply to the full scope.`,
+        suggestion: `Increase the priority of "${other.name}" above ${String(terminal.priority)}, or add a narrower URL condition to "${terminal.name}" so it does not apply to the full scope.`
       };
     }
   }
@@ -274,9 +280,7 @@ const checkTerminalConflict = (a: Rule, b: Rule): RuleConflict | null => {
 /**
  * Group conflicts by the rules they affect, for use in settings UI.
  */
-export const groupConflictsByRule = (
-  report: ConflictReport
-): Map<string, RuleConflict[]> => {
+export const groupConflictsByRule = (report: ConflictReport): Map<string, RuleConflict[]> => {
   const grouped = new Map<string, RuleConflict[]>();
 
   for (const conflict of report.conflicts) {

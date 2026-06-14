@@ -5,14 +5,10 @@
     "moduleResolution": "Bundler",
     "strict": true,
     "skipLibCheck": true,
-    "types": [
-      "chrome"
-    ],
+    "types": ["chrome"],
     "paths": {
       "@qa-interceptor/shared-types": ["../packages/shared-types/src/index.ts"]
     }
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }

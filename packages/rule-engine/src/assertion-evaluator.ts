@@ -57,14 +57,14 @@ const evaluateSingle = (assertion: AssertionInput, response: ResponseContext): A
         return {
           ...assertion,
           passed: false,
-          error: `Unknown assertion type: ${String(assertion.type)}`,
+          error: `Unknown assertion type: ${String(assertion.type)}`
         };
     }
   } catch (err) {
     return {
       ...assertion,
       passed: false,
-      error: err instanceof Error ? err.message : "Evaluation error",
+      error: err instanceof Error ? err.message : "Evaluation error"
     };
   }
 };
@@ -73,10 +73,7 @@ const evaluateSingle = (assertion: AssertionInput, response: ResponseContext): A
 // Type-specific evaluators
 // ---------------------------------------------------------------------------
 
-const evaluateStatus = (
-  assertion: AssertionInput,
-  response: ResponseContext
-): AssertionResult => {
+const evaluateStatus = (assertion: AssertionInput, response: ResponseContext): AssertionResult => {
   const actual = response.status;
   const expected = Number(assertion.expected);
   const passed = Number.isFinite(expected) && actual === expected;
@@ -84,15 +81,12 @@ const evaluateStatus = (
   return { ...assertion, passed, actual };
 };
 
-const evaluateHeader = (
-  assertion: AssertionInput,
-  response: ResponseContext
-): AssertionResult => {
+const evaluateHeader = (assertion: AssertionInput, response: ResponseContext): AssertionResult => {
   if (!assertion.path) {
     return {
       ...assertion,
       passed: false,
-      error: "Header assertion requires 'path' (header name).",
+      error: "Header assertion requires 'path' (header name)."
     };
   }
 
@@ -112,7 +106,7 @@ const evaluateJsonPath = (
     return {
       ...assertion,
       passed: false,
-      error: "JSON path assertion requires 'path' (e.g. $.user.id).",
+      error: "JSON path assertion requires 'path' (e.g. $.user.id)."
     };
   }
 
@@ -120,7 +114,7 @@ const evaluateJsonPath = (
     return {
       ...assertion,
       passed: false,
-      error: "Response body is empty — cannot evaluate JSON path.",
+      error: "Response body is empty — cannot evaluate JSON path."
     };
   }
 
@@ -132,7 +126,7 @@ const evaluateJsonPath = (
     return {
       ...assertion,
       passed: false,
-      error: "Response body is not valid JSON.",
+      error: "Response body is not valid JSON."
     };
   }
 

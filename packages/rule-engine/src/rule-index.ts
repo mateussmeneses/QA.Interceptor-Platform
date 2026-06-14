@@ -92,7 +92,7 @@ export const buildRuleIndex = (rules: Rule[]): RuleIndex => {
     universalRules,
     urlBuckets,
     terminalRules,
-    builtAtMs: Date.now(),
+    builtAtMs: Date.now()
   };
 };
 
@@ -123,7 +123,7 @@ export const evaluateRulesFromIndex = (
       ruleId: rule.id,
       ruleName: rule.name,
       type: rule.type,
-      payload: rule.payload,
+      payload: rule.payload
     });
 
     // Terminal rules stop the pipeline — no further rules can execute

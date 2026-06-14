@@ -22,7 +22,7 @@ const FOCUSABLE_SELECTOR = [
   "input:not([disabled])",
   "select:not([disabled])",
   "textarea:not([disabled])",
-  "[tabindex]:not([tabindex='-1'])",
+  "[tabindex]:not([tabindex='-1'])"
 ].join(",");
 
 const isVisible = (element: HTMLElement): boolean => {
@@ -41,7 +41,7 @@ export const createModalController = ({
   dialogEl,
   onRequestClose,
   initialFocusEl,
-  defaultRestoreFocusEl,
+  defaultRestoreFocusEl
 }: CreateModalControllerOptions): ModalController => {
   let restoreFocusEl: HTMLElement | null = null;
   let isOpen = false;
@@ -133,6 +133,6 @@ export const createModalController = ({
       const fallback = defaultRestoreFocusEl?.() ?? null;
       const target = restoreFocusEl ?? fallback;
       target?.focus();
-    },
+    }
   };
 };

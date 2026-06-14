@@ -16,84 +16,84 @@
 
 html {
   /* Primary colors (CTAs, focus rings, active states) */
-  --primary: #2F6DC4;
+  --primary: #2f6dc4;
   --primary-hover: #1f4791;
   --primary-active: #0d2d5e;
 
   /* Success colors (assertions pass, enabled rules, 2xx responses) */
-  --success: #10B981;
+  --success: #10b981;
   --success-hover: #059669;
   --success-active: #047857;
 
   /* Warning colors (conflicts, 3xx responses, attention needed) */
-  --warning: #F59E0B;
-  --warning-hover: #D97706;
-  --warning-active: #B45309;
+  --warning: #f59e0b;
+  --warning-hover: #d97706;
+  --warning-active: #b45309;
 
   /* Error colors (assertions fail, errors, 4xx/5xx, disabled) */
-  --error: #EF4444;
-  --error-hover: #DC2626;
-  --error-active: #B91C1C;
+  --error: #ef4444;
+  --error-hover: #dc2626;
+  --error-active: #b91c1c;
 
   /* Info colors (info badges, hints, rule type indicators) */
-  --info: #3B82F6;
-  --info-hover: #2563EB;
-  --info-active: #1D4ED8;
+  --info: #3b82f6;
+  --info-hover: #2563eb;
+  --info-active: #1d4ed8;
 
   /* Neutrals — backgrounds, text, borders */
-  --surface-bg: #FFFFFF;
-  --surface-alt: #F3F4F6;
-  --surface-border: #E5E7EB;
+  --surface-bg: #ffffff;
+  --surface-alt: #f3f4f6;
+  --surface-border: #e5e7eb;
 
   --text-primary: #111827;
-  --text-secondary: #6B7280;
-  --text-tertiary: #9CA3AF;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
 
-  --border: #E5E7EB;
-  --border-dark: #D1D5DB;
+  --border: #e5e7eb;
+  --border-dark: #d1d5db;
 
   /* Additional semantic colors */
-  --disabled-bg: #F3F4F6;
-  --disabled-text: #9CA3AF;
-  --focus-ring: #2F6DC4;
+  --disabled-bg: #f3f4f6;
+  --disabled-text: #9ca3af;
+  --focus-ring: #2f6dc4;
 }
 
 /* Dark mode color overrides */
 html[data-theme="dark"] {
-  --primary: #5B9FFF;
-  --primary-hover: #4A8FFF;
-  --primary-active: #3A7FFF;
+  --primary: #5b9fff;
+  --primary-hover: #4a8fff;
+  --primary-active: #3a7fff;
 
-  --success: #34D399;
-  --success-hover: #10B981;
+  --success: #34d399;
+  --success-hover: #10b981;
   --success-active: #059669;
 
-  --warning: #FBBF24;
-  --warning-hover: #F59E0B;
-  --warning-active: #D97706;
+  --warning: #fbbf24;
+  --warning-hover: #f59e0b;
+  --warning-active: #d97706;
 
-  --error: #F87171;
-  --error-hover: #EF4444;
-  --error-active: #DC2626;
+  --error: #f87171;
+  --error-hover: #ef4444;
+  --error-active: #dc2626;
 
-  --info: #60A5FA;
-  --info-hover: #3B82F6;
-  --info-active: #2563EB;
+  --info: #60a5fa;
+  --info-hover: #3b82f6;
+  --info-active: #2563eb;
 
-  --surface-bg: #1F2937;
+  --surface-bg: #1f2937;
   --surface-alt: #111827;
   --surface-border: #374151;
 
-  --text-primary: #F3F4F6;
-  --text-secondary: #D1D5DB;
-  --text-tertiary: #9CA3AF;
+  --text-primary: #f3f4f6;
+  --text-secondary: #d1d5db;
+  --text-tertiary: #9ca3af;
 
   --border: #374151;
-  --border-dark: #4B5563;
+  --border-dark: #4b5563;
 
   --disabled-bg: #374151;
-  --disabled-text: #9CA3AF;
-  --focus-ring: #5B9FFF;
+  --disabled-text: #9ca3af;
+  --focus-ring: #5b9fff;
 }
 
 /* ============================================================================

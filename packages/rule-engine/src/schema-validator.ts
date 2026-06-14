@@ -78,7 +78,7 @@ export const validateJsonString = (
   } catch {
     return {
       valid: false,
-      errors: [{ path: "$", message: "Response body is not valid JSON." }],
+      errors: [{ path: "$", message: "Response body is not valid JSON." }]
     };
   }
 
@@ -112,7 +112,7 @@ const validateNode = (
     if (!schema.enum.some((allowed) => deepEqual(value, allowed))) {
       errors.push({
         path,
-        message: `Value must be one of: ${schema.enum.map((v) => JSON.stringify(v)).join(", ")}.`,
+        message: `Value must be one of: ${schema.enum.map((v) => JSON.stringify(v)).join(", ")}.`
       });
     }
   }
@@ -158,7 +158,7 @@ const validateNode = (
     if (matchCount !== 1) {
       errors.push({
         path,
-        message: `Value must match exactly one of the 'oneOf' schemas (matched ${matchCount}).`,
+        message: `Value must match exactly one of the 'oneOf' schemas (matched ${matchCount}).`
       });
     }
   }
@@ -186,7 +186,7 @@ const SCHEMA_TYPES: Record<string, (v: unknown) => boolean> = {
   boolean: (v) => typeof v === "boolean",
   null: (v) => v === null,
   array: (v) => Array.isArray(v),
-  object: (v) => v !== null && typeof v === "object" && !Array.isArray(v),
+  object: (v) => v !== null && typeof v === "object" && !Array.isArray(v)
 };
 
 const validateType = (
@@ -201,7 +201,7 @@ const validateType = (
   if (!valid) {
     errors.push({
       path,
-      message: `Expected type ${types.join(" | ")}, got ${getTypeName(value)}.`,
+      message: `Expected type ${types.join(" | ")}, got ${getTypeName(value)}.`
     });
   }
 };
@@ -229,11 +229,17 @@ const validateString = (
   errors: JsonSchemaValidationError[]
 ): void => {
   if (schema.minLength !== undefined && value.length < schema.minLength) {
-    errors.push({ path, message: `String length ${value.length} is less than minLength ${schema.minLength}.` });
+    errors.push({
+      path,
+      message: `String length ${value.length} is less than minLength ${schema.minLength}.`
+    });
   }
 
   if (schema.maxLength !== undefined && value.length > schema.maxLength) {
-    errors.push({ path, message: `String length ${value.length} exceeds maxLength ${schema.maxLength}.` });
+    errors.push({
+      path,
+      message: `String length ${value.length} exceeds maxLength ${schema.maxLength}.`
+    });
   }
 
   if (schema.pattern !== undefined) {
@@ -242,7 +248,10 @@ const validateString = (
         errors.push({ path, message: `String does not match pattern /${schema.pattern}/.` });
       }
     } catch {
-      errors.push({ path, message: `Pattern /${schema.pattern}/ is not a valid regular expression.` });
+      errors.push({
+        path,
+        message: `Pattern /${schema.pattern}/ is not a valid regular expression.`
+      });
     }
   }
 };
@@ -277,11 +286,17 @@ const validateArray = (
   errors: JsonSchemaValidationError[]
 ): void => {
   if (schema.minItems !== undefined && value.length < schema.minItems) {
-    errors.push({ path, message: `Array has ${value.length} items; minItems is ${schema.minItems}.` });
+    errors.push({
+      path,
+      message: `Array has ${value.length} items; minItems is ${schema.minItems}.`
+    });
   }
 
   if (schema.maxItems !== undefined && value.length > schema.maxItems) {
-    errors.push({ path, message: `Array has ${value.length} items; maxItems is ${schema.maxItems}.` });
+    errors.push({
+      path,
+      message: `Array has ${value.length} items; maxItems is ${schema.maxItems}.`
+    });
   }
 
   if (schema.items !== undefined) {
@@ -325,7 +340,10 @@ const validateObject = (
 
     for (const key of Object.keys(value)) {
       if (!definedKeys.has(key)) {
-        errors.push({ path: `${path}.${key}`, message: `Additional property '${key}' is not allowed.` });
+        errors.push({
+          path: `${path}.${key}`,
+          message: `Additional property '${key}' is not allowed.`
+        });
       }
     }
   } else if (
@@ -378,10 +396,7 @@ const deepEqual = (a: unknown, b: unknown): boolean => {
     }
 
     return aKeys.every((key) =>
-      deepEqual(
-        (a as Record<string, unknown>)[key],
-        (b as Record<string, unknown>)[key]
-      )
+      deepEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])
     );
   }
 

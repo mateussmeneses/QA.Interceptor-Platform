@@ -1,4 +1,5 @@
 # ADR-001: Feature-Based Module Architecture for Sidepanel
+
 <!-- markdownlint-disable MD040 -->
 
 **Status**: Accepted  

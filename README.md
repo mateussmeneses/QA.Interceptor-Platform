@@ -23,6 +23,7 @@ Help QA professionals validate frontend behavior, backend integrations, API cont
 **👉 [Navegação centralizada: INDEX.md](INDEX.md)** - Use este arquivo como ponto de entrada para toda documentação.
 
 Quick links:
+
 - Vision and value: [PRODUCT_VISION.md](PRODUCT_VISION.md)
 - Non-negotiable rules: [PROJECT_RULES.md](PROJECT_RULES.md)
 - Architecture baseline: [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)

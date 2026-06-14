@@ -17,7 +17,7 @@ export const STORAGE_KEYS = {
   RULE_VALIDATION: "ruleValidation",
   RESPONSE_ASSERTIONS: "responseAssertions",
   MOCK_ENV_VARS: "mockEnvVars",
-  REPLAY_ARTIFACTS: "replayArtifacts",
+  REPLAY_ARTIFACTS: "replayArtifacts"
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
@@ -232,7 +232,9 @@ const isStoredResponseAssertion = (value: unknown): value is StoredResponseAsser
     typeof value.enabled === "boolean" &&
     value.expected !== undefined &&
     (value.path === undefined || typeof value.path === "string") &&
-    (value.actual === undefined || typeof value.actual === "string" || typeof value.actual === "number") &&
+    (value.actual === undefined ||
+      typeof value.actual === "string" ||
+      typeof value.actual === "number") &&
     (value.error === undefined || typeof value.error === "string") &&
     typeof value.createdAt === "string"
   );
@@ -372,7 +374,9 @@ export const loadResponseAssertions = async (): Promise<StoredResponseAssertion[
   return parseResponseAssertions(stored[STORAGE_KEYS.RESPONSE_ASSERTIONS]);
 };
 
-export const saveResponseAssertions = async (assertions: StoredResponseAssertion[]): Promise<void> => {
+export const saveResponseAssertions = async (
+  assertions: StoredResponseAssertion[]
+): Promise<void> => {
   await chrome.storage.local.set({ [STORAGE_KEYS.RESPONSE_ASSERTIONS]: assertions });
 };
 

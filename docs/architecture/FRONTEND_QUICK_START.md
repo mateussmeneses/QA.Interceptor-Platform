@@ -202,11 +202,7 @@ export const Primary = () => (
   </Button>
 );
 
-export const Secondary = () => (
-  <Button variant="secondary">
-    Cancel
-  </Button>
-);
+export const Secondary = () => <Button variant="secondary">Cancel</Button>;
 
 export const Disabled = () => (
   <Button variant="primary" disabled>
@@ -220,11 +216,7 @@ export const Loading = () => (
   </Button>
 );
 
-export const Danger = () => (
-  <Button variant="danger">
-    Delete
-  </Button>
-);
+export const Danger = () => <Button variant="danger">Delete</Button>;
 ```
 
 ```typescript
@@ -362,9 +354,10 @@ body {
   font-size: var(--font-size-body);
   font-family: var(--font-family);
   cursor: pointer;
-  transition: background-color var(--transition-micro),
-              border-color var(--transition-micro),
-              transform var(--transition-micro);
+  transition:
+    background-color var(--transition-micro),
+    border-color var(--transition-micro),
+    transform var(--transition-micro);
 }
 
 .btn:focus-visible {
@@ -449,6 +442,7 @@ pnpm storybook
 ```
 
 Now you can:
+
 - See Button component in different states (Primary, Secondary, Loading, Disabled)
 - Edit component code → hot reload in browser
 - No chrome extension needed
@@ -508,7 +502,9 @@ const root = createRoot(document.getElementById("app")!);
 // On mount
 loadRules().then((rules) => {
   root.render(
-    React.createElement("main", null,
+    React.createElement(
+      "main",
+      null,
       React.createElement(Button, { onClick: () => console.log("Add rule") }, "Add Rule"),
       React.createElement(RulesList, { rules })
     )

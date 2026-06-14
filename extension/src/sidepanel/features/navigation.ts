@@ -11,24 +11,24 @@ type ViewMeta = { title: string; subtitle: string };
 const VIEW_META: Record<ViewId, ViewMeta> = {
   rules: {
     title: "Rules Workspace",
-    subtitle: "Requestly-inspired shell with live data widgets.",
+    subtitle: "Requestly-inspired shell with live data widgets."
   },
   network: {
     title: "Network Inspector",
-    subtitle: "Traffic table, status chips, and request detail timeline.",
+    subtitle: "Traffic table, status chips, and request detail timeline."
   },
   mocks: {
     title: "Mock Playground",
-    subtitle: "Mock payload and status authoring with QA scenario hints.",
+    subtitle: "Mock payload and status authoring with QA scenario hints."
   },
   history: {
     title: "History & Evidence",
-    subtitle: "Session list, evidence timeline, and export-ready QA snapshot.",
+    subtitle: "Session list, evidence timeline, and export-ready QA snapshot."
   },
   settings: {
     title: "Settings",
-    subtitle: "Preferences, diagnostics, and QA error simulation profiles.",
-  },
+    subtitle: "Preferences, diagnostics, and QA error simulation profiles."
+  }
 };
 
 let navButtons: HTMLButtonElement[] = [];

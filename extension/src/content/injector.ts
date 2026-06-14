@@ -108,7 +108,8 @@ const readMockEnvVars = async (): Promise<MockEnvVar[]> => {
       typeof normalized.id === "string" &&
       typeof normalized.name === "string" &&
       typeof normalized.value === "string" &&
-      (normalized.scopeUrlContains === undefined || typeof normalized.scopeUrlContains === "string") &&
+      (normalized.scopeUrlContains === undefined ||
+        typeof normalized.scopeUrlContains === "string") &&
       typeof normalized.enabled === "boolean" &&
       typeof normalized.createdAt === "string"
     );
@@ -136,7 +137,11 @@ window.addEventListener("message", (event: MessageEvent<unknown>) => {
 
   const payload = event.data as Partial<MockAppliedMessage>;
 
-  if (payload.source !== "qa-interceptor-page" || payload.type !== "MOCK_APPLIED" || !payload.payload) {
+  if (
+    payload.source !== "qa-interceptor-page" ||
+    payload.type !== "MOCK_APPLIED" ||
+    !payload.payload
+  ) {
     return;
   }
 

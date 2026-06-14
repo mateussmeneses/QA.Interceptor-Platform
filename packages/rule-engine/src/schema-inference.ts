@@ -51,10 +51,7 @@ const DEFAULT_MAX_ARRAY_SAMPLE = 20;
 /**
  * Infer a JSON Schema from a single parsed JSON value.
  */
-export const inferSchema = (
-  value: unknown,
-  options: InferenceOptions = {}
-): JsonSchema => {
+export const inferSchema = (value: unknown, options: InferenceOptions = {}): JsonSchema => {
   const maxDepth = options.maxDepth ?? DEFAULT_MAX_DEPTH;
   const maxArraySample = options.maxArraySample ?? DEFAULT_MAX_ARRAY_SAMPLE;
   return inferValue(value, 0, maxDepth, maxArraySample);
@@ -198,10 +195,9 @@ const inferArraySchema = (
   }
 
   // Merge all item schemas
-  const merged = itemSchemas.slice(1).reduce(
-    (acc, schema) => mergeSchemas(acc, schema),
-    itemSchemas[0] as JsonSchema
-  );
+  const merged = itemSchemas
+    .slice(1)
+    .reduce((acc, schema) => mergeSchemas(acc, schema), itemSchemas[0] as JsonSchema);
 
   return { type: "array", items: merged };
 };
@@ -231,7 +227,7 @@ const inferObjectSchema = (
   return {
     type: "object",
     properties,
-    required: keys,
+    required: keys
   };
 };
 
@@ -261,14 +257,12 @@ const mergeObjectSchemas = (a: JsonSchema, b: JsonSchema): JsonSchema => {
   }
 
   // A property is required only if it was required in BOTH schemas
-  const required = [...allKeys].filter(
-    (k) => requiredA.has(k) && requiredB.has(k)
-  );
+  const required = [...allKeys].filter((k) => requiredA.has(k) && requiredB.has(k));
 
   return {
     type: "object",
     properties: mergedProps,
-    ...(required.length > 0 ? { required } : {}),
+    ...(required.length > 0 ? { required } : {})
   };
 };
 
@@ -319,8 +313,7 @@ export const inferSchemaFromSamples = (
     return null;
   }
 
-  return schemas.slice(1).reduce(
-    (acc, schema) => mergeSchemas(acc, schema),
-    schemas[0] as JsonSchema
-  );
+  return schemas
+    .slice(1)
+    .reduce((acc, schema) => mergeSchemas(acc, schema), schemas[0] as JsonSchema);
 };

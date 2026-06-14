@@ -40,7 +40,8 @@
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
-  transition: border-color var(--duration-fast) var(--ease-out),
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
     box-shadow var(--duration-fast) var(--ease-out);
 }
 

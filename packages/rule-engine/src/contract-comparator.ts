@@ -25,10 +25,7 @@ export type SnapshotComparisonResult =
  * This allows QA engineers to detect breaking API contract changes without
  * being sensitive to changing values (IDs, timestamps, counts, etc.).
  */
-export const compareContracts = (
-  expected: unknown,
-  actual: unknown
-): SnapshotComparisonResult => {
+export const compareContracts = (expected: unknown, actual: unknown): SnapshotComparisonResult => {
   const diffs: SnapshotDiffEntry[] = [];
   diffNodes(expected, actual, "$", diffs);
 
@@ -54,7 +51,7 @@ export const compareContractStrings = (
   } catch {
     return {
       match: false,
-      diffs: [{ path: "$", type: "type-change", expected: "valid JSON", actual: "parse error" }],
+      diffs: [{ path: "$", type: "type-change", expected: "valid JSON", actual: "parse error" }]
     };
   }
 
@@ -63,7 +60,9 @@ export const compareContractStrings = (
   } catch {
     return {
       match: false,
-      diffs: [{ path: "$", type: "type-change", expected: "valid JSON", actual: "parse error in actual" }],
+      diffs: [
+        { path: "$", type: "type-change", expected: "valid JSON", actual: "parse error in actual" }
+      ]
     };
   }
 
@@ -112,7 +111,7 @@ const diffNodes = (
           path: `${path}.${key}`,
           type: "missing-key",
           expected: getStructuralType(expectedObj[key]),
-          actual: "undefined",
+          actual: "undefined"
         });
       } else {
         diffNodes(expectedObj[key], actualObj[key], `${path}.${key}`, diffs);
@@ -126,7 +125,7 @@ const diffNodes = (
           path: `${path}.${key}`,
           type: "extra-key",
           expected: "undefined",
-          actual: getStructuralType(actualObj[key]),
+          actual: getStructuralType(actualObj[key])
         });
       }
     }
@@ -147,7 +146,7 @@ const diffNodes = (
         path: `${path}[0]`,
         type: "missing-key",
         expected: getStructuralType(expectedArr[0]),
-        actual: "empty array",
+        actual: "empty array"
       });
     }
     // If expected is empty but actual has items, that's not a breaking change

@@ -6,9 +6,7 @@ import type { Rule, InterceptedRequest } from "@qa-interceptor/shared-types";
 // Helpers
 // ---------------------------------------------------------------------------
 
-const makeRule = (
-  overrides: Partial<Rule> & { id: string; type: Rule["type"] }
-): Rule => ({
+const makeRule = (overrides: Partial<Rule> & { id: string; type: Rule["type"] }): Rule => ({
   name: overrides.id,
   enabled: true,
   priority: 10,
@@ -16,7 +14,7 @@ const makeRule = (
   condition: {},
   payload: {},
   groupId: undefined,
-  ...overrides,
+  ...overrides
 });
 
 const makeRequest = (overrides: Partial<InterceptedRequest> = {}): InterceptedRequest => ({
@@ -25,7 +23,7 @@ const makeRequest = (overrides: Partial<InterceptedRequest> = {}): InterceptedRe
   url: "https://api.example.com/users",
   headers: {},
   timestamp: new Date().toISOString(),
-  ...overrides,
+  ...overrides
 });
 
 // ---------------------------------------------------------------------------
@@ -44,7 +42,7 @@ describe("buildRuleIndex", () => {
   it("excludes disabled rules", () => {
     const rules = [
       makeRule({ id: "r1", type: "mock-response", enabled: false }),
-      makeRule({ id: "r2", type: "mock-response", enabled: true }),
+      makeRule({ id: "r2", type: "mock-response", enabled: true })
     ];
     const index = buildRuleIndex(rules);
     expect(index.sortedRules).toHaveLength(1);
@@ -55,7 +53,7 @@ describe("buildRuleIndex", () => {
     const rules = [
       makeRule({ id: "r1", type: "mock-response", priority: 20 }),
       makeRule({ id: "r2", type: "mock-response", priority: 5 }),
-      makeRule({ id: "r3", type: "mock-response", priority: 10 }),
+      makeRule({ id: "r3", type: "mock-response", priority: 10 })
     ];
     const index = buildRuleIndex(rules);
     expect(index.sortedRules.map((r) => r.id)).toEqual(["r2", "r3", "r1"]);
@@ -64,7 +62,7 @@ describe("buildRuleIndex", () => {
   it("breaks priority ties by createdAt ascending", () => {
     const rules = [
       makeRule({ id: "r1", type: "delay", priority: 10, createdAt: "2026-01-02T00:00:00.000Z" }),
-      makeRule({ id: "r2", type: "delay", priority: 10, createdAt: "2026-01-01T00:00:00.000Z" }),
+      makeRule({ id: "r2", type: "delay", priority: 10, createdAt: "2026-01-01T00:00:00.000Z" })
     ];
     const index = buildRuleIndex(rules);
     expect(index.sortedRules[0]?.id).toBe("r2"); // older first
@@ -73,7 +71,7 @@ describe("buildRuleIndex", () => {
   it("puts rules with no URL condition in universalRules", () => {
     const rules = [
       makeRule({ id: "r1", type: "delay", condition: {} }),
-      makeRule({ id: "r2", type: "delay", condition: { urlContains: "/api" } }),
+      makeRule({ id: "r2", type: "delay", condition: { urlContains: "/api" } })
     ];
     const index = buildRuleIndex(rules);
     expect(index.universalRules).toHaveLength(1);
@@ -84,7 +82,7 @@ describe("buildRuleIndex", () => {
     const rules = [
       makeRule({ id: "r1", type: "mock-response", condition: { urlContains: "/api" } }),
       makeRule({ id: "r2", type: "mock-status", condition: { urlContains: "/api" } }),
-      makeRule({ id: "r3", type: "block", condition: { urlContains: "/admin" } }),
+      makeRule({ id: "r3", type: "block", condition: { urlContains: "/admin" } })
     ];
     const index = buildRuleIndex(rules);
     expect(index.urlBuckets.get("/api")).toHaveLength(2);
@@ -95,7 +93,7 @@ describe("buildRuleIndex", () => {
     const rules = [
       makeRule({ id: "r1", type: "block" }),
       makeRule({ id: "r2", type: "redirect" }),
-      makeRule({ id: "r3", type: "mock-response" }),
+      makeRule({ id: "r3", type: "mock-response" })
     ];
     const index = buildRuleIndex(rules);
     expect(index.terminalRules).toHaveLength(2);
@@ -113,7 +111,7 @@ describe("buildRuleIndex", () => {
   it("does not mutate the input array", () => {
     const rules = [
       makeRule({ id: "r1", type: "mock-response", priority: 20 }),
-      makeRule({ id: "r2", type: "mock-response", priority: 5 }),
+      makeRule({ id: "r2", type: "mock-response", priority: 5 })
     ];
     const copy = rules.map((r) => r.id);
     buildRuleIndex(rules);
@@ -148,10 +146,13 @@ describe("evaluateRulesFromIndex", () => {
   it("matches rule by urlContains", () => {
     const rules = [
       makeRule({ id: "r1", type: "mock-response", condition: { urlContains: "/users" } }),
-      makeRule({ id: "r2", type: "mock-response", condition: { urlContains: "/orders" } }),
+      makeRule({ id: "r2", type: "mock-response", condition: { urlContains: "/orders" } })
     ];
     const index = buildRuleIndex(rules);
-    const result = evaluateRulesFromIndex(index, makeRequest({ url: "https://api.example.com/users/1" }));
+    const result = evaluateRulesFromIndex(
+      index,
+      makeRequest({ url: "https://api.example.com/users/1" })
+    );
     expect(result.matchedRules).toHaveLength(1);
     expect(result.matchedRules[0]?.ruleId).toBe("r1");
   });
@@ -159,7 +160,7 @@ describe("evaluateRulesFromIndex", () => {
   it("matches rule by method", () => {
     const rules = [
       makeRule({ id: "r1", type: "rewrite-header", condition: { method: "POST" } }),
-      makeRule({ id: "r2", type: "rewrite-header", condition: { method: "GET" } }),
+      makeRule({ id: "r2", type: "rewrite-header", condition: { method: "GET" } })
     ];
     const index = buildRuleIndex(rules);
     const result = evaluateRulesFromIndex(index, makeRequest({ method: "GET" }));
@@ -170,7 +171,7 @@ describe("evaluateRulesFromIndex", () => {
   it("respects priority order in matched rules", () => {
     const rules = [
       makeRule({ id: "r1", type: "delay", priority: 20 }),
-      makeRule({ id: "r2", type: "mock-response", priority: 5 }),
+      makeRule({ id: "r2", type: "mock-response", priority: 5 })
     ];
     const index = buildRuleIndex(rules);
     const result = evaluateRulesFromIndex(index, makeRequest());
@@ -181,7 +182,7 @@ describe("evaluateRulesFromIndex", () => {
   it("early-exits on block rule — no subsequent rules executed", () => {
     const rules = [
       makeRule({ id: "block", type: "block", priority: 1 }),
-      makeRule({ id: "mock", type: "mock-response", priority: 10 }),
+      makeRule({ id: "mock", type: "mock-response", priority: 10 })
     ];
     const index = buildRuleIndex(rules);
     const result = evaluateRulesFromIndex(index, makeRequest());
@@ -192,7 +193,7 @@ describe("evaluateRulesFromIndex", () => {
   it("early-exits on redirect rule", () => {
     const rules = [
       makeRule({ id: "redirect", type: "redirect", priority: 1 }),
-      makeRule({ id: "delay", type: "delay", priority: 20 }),
+      makeRule({ id: "delay", type: "delay", priority: 20 })
     ];
     const index = buildRuleIndex(rules);
     const result = evaluateRulesFromIndex(index, makeRequest());
@@ -204,7 +205,7 @@ describe("evaluateRulesFromIndex", () => {
     const rules = [
       makeRule({ id: "r1", type: "rewrite-header", priority: 1 }),
       makeRule({ id: "r2", type: "mock-response", priority: 2 }),
-      makeRule({ id: "r3", type: "delay", priority: 3 }),
+      makeRule({ id: "r3", type: "delay", priority: 3 })
     ];
     const index = buildRuleIndex(rules);
     const result = evaluateRulesFromIndex(index, makeRequest());
@@ -224,7 +225,7 @@ describe("evaluateRulesFromIndex", () => {
         id: `r${String(i)}`,
         type: "rewrite-header",
         priority: i,
-        condition: { urlContains: `/api/resource-${String(i)}` },
+        condition: { urlContains: `/api/resource-${String(i)}` }
       })
     );
     const index = buildRuleIndex(rules);
@@ -243,7 +244,7 @@ describe("computeRuleFingerprint", () => {
   it("returns the same fingerprint for the same rule set", () => {
     const rules = [
       makeRule({ id: "r1", type: "delay", priority: 10 }),
-      makeRule({ id: "r2", type: "block", priority: 5 }),
+      makeRule({ id: "r2", type: "block", priority: 5 })
     ];
     expect(computeRuleFingerprint(rules)).toBe(computeRuleFingerprint(rules));
   });
@@ -255,10 +256,7 @@ describe("computeRuleFingerprint", () => {
   });
 
   it("returns a different fingerprint when a rule is removed", () => {
-    const rules = [
-      makeRule({ id: "r1", type: "delay" }),
-      makeRule({ id: "r2", type: "block" }),
-    ];
+    const rules = [makeRule({ id: "r1", type: "delay" }), makeRule({ id: "r2", type: "block" })];
     const reduced = rules.slice(0, 1);
     expect(computeRuleFingerprint(rules)).not.toBe(computeRuleFingerprint(reduced));
   });
@@ -273,7 +271,7 @@ describe("computeRuleFingerprint", () => {
     const active = [makeRule({ id: "r1", type: "delay", enabled: true })];
     const withDisabled = [
       makeRule({ id: "r1", type: "delay", enabled: true }),
-      makeRule({ id: "r2", type: "block", enabled: false }),
+      makeRule({ id: "r2", type: "block", enabled: false })
     ];
     expect(computeRuleFingerprint(active)).toBe(computeRuleFingerprint(withDisabled));
   });

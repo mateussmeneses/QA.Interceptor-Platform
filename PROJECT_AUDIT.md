@@ -23,7 +23,7 @@ Primary evidence sources:
 
 - Backlog: docs/backlog/BACKLOG.md, docs/backlog/BACKLOG_CANONICAL.md, docs/backlog/BACKLOG_EXPANDED.md, docs/backlog/BACKLOG_FRONTEND.md
 - Planning: docs/planning/ROADMAP.md, docs/planning/CURRENT_PHASE.md, docs/planning/IMPLEMENTATION_READY.md, docs/planning/DELIVERABLES.md
-- Analysis: docs/analysis/PROJECT_STATUS.md, docs/analysis/SESSION_SUMMARY.md, and docs/analysis/ANALYSIS_* files
+- Analysis: docs/analysis/PROJECT*STATUS.md, docs/analysis/SESSION_SUMMARY.md, and docs/analysis/ANALYSIS*\* files
 - Architecture docs: files under docs/architecture and docs/adr
 - Runtime code: extension/src/background, extension/src/content, extension/src/sidepanel/features, extension/src/storage
 - Additional UI subtree: extension/src/sidepanel/components (React TSX)

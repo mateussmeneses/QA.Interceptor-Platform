@@ -11,6 +11,7 @@ All components accept data via **TypeScript props**. They never know or care whe
 ### Example: Rule Card Component
 
 **Today (Development Phase)**:
+
 ```tsx
 // MockData approach — no backend needed
 <RuleCard
@@ -21,7 +22,7 @@ All components accept data via **TypeScript props**. They never know or care whe
     enabled: true,
     priority: 5,
     condition: { urlContains: "/admin", method: "GET" },
-    payload: { redirectTo: "https://example.com/dashboard" },
+    payload: { redirectTo: "https://example.com/dashboard" }
   }}
   onEdit={(rule) => console.log("Edit", rule)}
   onDelete={(id) => console.log("Delete", id)}
@@ -29,6 +30,7 @@ All components accept data via **TypeScript props**. They never know or care whe
 ```
 
 **Tomorrow (After Backend Features Implement)**:
+
 ```tsx
 // Real data from evaluateRules + chrome.storage
 const rules = await loadRules(); // from rule-engine package
@@ -157,6 +159,7 @@ export const renderRulesFeature = (
 ```
 
 **Key observations**:
+
 1. **No direct chrome.storage calls** — data is passed in
 2. **No hardcoded mocks** — state is a prop
 3. **Actions are callbacks** — implementation is flexible
@@ -189,7 +192,9 @@ export const initRulesFeature = async (): Promise<RulesState> => {
 // Actions now call backend
 const actions: RulesActions = {
   onAddRule: async () => {
-    const newRule: Rule = { /* form data */ };
+    const newRule: Rule = {
+      /* form data */
+    };
     await saveRule(newRule);
     state.rules = await loadRules(); // Refresh
     render(); // Re-render with new data
@@ -198,7 +203,7 @@ const actions: RulesActions = {
     await deleteRule(id);
     state.rules = await loadRules();
     render();
-  },
+  }
   // … etc
 };
 
@@ -288,6 +293,7 @@ export const Loading = () => (
 ```
 
 **Benefits**:
+
 - No chrome extension needed
 - No backend needed
 - Fast iteration
@@ -334,7 +340,7 @@ export const createStore = (): Store => {
       return () => {
         listeners = listeners.filter((l) => l !== listener);
       };
-    },
+    }
   };
 };
 ```
@@ -348,26 +354,31 @@ export const createStore = (): Store => {
 When a backend feature is ready:
 
 ### 1. Data Source (Storage)
+
 - [ ] `loadXxx()` function exports from `rule-engine/storage-parsers.ts`
 - [ ] `saveXxx()` function integrates with `chrome.storage`
 - [ ] Data shape matches `@qa-interceptor/shared-types`
 
 ### 2. Business Logic (Rule Engine)
+
 - [ ] `evaluateXxx()` function in `rule-engine/src/`
 - [ ] Fully unit-tested
 - [ ] Exported from `@qa-interceptor/rule-engine`
 
 ### 3. Feature Module (Orchestration)
+
 - [ ] `features/xxx.ts` updated with real `onXxx()` implementations
 - [ ] Calls backend functions instead of mock data
 - [ ] Error handling (try/catch, user feedback)
 
 ### 4. UI Integration
+
 - [ ] Feature module passes real data to components
 - [ ] Components unchanged (props-based)
 - [ ] Test with real data in browser
 
 ### 5. Cleanup
+
 - [ ] Remove mock data
 - [ ] Remove Storybook stories (or keep for documentation)
 - [ ] Update README/docs with real flow
@@ -390,16 +401,16 @@ export const initRulesFeature = (): RulesState => ({
       priority: 5,
       condition: { urlContains: "/admin" },
       payload: { redirectTo: "/dashboard" },
-      createdAt: new Date().toISOString(),
-    },
+      createdAt: new Date().toISOString()
+    }
   ],
-  isLoading: false,
+  isLoading: false
 });
 
 const actions: RulesActions = {
   onAddRule: () => {
     console.log("Add rule (not implemented yet)");
-  },
+  }
   // … other mock actions
 };
 ```
@@ -419,7 +430,9 @@ export const initRulesFeature = async (): Promise<RulesState> => {
 
 const actions: RulesActions = {
   onAddRule: async () => {
-    const newRule = { /* from form */ };
+    const newRule = {
+      /* from form */
+    };
     await saveRule(newRule); // ← Persists to chrome.storage
     const rules = await loadRules();
     render({ rules });
@@ -428,7 +441,7 @@ const actions: RulesActions = {
     await deleteRule(id); // ← Deletes from storage
     const rules = await loadRules();
     render({ rules });
-  },
+  }
 };
 ```
 
@@ -438,15 +451,15 @@ const actions: RulesActions = {
 
 ## Benefits of This Approach
 
-| Benefit | How It Works |
-|---------|-------------|
-| **No Blocking** | Frontend can build while backend features are implemented. |
-| **Testable Components** | Storybook + mock data; no chrome/backend needed. |
-| **Fast Iteration** | Change UI without touching backend logic. |
-| **Clear Contracts** | TypeScript interfaces define expectations; implementation is flexible. |
-| **Gradual Integration** | Wire one feature at a time; don't wait for all features to be ready. |
-| **Easy Debugging** | Mock data makes it obvious when data flow is wrong; backend issues isolated. |
-| **Reusability** | Components can be used in web app or desktop app without changes. |
+| Benefit                 | How It Works                                                                 |
+| ----------------------- | ---------------------------------------------------------------------------- |
+| **No Blocking**         | Frontend can build while backend features are implemented.                   |
+| **Testable Components** | Storybook + mock data; no chrome/backend needed.                             |
+| **Fast Iteration**      | Change UI without touching backend logic.                                    |
+| **Clear Contracts**     | TypeScript interfaces define expectations; implementation is flexible.       |
+| **Gradual Integration** | Wire one feature at a time; don't wait for all features to be ready.         |
+| **Easy Debugging**      | Mock data makes it obvious when data flow is wrong; backend issues isolated. |
+| **Reusability**         | Components can be used in web app or desktop app without changes.            |
 
 ---
 

@@ -1,4 +1,5 @@
 # QA.Interceptor — Design System Implementation Guide
+
 <!-- markdownlint-disable MD022 MD031 MD032 MD040 -->
 
 **Status**: ✅ Phase FE-0 — Design Foundation Complete
@@ -43,38 +44,25 @@ extension/src/sidepanel/
 All colors are defined as CSS custom properties in `styles/tokens.css`.
 
 #### Light Mode (default)
-```css
---primary: #2F6DC4
---success: #10B981
---warning: #F59E0B
---error: #EF4444
---info: #3B82F6
 
---surface-bg: #FFFFFF
---surface-alt: #F3F4F6
---text-primary: #111827
---text-secondary: #6B7280
+```css
+--primary: #2f6dc4 --success: #10b981 --warning: #f59e0b --error: #ef4444 --info: #3b82f6
+  --surface-bg: #ffffff --surface-alt: #f3f4f6 --text-primary: #111827 --text-secondary: #6b7280;
 ```
 
 #### Dark Mode
+
 ```css
 html[data-theme="dark"] {
-  --primary: #5B9FFF
-  --success: #34D399
-  --warning: #FBBF24
-  --error: #F87171
-  --info: #60A5FA
-
-  --surface-bg: #1F2937
-  --surface-alt: #111827
-  --text-primary: #F3F4F6
-  --text-secondary: #D1D5DB
+  --primary: #5b9fff --success: #34d399 --warning: #fbbf24 --error: #f87171 --info: #60a5fa
+    --surface-bg: #1f2937 --surface-alt: #111827 --text-primary: #f3f4f6 --text-secondary: #d1d5db;
 }
 ```
 
 ### Using Colors in Components
 
 **CSS**:
+
 ```css
 .my-button {
   background-color: var(--primary);
@@ -94,6 +82,7 @@ html[data-theme="dark"] .my-button {
 ```
 
 **HTML**:
+
 ```html
 <button class="my-button">Click me</button>
 ```
@@ -101,39 +90,20 @@ html[data-theme="dark"] .my-button {
 ### Spacing Scale
 
 ```css
---spacing-xs: 2px      /* .gap-xs, .p-xs */
---spacing-2xs: 4px     /* .p-2xs */
---spacing-sm: 8px      /* .gap-sm, .p-sm */
---spacing-m-sm: 12px   /* .p-m-sm */
---spacing-m: 16px      /* .gap-m, .p-m (default) */
---spacing-l: 24px      /* .gap-l, .p-l */
---spacing-xl: 32px     /* .gap-xl, .p-xl */
---spacing-2xl: 48px    /* .p-2xl */
---spacing-3xl: 64px    /* .p-3xl */
+--spacing-xs: 2px /* .gap-xs, .p-xs */ --spacing-2xs: 4px /* .p-2xs */ --spacing-sm: 8px
+  /* .gap-sm, .p-sm */ --spacing-m-sm: 12px /* .p-m-sm */ --spacing-m: 16px
+  /* .gap-m, .p-m (default) */ --spacing-l: 24px /* .gap-l, .p-l */ --spacing-xl: 32px
+  /* .gap-xl, .p-xl */ --spacing-2xl: 48px /* .p-2xl */ --spacing-3xl: 64px /* .p-3xl */;
 ```
 
 ### Typography
 
 ```css
---font-sans: "Inter", "Segoe UI", system-ui
---font-mono: "Fira Code", "Source Code Pro"
-
---font-xs: 12px
---font-sm: 14px
---font-base: 16px
---font-lg: 18px
---font-xl: 20px
---font-2xl: 24px
---font-3xl: 28px
-
---lh-tight: 1.2
---lh-normal: 1.5
---lh-relaxed: 1.75
-
---fw-regular: 400
---fw-medium: 500
---fw-semibold: 600
---fw-bold: 700
+--font-sans:
+  "Inter", "Segoe UI", system-ui --font-mono: "Fira Code",
+  "Source Code Pro" --font-xs: 12px --font-sm: 14px --font-base: 16px --font-lg: 18px
+    --font-xl: 20px --font-2xl: 24px --font-3xl: 28px --lh-tight: 1.2 --lh-normal: 1.5
+    --lh-relaxed: 1.75 --fw-regular: 400 --fw-medium: 500 --fw-semibold: 600 --fw-bold: 700;
 ```
 
 ### Using Typography
@@ -162,33 +132,22 @@ html[data-theme="dark"] .my-button {
 ### Border Radius
 
 ```css
---radius-sm: 4px
---radius-m: 6px
---radius-lg: 8px
---radius-xl: 12px
---radius-full: 9999px
+--radius-sm: 4px --radius-m: 6px --radius-lg: 8px --radius-xl: 12px --radius-full: 9999px;
 ```
 
 ### Shadows
 
 ```css
---shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05)
---shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1)
---shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1)
---shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1)
+--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05) --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1) --shadow-lg: 0
+  10px 15px rgba(0, 0, 0, 0.1) --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
 ```
 
 ### Animations
 
 ```css
---duration-micro: 100ms
---duration-fast: 150ms
---duration-base: 300ms
---duration-slow: 500ms
-
---ease-in: cubic-bezier(0.4, 0, 1, 1)
---ease-out: cubic-bezier(0, 0, 0.2, 1)
---ease-in-out: cubic-bezier(0.4, 0, 0.2, 1)
+--duration-micro: 100ms --duration-fast: 150ms --duration-base: 300ms --duration-slow: 500ms
+  --ease-in: cubic-bezier(0.4, 0, 1, 1) --ease-out: cubic-bezier(0, 0, 0.2, 1)
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 ```
 
 ### Using Animations
@@ -225,21 +184,25 @@ html[data-theme="dark"] .my-button {
 ### Flexbox
 
 ```html
-<div class="flex gap-m">           <!-- flex row with 16px gap -->
+<div class="flex gap-m">
+  <!-- flex row with 16px gap -->
   <div>Item 1</div>
   <div>Item 2</div>
 </div>
 
-<div class="flex flex-col gap-sm">  <!-- flex column with 8px gap -->
+<div class="flex flex-col gap-sm">
+  <!-- flex column with 8px gap -->
   <div>Header</div>
   <div>Content</div>
 </div>
 
-<div class="flex-center">           <!-- centered content -->
+<div class="flex-center">
+  <!-- centered content -->
   <span>Centered</span>
 </div>
 
-<div class="flex-between">          <!-- space between -->
+<div class="flex-between">
+  <!-- space between -->
   <span>Left</span>
   <span>Right</span>
 </div>
@@ -248,19 +211,23 @@ html[data-theme="dark"] .my-button {
 ### Padding & Margin
 
 ```html
-<div class="p-m">                    <!-- padding: 16px -->
+<div class="p-m">
+  <!-- padding: 16px -->
   Content
 </div>
 
-<div class="px-l py-m">              <!-- padding-x: 24px, padding-y: 16px -->
+<div class="px-l py-m">
+  <!-- padding-x: 24px, padding-y: 16px -->
   Padded content
 </div>
 
-<div class="m-m">                    <!-- margin: 16px -->
+<div class="m-m">
+  <!-- margin: 16px -->
   Margined content
 </div>
 
-<div class="mb-l">                   <!-- margin-bottom: 24px -->
+<div class="mb-l">
+  <!-- margin-bottom: 24px -->
   Below this is 24px gap
 </div>
 ```
@@ -268,19 +235,23 @@ html[data-theme="dark"] .my-button {
 ### Sizing & Display
 
 ```html
-<div class="w-full">                 <!-- width: 100% -->
+<div class="w-full">
+  <!-- width: 100% -->
   Full width
 </div>
 
-<div class="hidden">                 <!-- display: none -->
+<div class="hidden">
+  <!-- display: none -->
   Hidden
 </div>
 
-<div class="text-center">            <!-- text-align: center -->
+<div class="text-center">
+  <!-- text-align: center -->
   Centered text
 </div>
 
-<span class="line-clamp-1">          <!-- Single line, ellipsis if overflow -->
+<span class="line-clamp-1">
+  <!-- Single line, ellipsis if overflow -->
   This text will truncate with ellipsis...
 </span>
 ```
@@ -288,19 +259,23 @@ html[data-theme="dark"] .my-button {
 ### Colors
 
 ```html
-<div class="bg-primary text-white">  <!-- primary background -->
+<div class="bg-primary text-white">
+  <!-- primary background -->
   Primary button
 </div>
 
-<div class="bg-success">             <!-- success background -->
+<div class="bg-success">
+  <!-- success background -->
   Success card
 </div>
 
-<p class="text-secondary">           <!-- secondary text color -->
+<p class="text-secondary">
+  <!-- secondary text color -->
   Helper text
 </p>
 
-<p class="text-error">               <!-- error text color -->
+<p class="text-error">
+  <!-- error text color -->
   Error message
 </p>
 ```
@@ -321,9 +296,7 @@ html[data-theme="dark"] .my-button {
 </div>
 
 <!-- Rounded button container -->
-<div class="rounded bg-surface border p-m">
-  Content
-</div>
+<div class="rounded bg-surface border p-m">Content</div>
 ```
 
 ---
@@ -373,20 +346,20 @@ The theme is applied via the `data-theme` attribute on the root `<html>` element
 ```html
 <!-- Light mode -->
 <html data-theme="light">
-
-<!-- Dark mode -->
-<html data-theme="dark">
+  <!-- Dark mode -->
+  <html data-theme="dark"></html>
+</html>
 ```
 
 All CSS variables automatically switch based on this attribute:
 
 ```css
 html {
-  --primary: #2F6DC4;        /* light mode */
+  --primary: #2f6dc4; /* light mode */
 }
 
 html[data-theme="dark"] {
-  --primary: #5B9FFF;        /* dark mode */
+  --primary: #5b9fff; /* dark mode */
 }
 ```
 
@@ -397,6 +370,7 @@ html[data-theme="dark"] {
 ### Step 1: Plan the Component
 
 Review the backlog for which component to build:
+
 - **Phase FE-1** contains base components: Button, Input, Card, Modal, etc.
 
 ### Step 2: Create Component File
@@ -451,10 +425,11 @@ File: `extension/src/sidepanel/styles/components/button.css`
   border-radius: var(--radius-m);
   font-weight: var(--fw-medium);
   cursor: pointer;
-  transition: background-color var(--duration-fast) var(--ease-out),
-              color var(--duration-fast) var(--ease-out),
-              transform var(--duration-micro) var(--ease-out),
-              box-shadow var(--duration-fast) var(--ease-out);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-micro) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
 }
 
 /* Sizes */
@@ -564,6 +539,7 @@ Create stories for component preview and testing.
 ## 🚀 Next Steps (Phase FE-1)
 
 Build 25 core components:
+
 - **Button components** (5 variants): primary, secondary, ghost, danger, compact
 - **Input components** (8 types): text, search, select, toggle, checkbox, radio, number, textarea
 - **Display components** (7 types): card, badge, status, tabs, accordion, spinner, toast
@@ -571,6 +547,7 @@ Build 25 core components:
 - **Modal components** (4 types): modal, dialog, confirmation, popover
 
 Each component will follow the same pattern:
+
 1. Create TypeScript component file
 2. Create CSS file with tokens & utility classes
 3. Write unit tests

@@ -5,7 +5,7 @@ import {
   resetMockCallCount,
   getMockCallCount,
   type ConditionalMockRule,
-  type MockCallContext,
+  type MockCallContext
 } from "./conditional-mock-evaluator";
 
 // ---------------------------------------------------------------------------
@@ -17,7 +17,7 @@ const makeCtx = (overrides: Partial<MockCallContext> = {}): MockCallContext => (
   url: "https://api.example.com/users",
   headers: {},
   body: undefined,
-  ...overrides,
+  ...overrides
 });
 
 const makeRule = (
@@ -28,12 +28,15 @@ const makeRule = (
   name: "Test Mock",
   enabled: true,
   branches,
-  ...overrides,
+  ...overrides
 });
 
-const payload = (status = 200, body = "ok"): ConditionalMockRule["branches"][number]["payload"] => ({
+const payload = (
+  status = 200,
+  body = "ok"
+): ConditionalMockRule["branches"][number]["payload"] => ({
   status,
-  body,
+  body
 });
 
 // ---------------------------------------------------------------------------
@@ -48,10 +51,9 @@ describe("always condition", () => {
   });
 
   it("does not match when rule is disabled", () => {
-    const rule = makeRule(
-      [{ id: "b1", condition: { kind: "always" }, payload: payload(200) }],
-      { enabled: false }
-    );
+    const rule = makeRule([{ id: "b1", condition: { kind: "always" }, payload: payload(200) }], {
+      enabled: false
+    });
     const result = evaluateConditionalMock(rule, makeCtx(), createMockState());
     expect(result.matched).toBe(false);
   });
@@ -64,7 +66,7 @@ describe("always condition", () => {
 describe("url-match condition", () => {
   it("matches when URL contains the string", () => {
     const rule = makeRule([
-      { id: "b1", condition: { kind: "url-match", urlContains: "/users" }, payload: payload(200) },
+      { id: "b1", condition: { kind: "url-match", urlContains: "/users" }, payload: payload(200) }
     ]);
     const result = evaluateConditionalMock(
       rule,
@@ -76,7 +78,7 @@ describe("url-match condition", () => {
 
   it("does not match when URL does not contain the string", () => {
     const rule = makeRule([
-      { id: "b1", condition: { kind: "url-match", urlContains: "/orders" }, payload: payload(200) },
+      { id: "b1", condition: { kind: "url-match", urlContains: "/orders" }, payload: payload(200) }
     ]);
     const result = evaluateConditionalMock(
       rule,
@@ -94,25 +96,17 @@ describe("url-match condition", () => {
 describe("method condition", () => {
   it("matches correct method (case-insensitive)", () => {
     const rule = makeRule([
-      { id: "b1", condition: { kind: "method", method: "post" }, payload: payload(201) },
+      { id: "b1", condition: { kind: "method", method: "post" }, payload: payload(201) }
     ]);
-    const result = evaluateConditionalMock(
-      rule,
-      makeCtx({ method: "POST" }),
-      createMockState()
-    );
+    const result = evaluateConditionalMock(rule, makeCtx({ method: "POST" }), createMockState());
     expect(result.matched).toBe(true);
   });
 
   it("does not match wrong method", () => {
     const rule = makeRule([
-      { id: "b1", condition: { kind: "method", method: "DELETE" }, payload: payload(204) },
+      { id: "b1", condition: { kind: "method", method: "DELETE" }, payload: payload(204) }
     ]);
-    const result = evaluateConditionalMock(
-      rule,
-      makeCtx({ method: "GET" }),
-      createMockState()
-    );
+    const result = evaluateConditionalMock(rule, makeCtx({ method: "GET" }), createMockState());
     expect(result.matched).toBe(false);
   });
 });
@@ -127,8 +121,8 @@ describe("header-equals condition", () => {
       {
         id: "b1",
         condition: { kind: "header-equals", headerName: "x-test", headerValue: "true" },
-        payload: payload(200),
-      },
+        payload: payload(200)
+      }
     ]);
     const result = evaluateConditionalMock(
       rule,
@@ -143,8 +137,8 @@ describe("header-equals condition", () => {
       {
         id: "b1",
         condition: { kind: "header-equals", headerName: "x-test", headerValue: "true" },
-        payload: payload(200),
-      },
+        payload: payload(200)
+      }
     ]);
     const result = evaluateConditionalMock(
       rule,
@@ -158,9 +152,13 @@ describe("header-equals condition", () => {
     const rule = makeRule([
       {
         id: "b1",
-        condition: { kind: "header-equals", headerName: "authorization", headerValue: "Bearer token" },
-        payload: payload(200),
-      },
+        condition: {
+          kind: "header-equals",
+          headerName: "authorization",
+          headerValue: "Bearer token"
+        },
+        payload: payload(200)
+      }
     ]);
     const result = evaluateConditionalMock(rule, makeCtx(), createMockState());
     expect(result.matched).toBe(false);
@@ -174,7 +172,7 @@ describe("header-equals condition", () => {
 describe("body-contains condition", () => {
   it("matches when body contains the substring", () => {
     const rule = makeRule([
-      { id: "b1", condition: { kind: "body-contains", substring: "admin" }, payload: payload(200) },
+      { id: "b1", condition: { kind: "body-contains", substring: "admin" }, payload: payload(200) }
     ]);
     const result = evaluateConditionalMock(
       rule,
@@ -186,7 +184,7 @@ describe("body-contains condition", () => {
 
   it("does not match when body is absent", () => {
     const rule = makeRule([
-      { id: "b1", condition: { kind: "body-contains", substring: "admin" }, payload: payload(200) },
+      { id: "b1", condition: { kind: "body-contains", substring: "admin" }, payload: payload(200) }
     ]);
     const result = evaluateConditionalMock(rule, makeCtx({ body: undefined }), createMockState());
     expect(result.matched).toBe(false);
@@ -200,7 +198,7 @@ describe("body-contains condition", () => {
 describe("sequence condition", () => {
   it("matches only on the Nth call", () => {
     const rule = makeRule([
-      { id: "b1", condition: { kind: "sequence", nth: 2 }, payload: payload(500, "second call") },
+      { id: "b1", condition: { kind: "sequence", nth: 2 }, payload: payload(500, "second call") }
     ]);
     const state = createMockState();
 
@@ -227,9 +225,7 @@ describe("sequence condition", () => {
 
   it("sequence conditions for first-call 500, then 200 fallback", () => {
     const rule = makeRule(
-      [
-        { id: "b1", condition: { kind: "sequence", nth: 1 }, payload: payload(500, "error") },
-      ],
+      [{ id: "b1", condition: { kind: "sequence", nth: 1 }, payload: payload(500, "error") }],
       { fallback: payload(200, "ok") }
     );
     const s0 = createMockState();
@@ -250,7 +246,7 @@ describe("sequence condition", () => {
 describe("call-count condition", () => {
   it("matches when call count is within range", () => {
     const rule = makeRule([
-      { id: "b1", condition: { kind: "call-count", min: 1, max: 3 }, payload: payload(200) },
+      { id: "b1", condition: { kind: "call-count", min: 1, max: 3 }, payload: payload(200) }
     ]);
     let state = createMockState();
     for (let i = 1; i <= 3; i++) {
@@ -265,7 +261,7 @@ describe("call-count condition", () => {
 
   it("matches open-ended range (no max)", () => {
     const rule = makeRule([
-      { id: "b1", condition: { kind: "call-count", min: 2 }, payload: payload(200) },
+      { id: "b1", condition: { kind: "call-count", min: 2 }, payload: payload(200) }
     ]);
     const s0 = createMockState();
     const r1 = evaluateConditionalMock(rule, makeCtx(), s0); // count = 1, min = 2 → no match
@@ -283,7 +279,9 @@ describe("call-count condition", () => {
 describe("fallback", () => {
   it("uses fallback when no branch matches", () => {
     const rule = makeRule(
-      [{ id: "b1", condition: { kind: "url-match", urlContains: "/admin" }, payload: payload(403) }],
+      [
+        { id: "b1", condition: { kind: "url-match", urlContains: "/admin" }, payload: payload(403) }
+      ],
       { fallback: payload(200, "fallback") }
     );
     const result = evaluateConditionalMock(rule, makeCtx({ url: "/public" }), createMockState());
@@ -296,7 +294,7 @@ describe("fallback", () => {
 
   it("does not match if no branch and no fallback", () => {
     const rule = makeRule([
-      { id: "b1", condition: { kind: "url-match", urlContains: "/admin" }, payload: payload(403) },
+      { id: "b1", condition: { kind: "url-match", urlContains: "/admin" }, payload: payload(403) }
     ]);
     const result = evaluateConditionalMock(rule, makeCtx({ url: "/public" }), createMockState());
     expect(result.matched).toBe(false);
@@ -311,7 +309,7 @@ describe("first-branch-wins", () => {
   it("returns the first matching branch, not later ones", () => {
     const rule = makeRule([
       { id: "b1", condition: { kind: "always" }, payload: payload(200, "first") },
-      { id: "b2", condition: { kind: "always" }, payload: payload(500, "second") },
+      { id: "b2", condition: { kind: "always" }, payload: payload(500, "second") }
     ]);
     const result = evaluateConditionalMock(rule, makeCtx(), createMockState());
     expect(result.matched).toBe(true);

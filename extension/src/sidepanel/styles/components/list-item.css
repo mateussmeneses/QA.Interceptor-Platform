@@ -10,7 +10,8 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-m);
   background-color: var(--surface-bg);
-  transition: background-color var(--duration-fast) var(--ease-out),
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
     border-color var(--duration-fast) var(--ease-out);
 }
 

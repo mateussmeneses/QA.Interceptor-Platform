@@ -95,80 +95,180 @@
    PADDING UTILITIES
    ============================================================================ */
 
-.p-0 { padding: 0; }
-.p-xs { padding: var(--padding-xs); }
-.p-sm { padding: var(--padding-sm); }
-.p-m { padding: var(--padding-m); }
-.p-l { padding: var(--padding-l); }
-.p-xl { padding: var(--padding-xl); }
+.p-0 {
+  padding: 0;
+}
+.p-xs {
+  padding: var(--padding-xs);
+}
+.p-sm {
+  padding: var(--padding-sm);
+}
+.p-m {
+  padding: var(--padding-m);
+}
+.p-l {
+  padding: var(--padding-l);
+}
+.p-xl {
+  padding: var(--padding-xl);
+}
 
-.px-sm { padding-left: var(--padding-sm); padding-right: var(--padding-sm); }
-.px-m { padding-left: var(--padding-m); padding-right: var(--padding-m); }
-.px-l { padding-left: var(--padding-l); padding-right: var(--padding-l); }
+.px-sm {
+  padding-left: var(--padding-sm);
+  padding-right: var(--padding-sm);
+}
+.px-m {
+  padding-left: var(--padding-m);
+  padding-right: var(--padding-m);
+}
+.px-l {
+  padding-left: var(--padding-l);
+  padding-right: var(--padding-l);
+}
 
-.py-sm { padding-top: var(--padding-sm); padding-bottom: var(--padding-sm); }
-.py-m { padding-top: var(--padding-m); padding-bottom: var(--padding-m); }
-.py-l { padding-top: var(--padding-l); padding-bottom: var(--padding-l); }
+.py-sm {
+  padding-top: var(--padding-sm);
+  padding-bottom: var(--padding-sm);
+}
+.py-m {
+  padding-top: var(--padding-m);
+  padding-bottom: var(--padding-m);
+}
+.py-l {
+  padding-top: var(--padding-l);
+  padding-bottom: var(--padding-l);
+}
 
-.pt-sm { padding-top: var(--padding-sm); }
-.pb-sm { padding-bottom: var(--padding-sm); }
-.pl-sm { padding-left: var(--padding-sm); }
-.pr-sm { padding-right: var(--padding-sm); }
+.pt-sm {
+  padding-top: var(--padding-sm);
+}
+.pb-sm {
+  padding-bottom: var(--padding-sm);
+}
+.pl-sm {
+  padding-left: var(--padding-sm);
+}
+.pr-sm {
+  padding-right: var(--padding-sm);
+}
 
 /* ============================================================================
    MARGIN UTILITIES
    ============================================================================ */
 
-.m-0 { margin: 0; }
-.m-xs { margin: var(--spacing-xs); }
-.m-sm { margin: var(--spacing-sm); }
-.m-m { margin: var(--spacing-m); }
-.m-l { margin: var(--spacing-l); }
-.m-xl { margin: var(--spacing-xl); }
+.m-0 {
+  margin: 0;
+}
+.m-xs {
+  margin: var(--spacing-xs);
+}
+.m-sm {
+  margin: var(--spacing-sm);
+}
+.m-m {
+  margin: var(--spacing-m);
+}
+.m-l {
+  margin: var(--spacing-l);
+}
+.m-xl {
+  margin: var(--spacing-xl);
+}
 
-.mx-auto { margin-left: auto; margin-right: auto; }
-.my-m { margin-top: var(--spacing-m); margin-bottom: var(--spacing-m); }
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+.my-m {
+  margin-top: var(--spacing-m);
+  margin-bottom: var(--spacing-m);
+}
 
-.mt-sm { margin-top: var(--spacing-sm); }
-.mb-sm { margin-bottom: var(--spacing-sm); }
-.ml-sm { margin-left: var(--spacing-sm); }
-.mr-sm { margin-right: var(--spacing-sm); }
+.mt-sm {
+  margin-top: var(--spacing-sm);
+}
+.mb-sm {
+  margin-bottom: var(--spacing-sm);
+}
+.ml-sm {
+  margin-left: var(--spacing-sm);
+}
+.mr-sm {
+  margin-right: var(--spacing-sm);
+}
 
-.mt-m { margin-top: var(--spacing-m); }
-.mb-m { margin-bottom: var(--spacing-m); }
-.ml-m { margin-left: var(--spacing-m); }
-.mr-m { margin-right: var(--spacing-m); }
+.mt-m {
+  margin-top: var(--spacing-m);
+}
+.mb-m {
+  margin-bottom: var(--spacing-m);
+}
+.ml-m {
+  margin-left: var(--spacing-m);
+}
+.mr-m {
+  margin-right: var(--spacing-m);
+}
 
 /* ============================================================================
    SIZING UTILITIES
    ============================================================================ */
 
-.w-full { width: 100%; }
-.w-auto { width: auto; }
-.h-auto { height: auto; }
+.w-full {
+  width: 100%;
+}
+.w-auto {
+  width: auto;
+}
+.h-auto {
+  height: auto;
+}
 
-.max-w-full { max-width: 100%; }
+.max-w-full {
+  max-width: 100%;
+}
 
 /* ============================================================================
    DISPLAY UTILITIES
    ============================================================================ */
 
-.hidden { display: none !important; }
-.inline { display: inline; }
-.inline-block { display: inline-block; }
-.block { display: block; }
+.hidden {
+  display: none !important;
+}
+.inline {
+  display: inline;
+}
+.inline-block {
+  display: inline-block;
+}
+.block {
+  display: block;
+}
 
-.visible { visibility: visible; }
-.invisible { visibility: hidden; }
+.visible {
+  visibility: visible;
+}
+.invisible {
+  visibility: hidden;
+}
 
 /* ============================================================================
    OVERFLOW UTILITIES
    ============================================================================ */
 
-.overflow-auto { overflow: auto; }
-.overflow-hidden { overflow: hidden; }
-.overflow-x-auto { overflow-x: auto; }
-.overflow-y-auto { overflow-y: auto; }
+.overflow-auto {
+  overflow: auto;
+}
+.overflow-hidden {
+  overflow: hidden;
+}
+.overflow-x-auto {
+  overflow-x: auto;
+}
+.overflow-y-auto {
+  overflow-y: auto;
+}
 
 .text-truncate {
   overflow: hidden;
@@ -187,21 +287,47 @@
    TEXT UTILITIES
    ============================================================================ */
 
-.text-left { text-align: left; }
-.text-center { text-align: center; }
-.text-right { text-align: right; }
+.text-left {
+  text-align: left;
+}
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
 
-.text-xs { font-size: var(--font-xs); }
-.text-sm { font-size: var(--font-sm); }
-.text-base { font-size: var(--font-base); }
-.text-lg { font-size: var(--font-lg); }
-.text-xl { font-size: var(--font-xl); }
-.text-2xl { font-size: var(--font-2xl); }
+.text-xs {
+  font-size: var(--font-xs);
+}
+.text-sm {
+  font-size: var(--font-sm);
+}
+.text-base {
+  font-size: var(--font-base);
+}
+.text-lg {
+  font-size: var(--font-lg);
+}
+.text-xl {
+  font-size: var(--font-xl);
+}
+.text-2xl {
+  font-size: var(--font-2xl);
+}
 
-.font-normal { font-weight: var(--fw-regular); }
-.font-medium { font-weight: var(--fw-medium); }
-.font-semibold { font-weight: var(--fw-semibold); }
-.font-bold { font-weight: var(--fw-bold); }
+.font-normal {
+  font-weight: var(--fw-regular);
+}
+.font-medium {
+  font-weight: var(--fw-medium);
+}
+.font-semibold {
+  font-weight: var(--fw-semibold);
+}
+.font-bold {
+  font-weight: var(--fw-bold);
+}
 
 .line-clamp-1 {
   display: -webkit-box;
@@ -228,88 +354,182 @@
    OPACITY & VISIBILITY
    ============================================================================ */
 
-.opacity-50 { opacity: 0.5; }
-.opacity-75 { opacity: 0.75; }
+.opacity-50 {
+  opacity: 0.5;
+}
+.opacity-75 {
+  opacity: 0.75;
+}
 
 /* ============================================================================
    CURSOR UTILITIES
    ============================================================================ */
 
-.cursor-pointer { cursor: pointer; }
-.cursor-default { cursor: default; }
-.cursor-text { cursor: text; }
-.cursor-move { cursor: move; }
-.cursor-not-allowed { cursor: not-allowed; }
+.cursor-pointer {
+  cursor: pointer;
+}
+.cursor-default {
+  cursor: default;
+}
+.cursor-text {
+  cursor: text;
+}
+.cursor-move {
+  cursor: move;
+}
+.cursor-not-allowed {
+  cursor: not-allowed;
+}
 
 /* ============================================================================
    BORDER UTILITIES
    ============================================================================ */
 
-.border { border: 1px solid var(--border); }
-.border-t { border-top: 1px solid var(--border); }
-.border-b { border-bottom: 1px solid var(--border); }
-.border-l { border-left: 1px solid var(--border); }
-.border-r { border-right: 1px solid var(--border); }
+.border {
+  border: 1px solid var(--border);
+}
+.border-t {
+  border-top: 1px solid var(--border);
+}
+.border-b {
+  border-bottom: 1px solid var(--border);
+}
+.border-l {
+  border-left: 1px solid var(--border);
+}
+.border-r {
+  border-right: 1px solid var(--border);
+}
 
-.rounded { border-radius: var(--radius-m); }
-.rounded-sm { border-radius: var(--radius-sm); }
-.rounded-lg { border-radius: var(--radius-lg); }
-.rounded-xl { border-radius: var(--radius-xl); }
-.rounded-full { border-radius: var(--radius-full); }
+.rounded {
+  border-radius: var(--radius-m);
+}
+.rounded-sm {
+  border-radius: var(--radius-sm);
+}
+.rounded-lg {
+  border-radius: var(--radius-lg);
+}
+.rounded-xl {
+  border-radius: var(--radius-xl);
+}
+.rounded-full {
+  border-radius: var(--radius-full);
+}
 
 /* ============================================================================
    BACKGROUND COLOR UTILITIES
    ============================================================================ */
 
-.bg-surface { background-color: var(--surface-bg); }
-.bg-surface-alt { background-color: var(--surface-alt); }
-.bg-primary { background-color: var(--primary); }
-.bg-success { background-color: var(--success); }
-.bg-warning { background-color: var(--warning); }
-.bg-error { background-color: var(--error); }
-.bg-info { background-color: var(--info); }
+.bg-surface {
+  background-color: var(--surface-bg);
+}
+.bg-surface-alt {
+  background-color: var(--surface-alt);
+}
+.bg-primary {
+  background-color: var(--primary);
+}
+.bg-success {
+  background-color: var(--success);
+}
+.bg-warning {
+  background-color: var(--warning);
+}
+.bg-error {
+  background-color: var(--error);
+}
+.bg-info {
+  background-color: var(--info);
+}
 
 /* ============================================================================
    TEXT COLOR UTILITIES
    ============================================================================ */
 
-.text-primary { color: var(--text-primary); }
-.text-secondary { color: var(--text-secondary); }
-.text-tertiary { color: var(--text-tertiary); }
-.text-error { color: var(--error); }
-.text-success { color: var(--success); }
-.text-warning { color: var(--warning); }
-.text-info { color: var(--info); }
+.text-primary {
+  color: var(--text-primary);
+}
+.text-secondary {
+  color: var(--text-secondary);
+}
+.text-tertiary {
+  color: var(--text-tertiary);
+}
+.text-error {
+  color: var(--error);
+}
+.text-success {
+  color: var(--success);
+}
+.text-warning {
+  color: var(--warning);
+}
+.text-info {
+  color: var(--info);
+}
 
 /* ============================================================================
    SHADOW UTILITIES
    ============================================================================ */
 
-.shadow-sm { box-shadow: var(--shadow-sm); }
-.shadow-md { box-shadow: var(--shadow-md); }
-.shadow-lg { box-shadow: var(--shadow-lg); }
-.shadow-xl { box-shadow: var(--shadow-xl); }
+.shadow-sm {
+  box-shadow: var(--shadow-sm);
+}
+.shadow-md {
+  box-shadow: var(--shadow-md);
+}
+.shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+.shadow-xl {
+  box-shadow: var(--shadow-xl);
+}
 
 /* ============================================================================
    POSITION UTILITIES
    ============================================================================ */
 
-.relative { position: relative; }
-.absolute { position: absolute; }
-.fixed { position: fixed; }
-.sticky { position: sticky; top: 0; z-index: 10; }
+.relative {
+  position: relative;
+}
+.absolute {
+  position: absolute;
+}
+.fixed {
+  position: fixed;
+}
+.sticky {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
 
 /* ============================================================================
    Z-INDEX UTILITIES
    ============================================================================ */
 
-.z-0 { z-index: 0; }
-.z-10 { z-index: 10; }
-.z-20 { z-index: 20; }
-.z-30 { z-index: 30; }
-.z-40 { z-index: 40; }
-.z-50 { z-index: 50; }
-.z-auto { z-index: auto; }
+.z-0 {
+  z-index: 0;
+}
+.z-10 {
+  z-index: 10;
+}
+.z-20 {
+  z-index: 20;
+}
+.z-30 {
+  z-index: 30;
+}
+.z-40 {
+  z-index: 40;
+}
+.z-50 {
+  z-index: 50;
+}
+.z-auto {
+  z-index: auto;
+}
 
 /* ============================================================================
    CONTAINER PATTERNS
@@ -337,8 +557,9 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: var(--padding-m);
-  transition: box-shadow var(--duration-fast) var(--ease-out),
-              transform var(--duration-micro) var(--ease-out);
+  transition:
+    box-shadow var(--duration-fast) var(--ease-out),
+    transform var(--duration-micro) var(--ease-out);
 }
 
 .card:hover {
@@ -351,11 +572,15 @@
    ============================================================================ */
 
 @media (max-width: 768px) {
-  .hidden-mobile { display: none !important; }
+  .hidden-mobile {
+    display: none !important;
+  }
 }
 
 @media (min-width: 769px) {
-  .hidden-desktop { display: none !important; }
+  .hidden-desktop {
+    display: none !important;
+  }
 }
 
 /* ============================================================================
@@ -363,5 +588,7 @@
    ============================================================================ */
 
 @media print {
-  .no-print { display: none !important; }
+  .no-print {
+    display: none !important;
+  }
 }

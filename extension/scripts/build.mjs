@@ -34,10 +34,13 @@ const tasks = [
 ];
 
 await mkdir(distDir, { recursive: true });
-await copyFile(path.join(rootDir, "src", "sidepanel", "index.html"), path.join(distDir, "sidepanel.html"));
+await copyFile(
+  path.join(rootDir, "src", "sidepanel", "index.html"),
+  path.join(distDir, "sidepanel.html")
+);
 await cp(path.join(rootDir, "src", "sidepanel", "styles"), path.join(distDir, "styles"), {
   recursive: true,
-  force: true,
+  force: true
 });
 
 if (isWatch) {

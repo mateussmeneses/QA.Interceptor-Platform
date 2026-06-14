@@ -3,7 +3,15 @@
  * Manages the rules list, editor, groups manager, import/export.
  */
 
-import type { AppState, RuleRow, RuleGroupRow, RulesFilterType, RulesStatusFilter, RuleValidation, HttpMethod } from "../shared/types";
+import type {
+  AppState,
+  RuleRow,
+  RuleGroupRow,
+  RulesFilterType,
+  RulesStatusFilter,
+  RuleValidation,
+  HttpMethod
+} from "../shared/types";
 import { isRuleType } from "../shared/types";
 import {
   escapeHtml,
@@ -13,7 +21,7 @@ import {
   renderRuleChips,
   triggerDownload,
   formatDateSlug,
-  generateId,
+  generateId
 } from "../shared/utils";
 import { createModalController, type ModalController } from "../shared/modal-controller";
 import { saveRules, saveRuleGroups } from "../../storage/index";
@@ -76,7 +84,13 @@ let rulesEditorModalController: ModalController;
 // Local state
 // ---------------------------------------------------------------------------
 
-let _state: AppState = { requests: [], rules: [], ruleGroups: [], validation: null, assertions: [] };
+let _state: AppState = {
+  requests: [],
+  rules: [],
+  ruleGroups: [],
+  validation: null,
+  assertions: []
+};
 let selectedRuleId: string | null = null;
 let rulesSearchQuery = "";
 let rulesTypeFilter: RulesFilterType = "all";
@@ -143,7 +157,7 @@ export function initRules(): void {
       closeRulesModalEditor();
     },
     initialFocusEl: () => rulesModalNameEl,
-    defaultRestoreFocusEl: () => rulesOpenModalEditorButtonEl,
+    defaultRestoreFocusEl: () => rulesOpenModalEditorButtonEl
   });
 
   bindEvents();
@@ -220,7 +234,8 @@ const renderRulesList = (
 
 const renderValidationStatus = (validation: RuleValidation | null): void => {
   if (!validation) {
-    rulesValidationEl.innerHTML = '<span class="validation-pill neutral">Validation: pending</span>';
+    rulesValidationEl.innerHTML =
+      '<span class="validation-pill neutral">Validation: pending</span>';
     return;
   }
 
@@ -278,10 +293,10 @@ const renderGroupedRulesHtml = (rows: RuleRow[], groups: RuleGroupRow[]): string
 
   const sortedRows = [...rows].sort((a, b) => {
     const left = a.groupId
-      ? priorities.get(a.groupId) ?? Number.MAX_SAFE_INTEGER
+      ? (priorities.get(a.groupId) ?? Number.MAX_SAFE_INTEGER)
       : Number.MAX_SAFE_INTEGER;
     const right = b.groupId
-      ? priorities.get(b.groupId) ?? Number.MAX_SAFE_INTEGER
+      ? (priorities.get(b.groupId) ?? Number.MAX_SAFE_INTEGER)
       : Number.MAX_SAFE_INTEGER;
 
     if (left !== right) {
@@ -292,7 +307,7 @@ const renderGroupedRulesHtml = (rows: RuleRow[], groups: RuleGroupRow[]): string
   });
 
   for (const row of sortedRows) {
-    const key = row.groupId ? labels.get(row.groupId) ?? "Ungrouped" : "Ungrouped";
+    const key = row.groupId ? (labels.get(row.groupId) ?? "Ungrouped") : "Ungrouped";
 
     if (!grouped[key]) {
       grouped[key] = [];
@@ -392,7 +407,8 @@ const applyRuleFilters = (rows: RuleRow[]): RuleRow[] =>
       return true;
     }
 
-    const haystack = `${rule.name} ${rule.type} ${rule.condition.method ?? ""} ${rule.condition.urlContains ?? ""}`.toLowerCase();
+    const haystack =
+      `${rule.name} ${rule.type} ${rule.condition.method ?? ""} ${rule.condition.urlContains ?? ""}`.toLowerCase();
     return haystack.includes(rulesSearchQuery);
   });
 
@@ -485,16 +501,14 @@ const bindEvents = (): void => {
     }
 
     const nextPriority =
-      _state.ruleGroups.length > 0
-        ? Math.max(..._state.ruleGroups.map((g) => g.priority)) + 1
-        : 0;
+      _state.ruleGroups.length > 0 ? Math.max(..._state.ruleGroups.map((g) => g.priority)) + 1 : 0;
 
     const nextGroup: RuleGroupRow = {
       id: generateId("grp"),
       name,
       enabled: true,
       priority: nextPriority,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date().toISOString()
     };
 
     const nextGroups = [..._state.ruleGroups, nextGroup];
@@ -679,7 +693,7 @@ const bindEvents = (): void => {
       ...sourceRule,
       id: generateId("rule"),
       name: `${sourceRule.name} Copy`,
-      priority: sourceRule.priority + 1,
+      priority: sourceRule.priority + 1
     };
 
     const nextRules = [duplicatedRule, ..._state.rules];
@@ -713,7 +727,7 @@ const bindEvents = (): void => {
     editorEnabledEl,
     editorGroupEl,
     editorUrlEl,
-    editorPayloadEl,
+    editorPayloadEl
   ]) {
     field.addEventListener("input", () => {
       if (selectedRuleId) {
@@ -754,8 +768,7 @@ const bindEvents = (): void => {
     }
 
     const nextPriority = Number.parseInt(editorPriorityEl.value, 10);
-    const normalizedPriority =
-      Number.isFinite(nextPriority) && nextPriority > 0 ? nextPriority : 1;
+    const normalizedPriority = Number.isFinite(nextPriority) && nextPriority > 0 ? nextPriority : 1;
     const methodValue = editorMethodEl.value.trim().toUpperCase() as HttpMethod | "";
     const groupValue = editorGroupEl.value.trim();
     const urlContainsValue = editorUrlEl.value.trim();
@@ -773,9 +786,9 @@ const bindEvents = (): void => {
         ...(groupValue ? { groupId: groupValue } : { groupId: undefined }),
         condition: {
           ...(methodValue ? { method: methodValue as HttpMethod } : {}),
-          ...(urlContainsValue ? { urlContains: urlContainsValue } : {}),
+          ...(urlContainsValue ? { urlContains: urlContainsValue } : {})
         },
-        payload: parsedPayload,
+        payload: parsedPayload
       };
     });
 
@@ -800,10 +813,12 @@ const bindEvents = (): void => {
   });
 
   rulesModalSavePreviewButtonEl.addEventListener("click", () => {
-    setEditorSaveStatus("Modal preview save clicked. Use existing editor to persist changes.", "neutral");
+    setEditorSaveStatus(
+      "Modal preview save clicked. Use existing editor to persist changes.",
+      "neutral"
+    );
     closeRulesModalEditor();
   });
-
 };
 
 // ---------------------------------------------------------------------------
@@ -818,7 +833,7 @@ const createDefaultRule = (): RuleRow => ({
   priority: 100,
   createdAt: new Date().toISOString(),
   condition: { urlContains: "/api" },
-  payload: { delayMs: 500 },
+  payload: { delayMs: 500 }
 });
 
 const isRuleRowShape = (value: unknown): value is RuleRow => {

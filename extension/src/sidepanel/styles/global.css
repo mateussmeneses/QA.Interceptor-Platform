@@ -40,8 +40,9 @@ body {
   line-height: var(--lh-normal);
   color: var(--text-primary);
   background-color: var(--surface-bg);
-  transition: background-color var(--duration-base) var(--ease-in-out),
-              color var(--duration-base) var(--ease-in-out);
+  transition:
+    background-color var(--duration-base) var(--ease-in-out),
+    color var(--duration-base) var(--ease-in-out);
 }
 
 .skip-link {
@@ -216,8 +217,9 @@ select {
   border-radius: var(--radius-m);
   background-color: var(--surface-bg);
   color: var(--text-primary);
-  transition: border-color var(--duration-fast) var(--ease-out),
-              box-shadow var(--duration-fast) var(--ease-out);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
 }
 
 input[type="text"]:focus,
@@ -255,9 +257,10 @@ textarea::placeholder {
 button {
   cursor: pointer;
   border: none;
-  transition: background-color var(--duration-fast) var(--ease-out),
-              color var(--duration-fast) var(--ease-out),
-              transform var(--duration-micro) var(--ease-out);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-micro) var(--ease-out);
 }
 
 button:disabled {

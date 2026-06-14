@@ -1,6 +1,6 @@
 /**
  * QA.Interceptor — Theme Manager
- * 
+ *
  * Handles light/dark mode theme switching with localStorage persistence
  * and system preference detection.
  */
@@ -22,7 +22,7 @@ class ThemeManager {
       storageKey: "qa-interceptor-theme",
       htmlElement: document.documentElement,
       themeAttribute: "data-theme",
-      ...config,
+      ...config
     };
 
     this.init();
@@ -141,7 +141,7 @@ class ThemeManager {
   private notifyThemeChanged(theme: Theme): void {
     const event = new CustomEvent("theme-changed", {
       detail: { theme },
-      bubbles: true,
+      bubbles: true
     });
     this.config.htmlElement.dispatchEvent(event);
   }

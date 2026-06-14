@@ -3,7 +3,14 @@
  * No DOM access, no chrome API calls.
  */
 
-import type { RequestRow, HistorySession, ResponseAssertionRow, EvidenceReport, EvidenceAssertionEntry, EvidenceTrafficEntry } from "./types";
+import type {
+  RequestRow,
+  HistorySession,
+  ResponseAssertionRow,
+  EvidenceReport,
+  EvidenceAssertionEntry,
+  EvidenceTrafficEntry
+} from "./types";
 
 // ---------------------------------------------------------------------------
 // String / DOM helpers
@@ -47,15 +54,18 @@ export const formatRuleType = (type: string): string => {
     "rewrite-request-body": "Rewrite Request Body",
     "mock-response": "Mock Response",
     "mock-status": "Mock Status",
-    "block": "Block",
-    "delay": "Delay",
-    "redirect": "Redirect",
+    block: "Block",
+    delay: "Delay",
+    redirect: "Redirect"
   };
 
   return labels[type] ?? type;
 };
 
-export const formatRuleCondition = (condition: { method?: string; urlContains?: string }): string => {
+export const formatRuleCondition = (condition: {
+  method?: string;
+  urlContains?: string;
+}): string => {
   if (condition.method && condition.urlContains) {
     return `Method: ${condition.method} • URL contains: ${condition.urlContains}`;
   }
@@ -192,7 +202,7 @@ export const buildHistorySessions = (rows: RequestRow[]): HistorySession[] => {
         endedAt,
         requests: sortedRows,
         failedCount,
-        pendingCount,
+        pendingCount
       };
     })
     .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
@@ -201,7 +211,9 @@ export const buildHistorySessions = (rows: RequestRow[]): HistorySession[] => {
 export const computeAverageDuration = (rows: RequestRow[]): number => {
   const durations = rows
     .map((row) => row.response?.durationMs)
-    .filter((value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0);
+    .filter(
+      (value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0
+    );
 
   if (durations.length === 0) {
     return 0;
@@ -243,10 +255,10 @@ const buildEvidenceTraffic = (session: HistorySession): EvidenceTrafficEntry[] =
               status: row.response.status,
               durationMs: row.response.durationMs,
               ...(row.response.headers ? { headers: row.response.headers } : {}),
-              ...(row.response.body ? { body: row.response.body } : {}),
-            },
+              ...(row.response.body ? { body: row.response.body } : {})
+            }
           }
-        : {}),
+        : {})
     }));
 
 const buildAssertionEntries = (assertions: ResponseAssertionRow[]): EvidenceAssertionEntry[] =>
@@ -258,9 +270,7 @@ const buildAssertionEntries = (assertions: ResponseAssertionRow[]): EvidenceAsse
     ...(a.path !== undefined ? { path: a.path } : {}),
     ...(a.actual !== undefined ? { actual: a.actual } : {}),
     ...(a.error !== undefined ? { error: a.error } : {}),
-    passed: a.error === undefined && a.actual !== undefined
-      ? a.actual === a.expected
-      : undefined,
+    passed: a.error === undefined && a.actual !== undefined ? a.actual === a.expected : undefined
   }));
 
 export const buildEvidenceJson = (
@@ -285,10 +295,10 @@ export const buildEvidenceJson = (
       assertionsPassed,
       assertionsFailed,
       assertionsTotal: assertionsEnabled.length,
-      uniqueRulesTriggered: getUniqueMatchedRulesCount(session.requests),
+      uniqueRulesTriggered: getUniqueMatchedRulesCount(session.requests)
     },
     assertions: assertionEntries,
-    traffic: buildEvidenceTraffic(session),
+    traffic: buildEvidenceTraffic(session)
   };
 };
 
@@ -305,7 +315,7 @@ export const buildEvidenceMarkdown = (
     ``,
     `**Period:** ${formatTimestamp(session.startedAt)} → ${formatTimestamp(session.endedAt)}`,
     `**Requests:** ${session.requests.length}  |  **Failures:** ${session.failedCount}  |  **Pending:** ${session.pendingCount}`,
-    ``,
+    ``
   ];
 
   if (assertionEntries.length > 0) {
@@ -315,14 +325,17 @@ export const buildEvidenceMarkdown = (
     lines.push(`|---|------|----------|------|--------|`);
 
     assertionEntries.forEach((assertion, i) => {
-      const result = assertion.passed === true ? "✅ Pass" : assertion.passed === false ? "❌ Fail" : "⏳ N/A";
+      const result =
+        assertion.passed === true ? "✅ Pass" : assertion.passed === false ? "❌ Fail" : "⏳ N/A";
       const path = assertion.path ?? "-";
       const expected = String(assertion.expected ?? "");
       lines.push(`| ${i + 1} | ${assertion.type} | ${expected} | ${path} | ${result} |`);
     });
 
     lines.push(``);
-    lines.push(`**Assertions:** ${assertionEntries.length} total  |  ✅ ${assertionsPassed} passed  |  ❌ ${assertionsFailed} failed`);
+    lines.push(
+      `**Assertions:** ${assertionEntries.length} total  |  ✅ ${assertionsPassed} passed  |  ❌ ${assertionsFailed} failed`
+    );
     lines.push(``);
   }
 
@@ -374,7 +387,7 @@ export const buildHar = (rows: RequestRow[]): object => {
       queryString: [],
       cookies: [],
       headersSize: -1,
-      bodySize: -1,
+      bodySize: -1
     },
     response: {
       status: row.response?.status ?? 0,
@@ -385,18 +398,18 @@ export const buildHar = (rows: RequestRow[]): object => {
       content: { size: -1, mimeType: "application/json" },
       redirectURL: "",
       headersSize: -1,
-      bodySize: -1,
+      bodySize: -1
     },
     cache: {},
-    timings: { send: 0, wait: row.response?.durationMs ?? 0, receive: 0 },
+    timings: { send: 0, wait: row.response?.durationMs ?? 0, receive: 0 }
   }));
 
   return {
     log: {
       version: "1.2",
       creator: { name: "QA.Interceptor", version: "0.1.0" },
-      entries,
-    },
+      entries
+    }
   };
 };
 
@@ -444,7 +457,9 @@ const harEntryToRequestRow = (entry: unknown, index: number): RequestRow | null 
   }
 
   const started =
-    typeof candidate.startedDateTime === "string" ? candidate.startedDateTime : new Date().toISOString();
+    typeof candidate.startedDateTime === "string"
+      ? candidate.startedDateTime
+      : new Date().toISOString();
   const time =
     typeof candidate.time === "number" && Number.isFinite(candidate.time) ? candidate.time : 0;
 
@@ -467,8 +482,8 @@ const harEntryToRequestRow = (entry: unknown, index: number): RequestRow | null 
       status,
       durationMs: Math.max(0, Math.round(time)),
       timestamp: started,
-      ...(responseBody ? { body: responseBody } : {}),
-    },
+      ...(responseBody ? { body: responseBody } : {})
+    }
   };
 };
 

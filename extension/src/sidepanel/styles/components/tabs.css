@@ -39,7 +39,8 @@
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-sm);
-  transition: color var(--duration-fast) var(--ease-out),
+  transition:
+    color var(--duration-fast) var(--ease-out),
     background-color var(--duration-fast) var(--ease-out),
     box-shadow var(--duration-fast) var(--ease-out);
 }

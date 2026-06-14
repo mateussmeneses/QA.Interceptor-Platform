@@ -28,7 +28,7 @@ components/
 ```typescript
 /**
  * QA.Interceptor — [ComponentName] Component
- * 
+ *
  * Brief description of what this component does.
  * Implements Phase FE-1 task: [TASK-XXX]
  */
@@ -42,20 +42,20 @@ export interface [ComponentName]Props
   extends React.HTMLAttributes<HTMLDivElement> {
   /** Brief description of prop */
   variant?: "variant1" | "variant2";
-  
+
   /** Size of component */
   size?: "sm" | "m" | "lg";
-  
+
   /** Whether component is disabled */
   disabled?: boolean;
-  
+
   /** Required content prop */
   children: React.ReactNode;
 }
 
 /**
  * [ComponentName] Component
- * 
+ *
  * Usage:
  *   <[ComponentName]>Content</[ComponentName]>
  *   <[ComponentName] variant="variant1" size="lg">Large variant</[ComponentName]>
@@ -117,11 +117,12 @@ export const [PresetName] = React.forwardRef<
   background-color: var(--surface-bg);
   color: var(--text-primary);
   border: 1px solid var(--border);
-  
+
   /* Transitions for interactive states */
-  transition: background-color var(--duration-fast) var(--ease-out),
-              color var(--duration-fast) var(--ease-out),
-              border-color var(--duration-fast) var(--ease-out);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
 }
 
 /* Focus states for keyboard navigation */
@@ -381,14 +382,14 @@ Always use the automatic dark mode:
 ```css
 /* ✅ GOOD — Automatic dark mode */
 .component {
-  background: var(--surface-bg);  /* Light: #FFF, Dark: #1F2937 */
-  color: var(--text-primary);      /* Light: #111827, Dark: #F3F4F6 */
+  background: var(--surface-bg); /* Light: #FFF, Dark: #1F2937 */
+  color: var(--text-primary); /* Light: #111827, Dark: #F3F4F6 */
 }
 
 /* ❌ BAD — Manual override */
 html[data-theme="dark"] .component {
-  background-color: #1F2937;
-  color: #F3F4F6;
+  background-color: #1f2937;
+  color: #f3f4f6;
 }
 ```
 
@@ -416,18 +417,18 @@ Mobile-first approach with breakpoint variables:
 ```css
 /* ✅ GOOD — Mobile-first */
 .component {
-  padding: var(--spacing-sm);      /* Mobile default */
+  padding: var(--spacing-sm); /* Mobile default */
 }
 
 @media (min-width: 768px) {
   .component {
-    padding: var(--spacing-m);     /* Tablet & up */
+    padding: var(--spacing-m); /* Tablet & up */
   }
 }
 
 @media (min-width: 1024px) {
   .component {
-    padding: var(--spacing-l);     /* Desktop & up */
+    padding: var(--spacing-l); /* Desktop & up */
   }
 }
 
@@ -536,24 +537,28 @@ describe.each(variants)("Button variant: %s", (variant) => {
 ## 📦 Component Lifecycle
 
 ### 1. Planning Phase
+
 - Read backlog task (e.g., BTN-001)
 - Review design system (colors, sizes, states)
 - Check similar components for patterns
 - Design prop interface
 
 ### 2. Implementation Phase
+
 - Create TypeScript component file
 - Create CSS file with all variants
 - Create test file with comprehensive tests
 - Import CSS in `styles/index.css`
 
 ### 3. Integration Phase
+
 - Export component from `components/index.ts`
 - Add to feature modules that need it
 - Update Storybook (future)
 - Merge to main branch
 
 ### 4. Refinement Phase (Post-MVP)
+
 - User feedback collection
 - A/B testing if needed
 - Accessibility audit
@@ -564,12 +569,14 @@ describe.each(variants)("Button variant: %s", (variant) => {
 ## 🎯 Coding Standards
 
 ### TypeScript
+
 - Use strict mode (`noImplicitAny: true`)
 - Export interfaces for consumer code
 - Use `React.forwardRef` for DOM elements
 - Add JSDoc comments to props
 
 ### CSS
+
 - Use lowercase class names with hyphens
 - Keep specificity low (class level)
 - No IDs in component styles
@@ -577,6 +584,7 @@ describe.each(variants)("Button variant: %s", (variant) => {
 - Include comments for sections
 
 ### Testing
+
 - Test behavior, not implementation
 - Use semantic queries (getByRole, getByText)
 - Avoid testing CSS directly
@@ -588,6 +596,7 @@ describe.each(variants)("Button variant: %s", (variant) => {
 ## 🚀 Component Development Workflow
 
 ### Step 1: Create Files
+
 ```bash
 # Component
 touch extension/src/sidepanel/components/[ComponentName].tsx
@@ -600,12 +609,14 @@ touch extension/src/sidepanel/components/__tests__/[ComponentName].test.tsx
 ```
 
 ### Step 2: Implement Component
+
 - Follow TypeScript template
 - Add props and variants
 - Use React.forwardRef
 - Add JSDoc comments
 
 ### Step 3: Implement Styles
+
 - Define base styles
 - Add all variants
 - Add size options
@@ -614,6 +625,7 @@ touch extension/src/sidepanel/components/__tests__/[ComponentName].test.tsx
 - Add accessibility considerations
 
 ### Step 4: Implement Tests
+
 - Test rendering
 - Test all variants
 - Test interactions
@@ -621,18 +633,21 @@ touch extension/src/sidepanel/components/__tests__/[ComponentName].test.tsx
 - Target 80%+ coverage
 
 ### Step 5: Import Styles
+
 ```css
 /* In extension/src/sidepanel/styles/index.css */
 @import "./components/[component-name].css";
 ```
 
 ### Step 6: Export Component
+
 ```typescript
 // In extension/src/sidepanel/components/index.ts
 export { [ComponentName] } from "./[ComponentName]";
 ```
 
 ### Step 7: Commit & Review
+
 ```bash
 git add extension/src/sidepanel/components/[ComponentName].tsx
 git add extension/src/sidepanel/styles/components/[component-name].css

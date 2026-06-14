@@ -255,38 +255,38 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 chrome.webRequest.onBeforeRequest.addListener(
   (details): undefined => {
     void (async () => {
-    if (!isCapturableRequest(details)) {
-      return;
-    }
+      if (!isCapturableRequest(details)) {
+        return;
+      }
 
-    const request = {
-      id: details.requestId,
-      method: details.method as InterceptedRequest["method"],
-      url: details.url,
-      headers: {},
-      timestamp: new Date().toISOString(),
-      captureSource: "network" as const,
-      resourceType: details.type,
-      tabId: details.tabId,
-      startedAtMs: details.timeStamp,
-      matchedRules: []
-    };
+      const request = {
+        id: details.requestId,
+        method: details.method as InterceptedRequest["method"],
+        url: details.url,
+        headers: {},
+        timestamp: new Date().toISOString(),
+        captureSource: "network" as const,
+        resourceType: details.type,
+        tabId: details.tabId,
+        startedAtMs: details.timeStamp,
+        matchedRules: []
+      };
 
-    const rules = await loadRulesForRuntime();
-    const evaluation = evaluateRules(rules, request);
+      const rules = await loadRulesForRuntime();
+      const evaluation = evaluateRules(rules, request);
 
-    const stored = await chrome.storage.local.get(CAPTURED_REQUESTS_KEY);
-    const existing = readCapturedRequests(stored[CAPTURED_REQUESTS_KEY]);
+      const stored = await chrome.storage.local.get(CAPTURED_REQUESTS_KEY);
+      const existing = readCapturedRequests(stored[CAPTURED_REQUESTS_KEY]);
 
-    await chrome.storage.local.set({
-      [CAPTURED_REQUESTS_KEY]: [
-        {
-          ...request,
-          matchedRules: evaluation.matchedRules
-        },
-        ...existing
-      ].slice(0, MAX_CAPTURED_REQUESTS)
-    });
+      await chrome.storage.local.set({
+        [CAPTURED_REQUESTS_KEY]: [
+          {
+            ...request,
+            matchedRules: evaluation.matchedRules
+          },
+          ...existing
+        ].slice(0, MAX_CAPTURED_REQUESTS)
+      });
     })();
   },
   { urls: ["<all_urls>"] }
@@ -295,35 +295,35 @@ chrome.webRequest.onBeforeRequest.addListener(
 chrome.webRequest.onCompleted.addListener(
   (details) => {
     void (async () => {
-    if (!isCapturableRequest(details)) {
-      return;
-    }
+      if (!isCapturableRequest(details)) {
+        return;
+      }
 
-    const stored = await chrome.storage.local.get(CAPTURED_REQUESTS_KEY);
-    const existing = readCapturedRequests(stored[CAPTURED_REQUESTS_KEY]);
-    const responseHeaders = Object.fromEntries(
-      Object.entries(details.responseHeaders ?? {}).map(([key, values]) => [
-        key,
-        Array.isArray(values) ? values.join(",") : values
-      ])
-    );
-    const updated = existing.map((request) =>
-      request.id === details.requestId
-        ? {
-            ...request,
-            response: {
-              status: details.statusCode,
-              durationMs: Math.max(0, Math.round(details.timeStamp - request.startedAtMs)),
-              timestamp: new Date(details.timeStamp).toISOString(),
-              headers: responseHeaders
+      const stored = await chrome.storage.local.get(CAPTURED_REQUESTS_KEY);
+      const existing = readCapturedRequests(stored[CAPTURED_REQUESTS_KEY]);
+      const responseHeaders = Object.fromEntries(
+        Object.entries(details.responseHeaders ?? {}).map(([key, values]) => [
+          key,
+          Array.isArray(values) ? values.join(",") : values
+        ])
+      );
+      const updated = existing.map((request) =>
+        request.id === details.requestId
+          ? {
+              ...request,
+              response: {
+                status: details.statusCode,
+                durationMs: Math.max(0, Math.round(details.timeStamp - request.startedAtMs)),
+                timestamp: new Date(details.timeStamp).toISOString(),
+                headers: responseHeaders
+              }
             }
-          }
-        : request
-    );
+          : request
+      );
 
-    await chrome.storage.local.set({
-      [CAPTURED_REQUESTS_KEY]: updated
-    });
+      await chrome.storage.local.set({
+        [CAPTURED_REQUESTS_KEY]: updated
+      });
     })();
   },
   { urls: ["<all_urls>"] }
@@ -538,7 +538,15 @@ const appendMockedRequest = async (payload: MockAppliedPayload) => {
   });
 };
 
-const repeatRequest = async (payload: RepeatRequestPayload): Promise<{ ok: boolean; status?: number; headers?: Record<string, string>; body?: string; error?: string }> => {
+const repeatRequest = async (
+  payload: RepeatRequestPayload
+): Promise<{
+  ok: boolean;
+  status?: number;
+  headers?: Record<string, string>;
+  body?: string;
+  error?: string;
+}> => {
   const requestId = `repeat-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
   const startedAtMs = Date.now();
   const timestamp = new Date(startedAtMs).toISOString();
@@ -622,7 +630,9 @@ const toDynamicRule = (rule: Rule): Omit<chrome.declarativeNetRequest.Rule, "id"
   };
 
   if (rule.condition.method) {
-    commonCondition.requestMethods = [rule.condition.method.toLowerCase() as chrome.declarativeNetRequest.RequestMethod];
+    commonCondition.requestMethods = [
+      rule.condition.method.toLowerCase() as chrome.declarativeNetRequest.RequestMethod
+    ];
   }
 
   if (rule.type === "rewrite-url") {
@@ -738,7 +748,9 @@ const toDynamicRule = (rule: Rule): Omit<chrome.declarativeNetRequest.Rule, "id"
 };
 
 const toDynamicPriority = (priority: number): number => {
-  const normalized = Number.isFinite(priority) ? Math.max(0, Math.min(9999, Math.round(priority))) : 0;
+  const normalized = Number.isFinite(priority)
+    ? Math.max(0, Math.min(9999, Math.round(priority)))
+    : 0;
   return 10000 - normalized;
 };
 
@@ -821,9 +833,7 @@ const readRewriteQueryPayload = (payload: Rule["payload"]): RewriteQueryPayload 
   }
 
   if (Array.isArray(candidate.remove)) {
-    result.remove = candidate.remove.filter(
-      (item): item is string => typeof item === "string"
-    );
+    result.remove = candidate.remove.filter((item): item is string => typeof item === "string");
   }
 
   if (!result.addOrReplace?.length && !result.remove?.length) {

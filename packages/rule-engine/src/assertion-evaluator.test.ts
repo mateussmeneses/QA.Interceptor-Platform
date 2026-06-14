@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   evaluateAssertions,
   type AssertionInput,
-  type ResponseContext,
+  type ResponseContext
 } from "./assertion-evaluator.js";
 
 // ---------------------------------------------------------------------------
@@ -14,14 +14,14 @@ const makeAssertion = (overrides: Partial<AssertionInput> = {}): AssertionInput 
   type: "status",
   enabled: true,
   expected: 200,
-  ...overrides,
+  ...overrides
 });
 
 const makeResponse = (overrides: Partial<ResponseContext> = {}): ResponseContext => ({
   status: 200,
   headers: { "content-type": "application/json" },
   body: '{"user":{"id":42,"name":"Alice"},"items":[1,2,3]}',
-  ...overrides,
+  ...overrides
 });
 
 // ---------------------------------------------------------------------------
@@ -38,7 +38,7 @@ describe("evaluateAssertions — disabled filtering", () => {
   it("includes enabled assertions only", () => {
     const assertions = [
       makeAssertion({ id: "a1", enabled: true }),
-      makeAssertion({ id: "a2", enabled: false }),
+      makeAssertion({ id: "a2", enabled: false })
     ];
     const results = evaluateAssertions(assertions, makeResponse());
     expect(results).toHaveLength(1);
@@ -256,7 +256,7 @@ describe("evaluateAssertions — multiple", () => {
     const assertions: AssertionInput[] = [
       makeAssertion({ id: "a1", type: "status", expected: 200 }),
       makeAssertion({ id: "a2", type: "body-contains", expected: "Alice" }),
-      makeAssertion({ id: "a3", type: "status", expected: 404 }),
+      makeAssertion({ id: "a3", type: "status", expected: 404 })
     ];
     const results = evaluateAssertions(assertions, makeResponse());
 

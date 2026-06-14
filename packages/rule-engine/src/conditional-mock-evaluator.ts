@@ -108,7 +108,7 @@ export const evaluateConditionalMock = (
   // Increment call count for this rule before evaluation (1-indexed for sequence)
   const currentCount = (state.callCounts[rule.id] ?? 0) + 1;
   const updatedState: MockState = {
-    callCounts: { ...state.callCounts, [rule.id]: currentCount },
+    callCounts: { ...state.callCounts, [rule.id]: currentCount }
   };
 
   for (const branch of rule.branches) {
@@ -174,7 +174,7 @@ export const createMockState = (): MockState => ({ callCounts: {} });
 
 /** Reset the call counter for a specific rule. */
 export const resetMockCallCount = (state: MockState, ruleId: string): MockState => ({
-  callCounts: { ...state.callCounts, [ruleId]: 0 },
+  callCounts: { ...state.callCounts, [ruleId]: 0 }
 });
 
 /** Get the current call count for a rule (0 if never called). */

@@ -17,22 +17,22 @@ Este arquivo e a unica fonte de verdade para status de backlog.
 
 ## Status Validado - Itens Criticos
 
-| ID | Status Canonico | Evidencia |
-| --- | --- | --- |
-| QP-001 Assertion evaluation pipeline | Done | `packages/rule-engine/src/assertion-evaluator.ts` + uso em `extension/src/sidepanel/features/network.ts` |
-| QP-002 JSON Schema validation rule | Done | `packages/rule-engine/src/schema-validator.ts` + `schema-validator.test.ts` |
-| QP-003 Contract snapshot comparison | Done | `packages/rule-engine/src/contract-comparator.ts` + `contract-comparator.test.ts` |
-| TEST-002 Unit tests storage layer | Done | `packages/rule-engine/src/storage-parsers.test.ts` |
-| QP-004 Export evidence JSON | Done | `buildEvidenceJson` em `extension/src/sidepanel/shared/utils.ts` + fluxo em `history.ts` |
-| QP-005 Export evidence Markdown | Done | `buildEvidenceMarkdown` em `extension/src/sidepanel/shared/utils.ts` + fluxo em `history.ts` |
-| QP-006 Export evidence HTML report | In Progress | Export HTML existe em `history.ts`, mas sem charts/waterfall/report viewer completo |
-| QP-007 Session replay/playback UI | In Progress | Modal e replay sequencial existem, ainda sem timeline scrubber/controles completos |
-| QP-008 Save replayable artifact | Todo | Nao ha artefato offline persistente dedicado |
-| OBS-001 Request/response diff UI | In Progress | Diff funcional basico em `network.ts`, sem nivel final de UX/documentacao |
-| OBS-004 Execution trace visualizer | In Progress | Indicadores e conflitos exibidos no network, escopo parcial |
-| OBS-005 Rule conflict detector | Done | `packages/rule-engine/src/conflict-detector.ts` + testes |
-| OBS-002/003/006/007/008 | Todo | Sem implementacao completa dedicada |
-| PERF-001/002/003 | Todo | Sem implementacao dedicada |
+| ID                                   | Status Canonico | Evidencia                                                                                                |
+| ------------------------------------ | --------------- | -------------------------------------------------------------------------------------------------------- |
+| QP-001 Assertion evaluation pipeline | Done            | `packages/rule-engine/src/assertion-evaluator.ts` + uso em `extension/src/sidepanel/features/network.ts` |
+| QP-002 JSON Schema validation rule   | Done            | `packages/rule-engine/src/schema-validator.ts` + `schema-validator.test.ts`                              |
+| QP-003 Contract snapshot comparison  | Done            | `packages/rule-engine/src/contract-comparator.ts` + `contract-comparator.test.ts`                        |
+| TEST-002 Unit tests storage layer    | Done            | `packages/rule-engine/src/storage-parsers.test.ts`                                                       |
+| QP-004 Export evidence JSON          | Done            | `buildEvidenceJson` em `extension/src/sidepanel/shared/utils.ts` + fluxo em `history.ts`                 |
+| QP-005 Export evidence Markdown      | Done            | `buildEvidenceMarkdown` em `extension/src/sidepanel/shared/utils.ts` + fluxo em `history.ts`             |
+| QP-006 Export evidence HTML report   | In Progress     | Export HTML existe em `history.ts`, mas sem charts/waterfall/report viewer completo                      |
+| QP-007 Session replay/playback UI    | In Progress     | Modal e replay sequencial existem, ainda sem timeline scrubber/controles completos                       |
+| QP-008 Save replayable artifact      | Todo            | Nao ha artefato offline persistente dedicado                                                             |
+| OBS-001 Request/response diff UI     | In Progress     | Diff funcional basico em `network.ts`, sem nivel final de UX/documentacao                                |
+| OBS-004 Execution trace visualizer   | In Progress     | Indicadores e conflitos exibidos no network, escopo parcial                                              |
+| OBS-005 Rule conflict detector       | Done            | `packages/rule-engine/src/conflict-detector.ts` + testes                                                 |
+| OBS-002/003/006/007/008              | Todo            | Sem implementacao completa dedicada                                                                      |
+| PERF-001/002/003                     | Todo            | Sem implementacao dedicada                                                                               |
 
 ## Estado Real Frontend
 

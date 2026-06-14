@@ -4,12 +4,7 @@ import tseslint from "typescript-eslint";
 
 export default [
   {
-    ignores: [
-      "**/dist/**",
-      "**/node_modules/**",
-      "**/.husky/**",
-      "**/.continue/**"
-    ]
+    ignores: ["**/dist/**", "**/node_modules/**", "**/.husky/**", "**/.continue/**"]
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

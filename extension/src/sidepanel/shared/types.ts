@@ -6,7 +6,7 @@
 import type {
   StoredCapturedRequest,
   StoredRuleValidation,
-  StoredResponseAssertion,
+  StoredResponseAssertion
 } from "../../storage/index";
 import type { Rule, RuleGroup, HttpMethod } from "../../../../packages/shared-types/src/index";
 
@@ -209,5 +209,7 @@ export const isNetworkStatusFilter = (value: string): value is NetworkStatusFilt
 export const isHistoryOutcomeFilter = (value: string): value is HistoryOutcomeFilter =>
   value === "all" || value === "passed" || value === "failed" || value === "pending";
 
-export const isMockRule = (rule: RuleRow): rule is RuleRow & { type: "mock-response" | "mock-status" } =>
+export const isMockRule = (
+  rule: RuleRow
+): rule is RuleRow & { type: "mock-response" | "mock-status" } =>
   rule.type === "mock-response" || rule.type === "mock-status";

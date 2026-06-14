@@ -16,11 +16,14 @@ import {
   renderRuleChips,
   buildHar,
   readHarAsRequestRows,
-  buildCurlCommand,
+  buildCurlCommand
 } from "../shared/utils";
 import { createModalController, type ModalController } from "../shared/modal-controller";
 import { saveCapturedRequests } from "../../storage/index";
-import { evaluateAssertions, type AssertionResult } from "../../../../packages/rule-engine/src/assertion-evaluator";
+import {
+  evaluateAssertions,
+  type AssertionResult
+} from "../../../../packages/rule-engine/src/assertion-evaluator";
 import { diffText, normalizeDiffText } from "../../../../packages/rule-engine/src/diff-engine";
 
 // ---------------------------------------------------------------------------
@@ -129,7 +132,13 @@ const renderAssertionResults = (results: AssertionResult[]): void => {
 // Local state
 // ---------------------------------------------------------------------------
 
-let _state: AppState = { requests: [], rules: [], ruleGroups: [], validation: null, assertions: [] };
+let _state: AppState = {
+  requests: [],
+  rules: [],
+  ruleGroups: [],
+  validation: null,
+  assertions: []
+};
 let selectedNetworkRequestId: string | null = null;
 let networkSearchQuery = "";
 let networkMethodFilter = "all";
@@ -193,9 +202,15 @@ export function initNetwork(): void {
   networkExportHarButtonEl = getEl("network-export-har-button") as HTMLButtonElement;
   networkAssertionResultsEl = document.getElementById("network-assertion-results");
   // OBS-001: Diff elements (optional — degrade gracefully)
-  networkDiffPinButtonEl = document.getElementById("network-diff-pin-button") as HTMLButtonElement | null;
-  networkDiffCompareButtonEl = document.getElementById("network-diff-compare-button") as HTMLButtonElement | null;
-  networkDiffClearButtonEl = document.getElementById("network-diff-clear-button") as HTMLButtonElement | null;
+  networkDiffPinButtonEl = document.getElementById(
+    "network-diff-pin-button"
+  ) as HTMLButtonElement | null;
+  networkDiffCompareButtonEl = document.getElementById(
+    "network-diff-compare-button"
+  ) as HTMLButtonElement | null;
+  networkDiffClearButtonEl = document.getElementById(
+    "network-diff-clear-button"
+  ) as HTMLButtonElement | null;
   networkDiffPinRowEl = document.getElementById("network-diff-pin-row");
   networkDiffPinLabelEl = document.getElementById("network-diff-pin-label");
   networkDiffHintEl = document.getElementById("network-diff-hint");
@@ -211,7 +226,7 @@ export function initNetwork(): void {
       closeComposePanel();
     },
     initialFocusEl: () => networkComposeUrlEl,
-    defaultRestoreFocusEl: () => networkComposeButtonEl,
+    defaultRestoreFocusEl: () => networkComposeButtonEl
   });
 
   bindEvents();
@@ -258,8 +273,7 @@ const renderNetworkInspector = (rows: RequestRow[]): void => {
     })
     .join("");
 
-  const selectedRow =
-    filteredRows.find((row) => row.id === selectedNetworkRequestId) ?? null;
+  const selectedRow = filteredRows.find((row) => row.id === selectedNetworkRequestId) ?? null;
   renderNetworkDetail(selectedRow);
 };
 
@@ -313,7 +327,7 @@ const renderNetworkDetail = (row: RequestRow | null): void => {
     const responseContext = {
       status: row.response.status,
       headers: row.response.headers ?? {},
-      body: row.response.body,
+      body: row.response.body
     };
     const results = evaluateAssertions(
       _state.assertions.map((a) => ({
@@ -321,7 +335,7 @@ const renderNetworkDetail = (row: RequestRow | null): void => {
         type: a.type,
         enabled: a.enabled,
         expected: a.expected as string | number,
-        path: a.path,
+        path: a.path
       })),
       responseContext
     );
@@ -347,10 +361,10 @@ const renderNetworkExecutionTimeline = (row: RequestRow): string => {
   // Entry: request captured
   parts.push(
     `<li class="network-execution-item capture">` +
-    `<span class="exec-badge capture">CAPTURE</span>` +
-    `<div class="exec-body"><strong>${escapeHtml(`${row.method} request captured`)}</strong>` +
-    `<small>${escapeHtml(row.url)}</small>` +
-    `<small class="exec-time">${escapeHtml(formatTimestamp(row.timestamp))}</small></div></li>`
+      `<span class="exec-badge capture">CAPTURE</span>` +
+      `<div class="exec-body"><strong>${escapeHtml(`${row.method} request captured`)}</strong>` +
+      `<small>${escapeHtml(row.url)}</small>` +
+      `<small class="exec-time">${escapeHtml(formatTimestamp(row.timestamp))}</small></div></li>`
   );
 
   // Entries: matched rules
@@ -367,13 +381,13 @@ const renderNetworkExecutionTimeline = (row: RequestRow): string => {
 
     parts.push(
       `<li class="network-execution-item rule${isConflicting ? " conflict" : ""}">` +
-      `<span class="exec-badge ${escapeHtml(badgeClass)}">#${String(i + 1)}</span>` +
-      `<div class="exec-body">` +
-      `<strong>${escapeHtml(matched.ruleName)}</strong>` +
-      `<small>${escapeHtml(summarizeRuleAction(matched.type))}</small>` +
-      `<small class="exec-type-pill">${escapeHtml(matched.type)}</small>` +
-      `${isConflicting ? `<small class="exec-conflict-hint">⚠ ${escapeHtml(String(conflictCount))} rules of type "${escapeHtml(matched.type)}" matched — last one wins</small>` : ""}` +
-      `</div></li>`
+        `<span class="exec-badge ${escapeHtml(badgeClass)}">#${String(i + 1)}</span>` +
+        `<div class="exec-body">` +
+        `<strong>${escapeHtml(matched.ruleName)}</strong>` +
+        `<small>${escapeHtml(summarizeRuleAction(matched.type))}</small>` +
+        `<small class="exec-type-pill">${escapeHtml(matched.type)}</small>` +
+        `${isConflicting ? `<small class="exec-conflict-hint">⚠ ${escapeHtml(String(conflictCount))} rules of type "${escapeHtml(matched.type)}" matched — last one wins</small>` : ""}` +
+        `</div></li>`
     );
   }
 
@@ -382,11 +396,11 @@ const renderNetworkExecutionTimeline = (row: RequestRow): string => {
     const conflictList = conflicts.map(([type, count]) => `${type} ×${count}`).join(", ");
     parts.push(
       `<li class="network-execution-item warning">` +
-      `<span class="exec-badge warning">⚠</span>` +
-      `<div class="exec-body"><strong>Rule conflicts detected</strong>` +
-      `<small>${escapeHtml(conflictList)}</small>` +
-      `<small>Multiple rules of the same type matched. Only the last rule's effect is applied.</small>` +
-      `</div></li>`
+        `<span class="exec-badge warning">⚠</span>` +
+        `<div class="exec-body"><strong>Rule conflicts detected</strong>` +
+        `<small>${escapeHtml(conflictList)}</small>` +
+        `<small>Multiple rules of the same type matched. Only the last rule's effect is applied.</small>` +
+        `</div></li>`
     );
   }
 
@@ -395,19 +409,19 @@ const renderNetworkExecutionTimeline = (row: RequestRow): string => {
     const statusTone = getStatusToneClass(row.response.status);
     parts.push(
       `<li class="network-execution-item response ${escapeHtml(statusTone)}">` +
-      `<span class="exec-badge response ${escapeHtml(statusTone)}">${escapeHtml(String(row.response.status))}</span>` +
-      `<div class="exec-body"><strong>${escapeHtml(`Response completed (${row.response.status})`)}</strong>` +
-      `<small>${escapeHtml(`Finished in ${formatDuration(row.response.durationMs)}`)}</small>` +
-      `<small class="exec-time">${escapeHtml(formatTimestamp(row.response.timestamp))}</small>` +
-      `</div></li>`
+        `<span class="exec-badge response ${escapeHtml(statusTone)}">${escapeHtml(String(row.response.status))}</span>` +
+        `<div class="exec-body"><strong>${escapeHtml(`Response completed (${row.response.status})`)}</strong>` +
+        `<small>${escapeHtml(`Finished in ${formatDuration(row.response.durationMs)}`)}</small>` +
+        `<small class="exec-time">${escapeHtml(formatTimestamp(row.response.timestamp))}</small>` +
+        `</div></li>`
     );
   } else {
     parts.push(
       `<li class="network-execution-item pending">` +
-      `<span class="exec-badge pending">…</span>` +
-      `<div class="exec-body"><strong>Response pending</strong>` +
-      `<small>Waiting for completion from browser runtime.</small>` +
-      `</div></li>`
+        `<span class="exec-badge pending">…</span>` +
+        `<div class="exec-body"><strong>Response pending</strong>` +
+        `<small>Waiting for completion from browser runtime.</small>` +
+        `</div></li>`
     );
   }
 
@@ -423,9 +437,9 @@ const summarizeRuleAction = (type: string): string => {
     "rewrite-request-body": "Action: request body transformed before fetch execution.",
     "mock-response": "Action: mocked response payload served to caller.",
     "mock-status": "Action: mocked HTTP status code applied.",
-    "delay": "Action: request delayed to simulate network latency.",
-    "redirect": "Action: request redirected to configured destination.",
-    "block": "Action: request blocked by interception rule.",
+    delay: "Action: request delayed to simulate network latency.",
+    redirect: "Action: request redirected to configured destination.",
+    block: "Action: request blocked by interception rule."
   };
 
   return actions[type] ?? "Action: rule matched and applied in runtime pipeline.";
@@ -459,10 +473,7 @@ const applyNetworkFilters = (rows: RequestRow[]): RequestRow[] =>
     })
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-const matchesStatusFilter = (
-  status: number | undefined,
-  filter: NetworkStatusFilter
-): boolean => {
+const matchesStatusFilter = (status: number | undefined, filter: NetworkStatusFilter): boolean => {
   if (filter === "pending") {
     return typeof status !== "number";
   }
@@ -548,7 +559,7 @@ const bindEvents = (): void => {
     void chrome.runtime
       .sendMessage({
         type: "REPEAT_REQUEST",
-        payload: { method: row.method, url: row.url, headers: row.headers, body: row.body },
+        payload: { method: row.method, url: row.url, headers: row.headers, body: row.body }
       })
       .then((response: { ok?: boolean } | undefined) => {
         networkRepeatRequestButtonEl.textContent = response?.ok ? "Repeated" : "Replay failed";
@@ -608,10 +619,7 @@ const bindEvents = (): void => {
     }
 
     fillComposeFromRequest(selectedRow);
-    setNetworkComposeStatus(
-      "Editing cloned request. Update fields and click Send Request.",
-      "ok"
-    );
+    setNetworkComposeStatus("Editing cloned request. Update fields and click Send Request.", "ok");
     openComposePanel();
   });
 
@@ -661,43 +669,56 @@ const bindEvents = (): void => {
           method,
           url,
           ...(Object.keys(headers).length > 0 ? { headers } : {}),
-          ...(body.trim() ? { body } : {}),
-        },
-      })
-      .then((response: { ok?: boolean; status?: number; headers?: Record<string, string>; body?: string; error?: string } | undefined) => {
-        if (response?.ok) {
-          const statusPart = typeof response.status === "number" ? ` (status ${String(response.status)})` : "";
-          setNetworkComposeStatus(`Request sent successfully${statusPart}.`, "ok");
-          closeComposePanel({
-            statusMessage: undefined,
-            focusTrigger: false,
-          });
-
-          // Auto-evaluate assertions against the compose response (QP-001)
-          if (typeof response.status === "number") {
-            const results = evaluateAssertions(
-              _state.assertions.map((a) => ({
-                id: a.id,
-                type: a.type,
-                enabled: a.enabled,
-                expected: a.expected as string | number,
-                path: a.path,
-              })),
-              {
-                status: response.status,
-                headers: response.headers ?? {},
-                body: response.body,
-              }
-            );
-            renderAssertionResults(results);
-          }
-        } else {
-          setNetworkComposeStatus(
-            response?.error ? `Request failed: ${String(response.error)}` : "Request failed.",
-            "error"
-          );
+          ...(body.trim() ? { body } : {})
         }
       })
+      .then(
+        (
+          response:
+            | {
+                ok?: boolean;
+                status?: number;
+                headers?: Record<string, string>;
+                body?: string;
+                error?: string;
+              }
+            | undefined
+        ) => {
+          if (response?.ok) {
+            const statusPart =
+              typeof response.status === "number" ? ` (status ${String(response.status)})` : "";
+            setNetworkComposeStatus(`Request sent successfully${statusPart}.`, "ok");
+            closeComposePanel({
+              statusMessage: undefined,
+              focusTrigger: false
+            });
+
+            // Auto-evaluate assertions against the compose response (QP-001)
+            if (typeof response.status === "number") {
+              const results = evaluateAssertions(
+                _state.assertions.map((a) => ({
+                  id: a.id,
+                  type: a.type,
+                  enabled: a.enabled,
+                  expected: a.expected as string | number,
+                  path: a.path
+                })),
+                {
+                  status: response.status,
+                  headers: response.headers ?? {},
+                  body: response.body
+                }
+              );
+              renderAssertionResults(results);
+            }
+          } else {
+            setNetworkComposeStatus(
+              response?.error ? `Request failed: ${String(response.error)}` : "Request failed.",
+              "error"
+            );
+          }
+        }
+      )
       .catch(() => {
         setNetworkComposeStatus("Request failed due to runtime error.", "error");
       })
@@ -871,13 +892,10 @@ const openComposePanel = (): void => {
   networkComposeModalController.open();
 };
 
-const closeComposePanel = (options?: {
-  statusMessage?: string;
-  focusTrigger?: boolean;
-}): void => {
+const closeComposePanel = (options?: { statusMessage?: string; focusTrigger?: boolean }): void => {
   networkComposeButtonEl.setAttribute("aria-expanded", "false");
   networkComposeModalController.close({
-    restoreFocus: options?.focusTrigger !== false,
+    restoreFocus: options?.focusTrigger !== false
   });
 
   if (options?.statusMessage !== undefined) {

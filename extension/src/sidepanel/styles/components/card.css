@@ -12,8 +12,9 @@
   background-color: var(--surface-bg);
   border-radius: var(--radius-lg);
   padding: var(--spacing-m);
-  transition: box-shadow var(--duration-base) var(--ease-in-out),
-              transform var(--duration-micro) var(--ease-out);
+  transition:
+    box-shadow var(--duration-base) var(--ease-in-out),
+    transform var(--duration-micro) var(--ease-out);
 }
 
 /* ============================================================================

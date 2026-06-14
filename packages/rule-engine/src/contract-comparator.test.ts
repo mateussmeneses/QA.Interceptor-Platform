@@ -139,7 +139,10 @@ describe("compareContracts — objects", () => {
 describe("compareContracts — arrays", () => {
   it("matches when both are arrays with same item shape", () => {
     const expected = [{ id: 1, name: "A" }];
-    const actual = [{ id: 2, name: "B" }, { id: 3, name: "C" }];
+    const actual = [
+      { id: 2, name: "B" },
+      { id: 3, name: "C" }
+    ];
     expect(compareContracts(expected, actual).match).toBe(true);
   });
 
@@ -186,10 +189,10 @@ describe("compareContracts — real-world scenarios", () => {
       id: 1,
       name: "Alice",
       email: "alice@example.com",
-      role: "admin",
+      role: "admin"
     },
     permissions: ["read", "write"],
-    meta: { createdAt: "2026-01-01", updatedAt: "2026-01-01" },
+    meta: { createdAt: "2026-01-01", updatedAt: "2026-01-01" }
   };
 
   it("matches when values change but structure is preserved", () => {
@@ -198,10 +201,10 @@ describe("compareContracts — real-world scenarios", () => {
         id: 42,
         name: "Bob",
         email: "bob@example.com",
-        role: "user",
+        role: "user"
       },
       permissions: ["read"],
-      meta: { createdAt: "2026-06-01", updatedAt: "2026-06-12" },
+      meta: { createdAt: "2026-06-01", updatedAt: "2026-06-12" }
     };
     expect(compareContracts(expectedResponse, actualResponse).match).toBe(true);
   });
@@ -212,10 +215,10 @@ describe("compareContracts — real-world scenarios", () => {
         id: 42,
         name: "Bob",
         // email removed
-        role: "user",
+        role: "user"
       },
       permissions: ["read"],
-      meta: { createdAt: "2026-06-01", updatedAt: "2026-06-12" },
+      meta: { createdAt: "2026-06-01", updatedAt: "2026-06-12" }
     };
     const result = compareContracts(expectedResponse, actual);
     expect(result.match).toBe(false);
@@ -230,15 +233,17 @@ describe("compareContracts — real-world scenarios", () => {
         id: "user_42", // was number, now string
         name: "Bob",
         email: "bob@example.com",
-        role: "user",
+        role: "user"
       },
       permissions: ["read"],
-      meta: { createdAt: "2026-06-01", updatedAt: "2026-06-12" },
+      meta: { createdAt: "2026-06-01", updatedAt: "2026-06-12" }
     };
     const result = compareContracts(expectedResponse, actual);
     expect(result.match).toBe(false);
     if (!result.match) {
-      expect(result.diffs.some((d) => d.path === "$.user.id" && d.type === "type-change")).toBe(true);
+      expect(result.diffs.some((d) => d.path === "$.user.id" && d.type === "type-change")).toBe(
+        true
+      );
     }
   });
 
@@ -248,10 +253,10 @@ describe("compareContracts — real-world scenarios", () => {
         id: 1,
         name: "Alice",
         email: "alice@example.com",
-        role: "admin",
+        role: "admin"
       },
       permissions: { read: true }, // was array, now object
-      meta: { createdAt: "2026-01-01", updatedAt: "2026-01-01" },
+      meta: { createdAt: "2026-01-01", updatedAt: "2026-01-01" }
     };
     const result = compareContracts(expectedResponse, actual);
     expect(result.match).toBe(false);

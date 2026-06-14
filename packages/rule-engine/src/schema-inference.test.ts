@@ -3,7 +3,7 @@ import {
   inferSchema,
   inferSchemaFromString,
   mergeSchemas,
-  inferSchemaFromSamples,
+  inferSchemaFromSamples
 } from "./schema-inference";
 
 // ---------------------------------------------------------------------------
@@ -33,7 +33,10 @@ describe("inferSchema — primitives", () => {
   });
 
   it("infers date-time string", () => {
-    expect(inferSchema("2026-06-12T14:00:00.000Z")).toMatchObject({ type: "string", format: "date-time" });
+    expect(inferSchema("2026-06-12T14:00:00.000Z")).toMatchObject({
+      type: "string",
+      format: "date-time"
+    });
   });
 
   it("infers date string", () => {
@@ -41,7 +44,10 @@ describe("inferSchema — primitives", () => {
   });
 
   it("infers uuid string", () => {
-    expect(inferSchema("550e8400-e29b-41d4-a716-446655440000")).toMatchObject({ type: "string", format: "uuid" });
+    expect(inferSchema("550e8400-e29b-41d4-a716-446655440000")).toMatchObject({
+      type: "string",
+      format: "uuid"
+    });
   });
 
   it("infers uri string", () => {
@@ -77,7 +83,10 @@ describe("inferSchema — arrays", () => {
   });
 
   it("infers nested array", () => {
-    const schema = inferSchema([[1, 2], [3, 4]]);
+    const schema = inferSchema([
+      [1, 2],
+      [3, 4]
+    ]);
     expect(schema).toMatchObject({ type: "array" });
     const items = (schema as { items?: unknown }).items;
     expect(items).toBeDefined();
@@ -100,9 +109,9 @@ describe("inferSchema — objects", () => {
       properties: {
         id: { type: "integer" },
         name: { type: "string" },
-        active: { type: "boolean" },
+        active: { type: "boolean" }
       },
-      required: expect.arrayContaining(["id", "name", "active"]),
+      required: expect.arrayContaining(["id", "name", "active"])
     });
   });
 
@@ -159,12 +168,12 @@ describe("mergeSchemas", () => {
     const a = {
       type: "object" as const,
       properties: { id: { type: "integer" as const }, name: { type: "string" as const } },
-      required: ["id", "name"],
+      required: ["id", "name"]
     };
     const b = {
       type: "object" as const,
       properties: { id: { type: "integer" as const } },
-      required: ["id"],
+      required: ["id"]
     };
     const merged = mergeSchemas(a, b) as { required?: string[] };
     // "id" in both → required; "name" only in a → not required
@@ -176,12 +185,12 @@ describe("mergeSchemas", () => {
     const a = {
       type: "object" as const,
       properties: { id: { type: "integer" as const } },
-      required: ["id"],
+      required: ["id"]
     };
     const b = {
       type: "object" as const,
       properties: { id: { type: "integer" as const }, extra: { type: "string" as const } },
-      required: ["id", "extra"],
+      required: ["id", "extra"]
     };
     const merged = mergeSchemas(a, b) as { properties?: Record<string, unknown> };
     expect(merged.properties?.["extra"]).toBeDefined();
@@ -221,10 +230,7 @@ describe("inferSchemaFromSamples", () => {
   });
 
   it("merges multiple samples — required = intersection", () => {
-    const samples = [
-      '{"id":1,"name":"Alice","role":"admin"}',
-      '{"id":2,"name":"Bob"}',
-    ];
+    const samples = ['{"id":1,"name":"Alice","role":"admin"}', '{"id":2,"name":"Bob"}'];
     const schema = inferSchemaFromSamples(samples) as { required?: string[] };
     // "id" and "name" in both → required; "role" only in first → optional
     expect(schema?.required).toContain("id");
@@ -235,7 +241,7 @@ describe("inferSchemaFromSamples", () => {
   it("handles varied response shapes across samples", () => {
     const samples = [
       '{"status":"ok","data":[1,2,3]}',
-      '{"status":"ok","data":[4,5,6],"meta":{"page":1}}',
+      '{"status":"ok","data":[4,5,6],"meta":{"page":1}}'
     ];
     const schema = inferSchemaFromSamples(samples) as {
       properties?: Record<string, unknown>;

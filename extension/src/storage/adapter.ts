@@ -91,7 +91,7 @@ export const createChromeStorageAdapter = (): StorageAdapter => ({
       chrome.storage.local.clear(() => {
         resolve();
       });
-    }),
+    })
 });
 
 // ---------------------------------------------------------------------------
@@ -112,13 +112,7 @@ export const createMemoryStorageAdapter = (
 
   return {
     get: (keys) =>
-      Promise.resolve(
-        Object.fromEntries(
-          keys
-            .filter((k) => k in store)
-            .map((k) => [k, store[k]])
-        )
-      ),
+      Promise.resolve(Object.fromEntries(keys.filter((k) => k in store).map((k) => [k, store[k]]))),
 
     set: (items) => {
       Object.assign(store, items);
@@ -141,6 +135,6 @@ export const createMemoryStorageAdapter = (
       return Promise.resolve();
     },
 
-    snapshot: () => ({ ...store }),
+    snapshot: () => ({ ...store })
   };
 };

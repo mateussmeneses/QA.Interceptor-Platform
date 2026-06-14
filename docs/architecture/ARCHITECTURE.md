@@ -4,21 +4,21 @@
 
 UI Layer
 
-* Popup
-* Side Panel
-* Options Page
+- Popup
+- Side Panel
+- Options Page
 
 Core Layer
 
-* Rule Engine
-* Request Processor
-* Response Processor
+- Rule Engine
+- Request Processor
+- Response Processor
 
 Infrastructure Layer
 
-* Browser APIs
-* Storage
-* Exporters
+- Browser APIs
+- Storage
+- Exporters
 
 ## Rule Flow
 

@@ -71,9 +71,9 @@ describe("validateJsonSchema — properties and required", () => {
     type: "object",
     properties: {
       id: { type: "number" },
-      name: { type: "string" },
+      name: { type: "string" }
     },
-    required: ["id", "name"],
+    required: ["id", "name"]
   };
 
   it("passes when all required properties exist with correct types", () => {
@@ -110,7 +110,7 @@ describe("validateJsonSchema — additionalProperties", () => {
     const schema: JsonSchema = {
       type: "object",
       properties: { id: { type: "number" } },
-      additionalProperties: false,
+      additionalProperties: false
     };
     const result = validateJsonSchema({ id: 1, extra: "x" }, schema);
     expect(result.valid).toBe(false);
@@ -123,7 +123,7 @@ describe("validateJsonSchema — additionalProperties", () => {
     const schema: JsonSchema = {
       type: "object",
       properties: { id: { type: "number" } },
-      additionalProperties: { type: "string" },
+      additionalProperties: { type: "string" }
     };
     expect(validateJsonSchema({ id: 1, note: "ok" }, schema).valid).toBe(true);
     expect(validateJsonSchema({ id: 1, note: 42 }, schema).valid).toBe(false);
@@ -152,7 +152,9 @@ describe("validateJsonSchema — string keywords", () => {
   });
 
   it("passes pattern", () => {
-    expect(validateJsonSchema("abc123", { type: "string", pattern: "^[a-z]+[0-9]+$" }).valid).toBe(true);
+    expect(validateJsonSchema("abc123", { type: "string", pattern: "^[a-z]+[0-9]+$" }).valid).toBe(
+      true
+    );
   });
 
   it("fails pattern", () => {
@@ -255,42 +257,42 @@ describe("validateJsonSchema — composition keywords", () => {
 
   it("allOf: passes when all schemas pass", () => {
     const schema: JsonSchema = {
-      allOf: [{ type: "number" }, { minimum: 5 }],
+      allOf: [{ type: "number" }, { minimum: 5 }]
     };
     expect(validateJsonSchema(10, schema).valid).toBe(true);
   });
 
   it("allOf: fails when one schema fails", () => {
     const schema: JsonSchema = {
-      allOf: [{ type: "number" }, { minimum: 20 }],
+      allOf: [{ type: "number" }, { minimum: 20 }]
     };
     expect(validateJsonSchema(10, schema).valid).toBe(false);
   });
 
   it("anyOf: passes when at least one schema matches", () => {
     const schema: JsonSchema = {
-      anyOf: [{ type: "string" }, { type: "number" }],
+      anyOf: [{ type: "string" }, { type: "number" }]
     };
     expect(validateJsonSchema(42, schema).valid).toBe(true);
   });
 
   it("anyOf: fails when no schema matches", () => {
     const schema: JsonSchema = {
-      anyOf: [{ type: "string" }, { type: "boolean" }],
+      anyOf: [{ type: "string" }, { type: "boolean" }]
     };
     expect(validateJsonSchema(42, schema).valid).toBe(false);
   });
 
   it("oneOf: passes when exactly one schema matches", () => {
     const schema: JsonSchema = {
-      oneOf: [{ type: "string" }, { type: "number" }],
+      oneOf: [{ type: "string" }, { type: "number" }]
     };
     expect(validateJsonSchema(42, schema).valid).toBe(true);
   });
 
   it("oneOf: fails when more than one schema matches", () => {
     const schema: JsonSchema = {
-      oneOf: [{ type: "number" }, { minimum: 1 }],
+      oneOf: [{ type: "number" }, { minimum: 1 }]
     };
     expect(validateJsonSchema(5, schema).valid).toBe(false);
   });
@@ -308,9 +310,9 @@ describe("validateJsonSchema — real-world scenarios", () => {
       id: { type: "integer" },
       name: { type: "string", minLength: 1 },
       email: { type: "string", pattern: "^.+@.+\\..+$" },
-      role: { enum: ["admin", "user", "guest"] },
+      role: { enum: ["admin", "user", "guest"] }
     },
-    additionalProperties: false,
+    additionalProperties: false
   };
 
   it("passes for valid user object", () => {

@@ -3,14 +3,16 @@
  * Manages the mock playground: rule list, editor, templates, and env-var preview.
  */
 
-import type { AppState, RuleRow, MockTypeFilter, MockStatusFilter, MockTemplate, HttpMethod } from "../shared/types";
+import type {
+  AppState,
+  RuleRow,
+  MockTypeFilter,
+  MockStatusFilter,
+  MockTemplate,
+  HttpMethod
+} from "../shared/types";
 import { isMockRule } from "../shared/types";
-import {
-  escapeHtml,
-  formatRuleType,
-  formatRuleCondition,
-  generateId,
-} from "../shared/utils";
+import { escapeHtml, formatRuleType, formatRuleCondition, generateId } from "../shared/utils";
 import { saveRules } from "../../storage/index";
 
 // ---------------------------------------------------------------------------
@@ -26,7 +28,7 @@ const MOCK_TEMPLATES: MockTemplate[] = [
     urlContains: "/api",
     status: 401,
     headers: { "content-type": "application/json" },
-    body: '{"error":"unauthorized","message":"Session expired"}',
+    body: '{"error":"unauthorized","message":"Session expired"}'
   },
   {
     id: "server-500",
@@ -37,7 +39,7 @@ const MOCK_TEMPLATES: MockTemplate[] = [
     status: 500,
     delayMs: 800,
     headers: { "content-type": "application/json" },
-    body: '{"error":"internal_error","message":"Temporary failure"}',
+    body: '{"error":"internal_error","message":"Temporary failure"}'
   },
   {
     id: "validation-422",
@@ -47,7 +49,7 @@ const MOCK_TEMPLATES: MockTemplate[] = [
     urlContains: "/api/orders",
     status: 422,
     headers: { "content-type": "application/json" },
-    body: '{"error":"validation_failed","fields":{"email":"invalid format"}}',
+    body: '{"error":"validation_failed","fields":{"email":"invalid format"}}'
   },
   {
     id: "slow-success",
@@ -58,8 +60,8 @@ const MOCK_TEMPLATES: MockTemplate[] = [
     status: 200,
     delayMs: 1500,
     headers: { "content-type": "application/json" },
-    body: '{"ok":true,"source":"template","items":[]}',
-  },
+    body: '{"ok":true,"source":"template","items":[]}'
+  }
 ];
 
 // ---------------------------------------------------------------------------
@@ -90,7 +92,13 @@ let mockSaveButtonEl: HTMLButtonElement;
 // Local state
 // ---------------------------------------------------------------------------
 
-let _state: AppState = { requests: [], rules: [], ruleGroups: [], validation: null, assertions: [] };
+let _state: AppState = {
+  requests: [],
+  rules: [],
+  ruleGroups: [],
+  validation: null,
+  assertions: []
+};
 let selectedMockRuleId: string | null = null;
 let mockSearchQuery = "";
 let mockTypeFilter: MockTypeFilter = "all";
@@ -190,8 +198,7 @@ const renderMockPlayground = (rows: RuleRow[]): void => {
     })
     .join("");
 
-  const selectedRule =
-    filteredRows.find((rule) => rule.id === selectedMockRuleId) ?? null;
+  const selectedRule = filteredRows.find((rule) => rule.id === selectedMockRuleId) ?? null;
   populateMockEditor(selectedRule);
 };
 
@@ -251,7 +258,8 @@ const applyMockFilters = (rows: RuleRow[]): RuleRow[] =>
         return true;
       }
 
-      const haystack = `${rule.name} ${rule.condition.urlContains ?? ""} ${rule.condition.method ?? ""}`.toLowerCase();
+      const haystack =
+        `${rule.name} ${rule.condition.urlContains ?? ""} ${rule.condition.method ?? ""}`.toLowerCase();
       return haystack.includes(mockSearchQuery);
     })
     .sort((a, b) => b.priority - a.priority);
@@ -382,7 +390,7 @@ const bindEvents = (): void => {
     mockEditorHttpStatusEl,
     mockEditorDelayMsEl,
     mockEditorHeadersEl,
-    mockEditorBodyEl,
+    mockEditorBodyEl
   ]) {
     field.addEventListener("input", () => {
       if (selectedMockRuleId) {
@@ -416,8 +424,7 @@ const bindEvents = (): void => {
     }
 
     const nextDelayRaw = Number.parseInt(mockEditorDelayMsEl.value || "0", 10);
-    const nextDelay =
-      Number.isFinite(nextDelayRaw) && nextDelayRaw > 0 ? nextDelayRaw : 0;
+    const nextDelay = Number.isFinite(nextDelayRaw) && nextDelayRaw > 0 ? nextDelayRaw : 0;
 
     let nextHeaders: Record<string, string> = {};
 
@@ -461,7 +468,7 @@ const bindEvents = (): void => {
         ...(rule.payload ?? {}),
         status: nextStatus,
         ...(nextDelay > 0 ? { delayMs: nextDelay } : {}),
-        ...(Object.keys(nextHeaders).length > 0 ? { headers: nextHeaders } : {}),
+        ...(Object.keys(nextHeaders).length > 0 ? { headers: nextHeaders } : {})
       };
 
       if (rule.type === "mock-response") {
@@ -473,9 +480,9 @@ const bindEvents = (): void => {
         enabled: mockEditorEnabledEl.value === "true",
         condition: {
           ...(methodValue ? { method: methodValue as HttpMethod } : {}),
-          ...(urlContainsValue ? { urlContains: urlContainsValue } : {}),
+          ...(urlContainsValue ? { urlContains: urlContainsValue } : {})
         },
-        payload,
+        payload
       };
     });
 
@@ -521,12 +528,12 @@ export const createMockRuleFromTemplate = (template: MockTemplate): RuleRow => (
   createdAt: new Date().toISOString(),
   condition: {
     ...(template.method ? { method: template.method as HttpMethod } : {}),
-    ...(template.urlContains ? { urlContains: template.urlContains } : {}),
+    ...(template.urlContains ? { urlContains: template.urlContains } : {})
   },
   payload: {
     status: template.status ?? 200,
     body: template.body ?? "",
     ...(template.headers ? { headers: template.headers } : {}),
-    ...(template.delayMs ? { delayMs: template.delayMs } : {}),
-  },
+    ...(template.delayMs ? { delayMs: template.delayMs } : {})
+  }
 });

@@ -1,11 +1,4 @@
-export type HttpMethod =
-  | "GET"
-  | "POST"
-  | "PUT"
-  | "PATCH"
-  | "DELETE"
-  | "OPTIONS"
-  | "HEAD";
+export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS" | "HEAD";
 
 export type RuleType =
   | "rewrite-url"
@@ -59,11 +52,7 @@ export type InterceptedResponse = {
   durationMs: number;
   timestamp: string;
 };
-export type ResponseAssertionType =
-  | "status"
-  | "header"
-  | "json-path"
-  | "body-contains";
+export type ResponseAssertionType = "status" | "header" | "json-path" | "body-contains";
 
 export type ResponseAssertion = {
   id: string;

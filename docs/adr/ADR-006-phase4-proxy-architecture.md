@@ -1,4 +1,5 @@
 # ADR-006: Phase 4 Proxy Engine Architecture
+
 <!-- markdownlint-disable MD040 -->
 
 **Status**: Proposed  

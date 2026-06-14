@@ -1,4 +1,5 @@
 # ADR-002: Centralized Storage Abstraction Layer
+
 <!-- markdownlint-disable MD040 -->
 
 **Status**: Accepted  

@@ -93,7 +93,11 @@ export const isRepeatRequestMessage = (value: unknown): value is RepeatRequestMe
 
   const candidate = value as Record<string, unknown>;
 
-  if (candidate.type !== "REPEAT_REQUEST" || !candidate.payload || typeof candidate.payload !== "object") {
+  if (
+    candidate.type !== "REPEAT_REQUEST" ||
+    !candidate.payload ||
+    typeof candidate.payload !== "object"
+  ) {
     return false;
   }
 

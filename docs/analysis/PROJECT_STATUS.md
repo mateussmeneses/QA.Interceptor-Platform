@@ -1,4 +1,5 @@
 # QA.Interceptor — Project Status (January 2025)
+
 <!-- markdownlint-disable MD060 -->
 
 > Legacy snapshot: este documento foi congelado para referencia historica.
@@ -14,17 +15,22 @@
 Quando quiser trocar de sessao de chat, siga exatamente este checklist:
 
 1. Confirmar fonte oficial do trabalho atual:
-  - Execucao: `BACKLOG_CONSOLIDATED.md`
-  - Status canonico: `docs/backlog/BACKLOG_CANONICAL.md`
+
+- Execucao: `BACKLOG_CONSOLIDATED.md`
+- Status canonico: `docs/backlog/BACKLOG_CANONICAL.md`
+
 2. Registrar o ultimo item em andamento com:
-  - ID da tarefa (ex.: `QP-008`)
-  - Arquivos alterados
-  - Validacao executada (`npm run build`, typecheck, etc.)
+
+- ID da tarefa (ex.: `QP-008`)
+- Arquivos alterados
+- Validacao executada (`npm run build`, typecheck, etc.)
+
 3. Abrir a nova sessao e colar um resumo com:
-  - Objetivo atual
-  - O que ja foi concluido
-  - Proximo passo imediato
-  - Risco conhecido (se houver)
+
+- Objetivo atual
+- O que ja foi concluido
+- Proximo passo imediato
+- Risco conhecido (se houver)
 
 Template recomendado para abrir nova sessao:
 
@@ -222,23 +228,23 @@ import {
 
 ### Frontend Planning Documents (Read These First)
 
-| File                                                                   | Purpose                        | Time   |
-| ---------------------------------------------------------------------- | ------------------------------ | ------ |
-| [IMPLEMENTATION_READY.md](../planning/IMPLEMENTATION_READY.md)                   | Executive summary + next steps | 10 min |
+| File                                                                                 | Purpose                        | Time   |
+| ------------------------------------------------------------------------------------ | ------------------------------ | ------ |
+| [IMPLEMENTATION_READY.md](../planning/IMPLEMENTATION_READY.md)                       | Executive summary + next steps | 10 min |
 | [FRONTEND_QUICK_START.md](../architecture/FRONTEND_QUICK_START.md)                   | Step-by-step setup guide       | 20 min |
 | [DESIGN_SYSTEM.md](../architecture/DESIGN_SYSTEM.md)                                 | Design tokens + components     | 30 min |
-| [BACKLOG_FRONTEND.md](../backlog/BACKLOG_FRONTEND.md)                           | 72 tasks (FE-0 through FE-6)   | 15 min |
+| [BACKLOG_FRONTEND.md](../backlog/BACKLOG_FRONTEND.md)                                | 72 tasks (FE-0 through FE-6)   | 15 min |
 | [UI_UX_PREVIEW.md](../architecture/UI_UX_PREVIEW.md)                                 | Visual mockups of all views    | 20 min |
 | [FRONTEND_INTEGRATION_STRATEGY.md](../architecture/FRONTEND_INTEGRATION_STRATEGY.md) | How to wire to backend         | 15 min |
 
 ### Architecture & Infrastructure
 
-| File                                 | Purpose                                 |
-| ------------------------------------ | --------------------------------------- |
-| [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) | Full project architecture               |
-| [docs/adr/](../adr/)             | Architectural decision records (6 ADRs) |
-| [ADR-001](../adr/ADR-001-feature-based-module-architecture.md)     | Feature-based module architecture       |
-| [ADR-006](../adr/ADR-006-phase4-proxy-architecture.md)     | Phase 4 proxy architecture (complete)   |
+| File                                                           | Purpose                                 |
+| -------------------------------------------------------------- | --------------------------------------- |
+| [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)             | Full project architecture               |
+| [docs/adr/](../adr/)                                           | Architectural decision records (6 ADRs) |
+| [ADR-001](../adr/ADR-001-feature-based-module-architecture.md) | Feature-based module architecture       |
+| [ADR-006](../adr/ADR-006-phase4-proxy-architecture.md)         | Phase 4 proxy architecture (complete)   |
 
 ### Backend Code (Ready to Use)
 

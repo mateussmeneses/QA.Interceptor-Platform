@@ -36,7 +36,8 @@
   color: var(--text-primary);
   font-weight: var(--fw-semibold);
   cursor: pointer;
-  transition: background-color var(--duration-fast) var(--ease-out),
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
     border-color var(--duration-fast) var(--ease-out),
     color var(--duration-fast) var(--ease-out);
 }
@@ -71,7 +72,8 @@
   font-family: var(--font-sans);
   color: var(--text-primary);
   background-color: var(--surface-bg);
-  transition: border-color var(--duration-fast) var(--ease-out),
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
     box-shadow var(--duration-fast) var(--ease-out),
     background-color var(--duration-fast) var(--ease-out);
 }

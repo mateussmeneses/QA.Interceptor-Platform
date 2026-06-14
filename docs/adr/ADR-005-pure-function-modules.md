@@ -1,4 +1,5 @@
 # ADR-005: Pure Function Modules for Testability
+
 <!-- markdownlint-disable MD040 -->
 
 **Status**: Accepted  

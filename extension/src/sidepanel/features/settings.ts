@@ -35,7 +35,7 @@ const ERROR_PROFILES: ErrorProfile[] = [
     description: "Returns 400 for all API calls. Validates client-side error handling.",
     ruleType: "mock-response",
     status: 400,
-    body: '{"error":"bad_request","message":"The request was malformed."}',
+    body: '{"error":"bad_request","message":"The request was malformed."}'
   },
   {
     id: "401-unauthorized",
@@ -43,7 +43,7 @@ const ERROR_PROFILES: ErrorProfile[] = [
     description: "Simulates expired session/token. Validates auth redirect and re-login flow.",
     ruleType: "mock-response",
     status: 401,
-    body: '{"error":"unauthorized","message":"Session expired. Please log in again."}',
+    body: '{"error":"unauthorized","message":"Session expired. Please log in again."}'
   },
   {
     id: "403-forbidden",
@@ -51,7 +51,7 @@ const ERROR_PROFILES: ErrorProfile[] = [
     description: "Simulates permission denied. Validates role-based access control UI.",
     ruleType: "mock-response",
     status: 403,
-    body: '{"error":"forbidden","message":"You do not have permission to access this resource."}',
+    body: '{"error":"forbidden","message":"You do not have permission to access this resource."}'
   },
   {
     id: "404-not-found",
@@ -59,7 +59,7 @@ const ERROR_PROFILES: ErrorProfile[] = [
     description: "Simulates missing resources. Validates empty states and 404 pages.",
     ruleType: "mock-response",
     status: 404,
-    body: '{"error":"not_found","message":"The requested resource was not found."}',
+    body: '{"error":"not_found","message":"The requested resource was not found."}'
   },
   {
     id: "500-server-error",
@@ -67,14 +67,14 @@ const ERROR_PROFILES: ErrorProfile[] = [
     description: "Simulates backend failure. Validates error boundaries and retry logic.",
     ruleType: "mock-response",
     status: 500,
-    body: '{"error":"internal_error","message":"An unexpected server error occurred. Please try again."}',
+    body: '{"error":"internal_error","message":"An unexpected server error occurred. Please try again."}'
   },
   {
     id: "network-failure",
     label: "Network Failure",
     description: "Blocks all API calls. Validates offline mode and connection loss handling.",
-    ruleType: "block",
-  },
+    ruleType: "block"
+  }
 ];
 
 const PROFILE_RULE_GROUP_ID = "grp-error-profiles";
@@ -92,7 +92,13 @@ let errorProfilesListEl: HTMLElement;
 // Local state
 // ---------------------------------------------------------------------------
 
-let _state: AppState = { requests: [], rules: [], ruleGroups: [], validation: null, assertions: [] };
+let _state: AppState = {
+  requests: [],
+  rules: [],
+  ruleGroups: [],
+  validation: null,
+  assertions: []
+};
 
 // ---------------------------------------------------------------------------
 // Init
@@ -139,12 +145,18 @@ const renderResponseAssertions = (assertions: ResponseAssertionRow[]): void => {
 
   responseAssertionsListEl.innerHTML = assertions
     .map((assertion) => {
-      const statusClass = assertion.error ? "error" : assertion.actual !== undefined ? "ok" : "pending";
+      const statusClass = assertion.error
+        ? "error"
+        : assertion.actual !== undefined
+          ? "ok"
+          : "pending";
       const statusIcon = assertion.error ? "❌" : assertion.actual !== undefined ? "✓" : "○";
       const typeLabel = `${assertion.type}${assertion.path ? ` (${assertion.path})` : ""}`;
       const expectedText = `Expected: ${String(assertion.expected)}`;
       const actualText =
-        assertion.actual !== undefined ? `Actual: ${String(assertion.actual)}` : "Not validated yet";
+        assertion.actual !== undefined
+          ? `Actual: ${String(assertion.actual)}`
+          : "Not validated yet";
       const errorText = assertion.error ? `Error: ${assertion.error}` : "";
       const toggleLabel = assertion.enabled
         ? `Disable assertion ${typeLabel}`
@@ -213,8 +225,7 @@ const getActiveProfileIds = (rules: RuleRow[]): Set<string> => {
   return active;
 };
 
-const profileRuleId = (profileId: ErrorProfileId): string =>
-  `error-profile-${profileId}`;
+const profileRuleId = (profileId: ErrorProfileId): string => `error-profile-${profileId}`;
 
 const buildProfileRule = (profile: ErrorProfile): RuleRow => ({
   id: profileRuleId(profile.id),
@@ -230,9 +241,9 @@ const buildProfileRule = (profile: ErrorProfile): RuleRow => ({
       ? {
           status: profile.status ?? 500,
           body: profile.body ?? "",
-          headers: { "content-type": "application/json" },
+          headers: { "content-type": "application/json" }
         }
-      : {},
+      : {}
 });
 
 const activateProfile = async (profileId: ErrorProfileId): Promise<void> => {
@@ -282,7 +293,7 @@ const bindEvents = (): void => {
       type: "status",
       enabled: true,
       expected: 200,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date().toISOString()
     };
 
     const nextAssertions = [newAssertion, ..._state.assertions];

@@ -91,15 +91,18 @@ Ratio: Developer 80% | Architect 20%
 ## 🚀 PHASE 3.5 MVP (WEEKS 1-3)
 
 ### Must-Have (3 items)
+
 - **QP-004** (Developer, M): Export evidence JSON
-- **QP-005** (Developer, M): Export evidence Markdown  
+- **QP-005** (Developer, M): Export evidence Markdown
 - **QP-007** (Developer, L): Session replay/playback UI
 
 ### Should-Have (2 items)
+
 - **OBS-001** (Developer, L): Request/response diff UI
 - **OBS-004** (Developer, M): Execution trace visualizer
 
 ### Nice-to-Have (2 items)
+
 - **OBS-005** (Architect, M): Rule conflict detector
 - **QP-006** (Developer, L): Export HTML report
 
@@ -145,7 +148,7 @@ WEEK 7-12: Phase 4 Planning & Alpha
 └─ XL (16+ hours): 5 items ............ 80+ hours
 
 Total: ~632 hours
-Distribution: 
+Distribution:
   - 6 weeks Phase 3.5: ~18 hours/week (1 Dev, 0.3 Arch)
   - 8 weeks Phase 4: ~35 hours/week (1 Dev + 1 Arch)
 ```
@@ -167,12 +170,12 @@ Distribution:
 
 ## 🎯 CRITICAL DECISIONS NEEDED
 
-| Decision | Options | Recommended | Impact |
-|----------|---------|-------------|--------|
-| **Phase 3.5 Scope** | MVP (3wk) vs Full (8wk) | MVP + 2 should-have (5wk) | Timeline +2 wk |
-| **Proxy Library** | Build vs Express | Build from scratch | Control + learning |
-| **Desktop UI** | New vs Reuse React | Reuse components | 20-30% overhead |
-| **Phase 5 Timing** | Now vs After Phase 4 | Plan now, exec after Phase 4 | Parallel planning |
+| Decision            | Options                 | Recommended                  | Impact             |
+| ------------------- | ----------------------- | ---------------------------- | ------------------ |
+| **Phase 3.5 Scope** | MVP (3wk) vs Full (8wk) | MVP + 2 should-have (5wk)    | Timeline +2 wk     |
+| **Proxy Library**   | Build vs Express        | Build from scratch           | Control + learning |
+| **Desktop UI**      | New vs Reuse React      | Reuse components             | 20-30% overhead    |
+| **Phase 5 Timing**  | Now vs After Phase 4    | Plan now, exec after Phase 4 | Parallel planning  |
 
 ---
 
@@ -205,19 +208,23 @@ Distribution:
 ## 📚 WHAT TO READ
 
 ### For Devs (20 minutes)
+
 1. EXECUTIVE_SUMMARY.md → Phase 3.5 section
 2. BACKLOG_EXPANDED.md → Phase 3.5 items + your tasks
 
 ### For Architects (30 minutes)
+
 1. ANALYSIS_STATE_OF_PROJECT.md → All sections
 2. BACKLOG_EXPANDED.md → Phase 4 section
 3. EXECUTIVE_SUMMARY.md → Key Decisions
 
 ### For PMs (15 minutes)
+
 1. EXECUTIVE_SUMMARY.md → All sections
 2. BACKLOG_EXPANDED.md → Summary table
 
 ### For Stakeholders PT (10 min)
+
 1. RESUMO_EXECUTIVO_PT.md → All sections
 
 ---
@@ -225,6 +232,7 @@ Distribution:
 ## 🎬 NEXT IMMEDIATE ACTIONS
 
 **This Week**:
+
 - [ ] Architect: Review Phase 4 proxy requirements
 - [ ] Architect: Spike HTTPS CA (node-forge) approach
 - [ ] Developer: Confirm Phase 3.5 scope with PM
@@ -232,11 +240,13 @@ Distribution:
 - [ ] Team: Schedule Phase 3.5 kickoff
 
 **Week 1**:
+
 - [ ] Architect: Create Phase 4 design doc
 - [ ] Developer: Start QP-004 (Evidence export)
 - [ ] Team: Daily standup initiated
 
 **Week 6**:
+
 - [ ] Checkpoint: Phase 3.5 progress review
 - [ ] Assess timeline vs. plan
 - [ ] Adjust Phase 4 if needed
@@ -266,7 +276,7 @@ START HERE ──→ DOCUMENTATION_MAP.md
 ✅ **Quality Strong**: 198 tests, 0 errors, 0 warnings  
 ✅ **Backlog Clear**: 71 items prioritized, effort-estimated, role-assigned  
 ✅ **Roadmap Solid**: 12-week execution plan with resources  
-✅ **Ready to Go**: Phase 3.5 can start immediately  
+✅ **Ready to Go**: Phase 3.5 can start immediately
 
 ---
 
@@ -274,7 +284,7 @@ START HERE ──→ DOCUMENTATION_MAP.md
 
 vs. **Requestly**: Parity on core features, missing advanced mocking  
 vs. **Charles Proxy**: Strong QA focus, missing desktop/proxy (Phase 4)  
-vs. **Fiddler**: Open-source advantage, lighter weight  
+vs. **Fiddler**: Open-source advantage, lighter weight
 
 **Next 12 weeks closes Charles Proxy gap significantly (Phase 4 proxy foundation)**
 
@@ -318,6 +328,6 @@ Observability         ✅ Session Replay       ✅ HTTPS CA Ready
 **Created**: June 12, 2026  
 **Language**: English (project standard)  
 **Status**: ✅ READY TO EXECUTE  
-**Next Phase Start**: Week 1 (immediate)  
+**Next Phase Start**: Week 1 (immediate)
 
 🚀 **Let's build Phase 3.5!**

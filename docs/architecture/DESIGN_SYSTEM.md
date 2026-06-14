@@ -18,18 +18,18 @@
 
 ### Semantic Colors
 
-| Token | Light | Dark | Usage |
-|-------|-------|------|-------|
-| `--primary` | `#2F6DC4` | `#5B9FFF` | Active states, CTAs, focus rings |
-| `--success` | `#10B981` | `#34D399` | Assertions pass, enabled rules, 2xx responses |
-| `--warning` | `#F59E0B` | `#FBBF24` | Rule conflicts, 3xx responses, attention needed |
-| `--error` | `#EF4444` | `#F87171` | Assertions fail, errors, 4xx/5xx, disabled |
-| `--info` | `#3B82F6` | `#60A5FA` | Info badges, hints, rule type indicators |
-| `--surface-bg` | `#FFFFFF` | `#1F2937` | Card backgrounds, panels |
-| `--surface-alt` | `#F3F4F6` | `#111827` | Hover states, alternates |
-| `--text-primary` | `#111827` | `#F3F4F6` | Body text |
-| `--text-secondary` | `#6B7280` | `#D1D5DB` | Helper text, labels |
-| `--border` | `#E5E7EB` | `#374151` | Dividers, outlines |
+| Token              | Light     | Dark      | Usage                                           |
+| ------------------ | --------- | --------- | ----------------------------------------------- |
+| `--primary`        | `#2F6DC4` | `#5B9FFF` | Active states, CTAs, focus rings                |
+| `--success`        | `#10B981` | `#34D399` | Assertions pass, enabled rules, 2xx responses   |
+| `--warning`        | `#F59E0B` | `#FBBF24` | Rule conflicts, 3xx responses, attention needed |
+| `--error`          | `#EF4444` | `#F87171` | Assertions fail, errors, 4xx/5xx, disabled      |
+| `--info`           | `#3B82F6` | `#60A5FA` | Info badges, hints, rule type indicators        |
+| `--surface-bg`     | `#FFFFFF` | `#1F2937` | Card backgrounds, panels                        |
+| `--surface-alt`    | `#F3F4F6` | `#111827` | Hover states, alternates                        |
+| `--text-primary`   | `#111827` | `#F3F4F6` | Body text                                       |
+| `--text-secondary` | `#6B7280` | `#D1D5DB` | Helper text, labels                             |
+| `--border`         | `#E5E7EB` | `#374151` | Dividers, outlines                              |
 
 ### Spacing Scale
 
@@ -56,13 +56,13 @@ Mono:       "Fira Code", "Source Code Pro" (for code blocks, headers)
 
 ### Status
 
-| Icon | Semantics | Color | Usage |
-|------|-----------|-------|-------|
-| ✓ | Success | Green | Passed assertions, enabled, healthy |
-| ✗ | Error | Red | Failed assertions, disabled, error state |
-| ⚠ | Warning | Yellow | Conflicts, attention needed, deprecated |
-| ℹ | Info | Blue | Informational badge, neutral state |
-| ↻ | Processing | Blue (animated) | Loading, in-flight request |
+| Icon | Semantics  | Color           | Usage                                    |
+| ---- | ---------- | --------------- | ---------------------------------------- |
+| ✓    | Success    | Green           | Passed assertions, enabled, healthy      |
+| ✗    | Error      | Red             | Failed assertions, disabled, error state |
+| ⚠    | Warning    | Yellow          | Conflicts, attention needed, deprecated  |
+| ℹ    | Info       | Blue            | Informational badge, neutral state       |
+| ↻    | Processing | Blue (animated) | Loading, in-flight request               |
 
 ### Button Variants
 
@@ -156,18 +156,22 @@ Each view follows a standard structure:
 ## Responsive Strategy
 
 ### Desktop (1920px+)
+
 - Sidepanel: 360px fixed, content full-width
 - Hover states active, keyboard shortcuts visible
 
 ### Laptop (1024–1920px)
+
 - Sidepanel: 360px, resizable
 - Toolbar icons + labels (default)
 
 ### Tablet (768–1024px)
+
 - Sidepanel: 280px (or collapsed)
 - Toolbar icons only (labels on hover)
 
 ### Mobile (< 768px)
+
 - Not primary target for extension, but plan for mobile web (Phase 5)
 
 ---
@@ -209,6 +213,7 @@ Easing:             ease-out (responsive), ease-in-out (modal), ease-in (exit)
 ## Component Storybook
 
 Future home for isolated component development & testing:
+
 ```
 packages/component-library/
 ├── src/

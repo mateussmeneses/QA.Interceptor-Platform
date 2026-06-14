@@ -13,10 +13,7 @@ export type RuleEvaluationResult = {
   matchedRules: MatchedRule[];
 };
 
-export const evaluateRules = (
-  rules: Rule[],
-  request: InterceptedRequest
-): RuleEvaluationResult => {
+export const evaluateRules = (rules: Rule[], request: InterceptedRequest): RuleEvaluationResult => {
   const matchedRules = rules
     .filter((rule) => rule.enabled)
     .sort(byPriorityThenCreatedAt)
@@ -47,7 +44,7 @@ export {
   type AssertionInput,
   type AssertionResult,
   type ResponseContext,
-  type AssertionType,
+  type AssertionType
 } from "./assertion-evaluator.js";
 
 export {
@@ -55,7 +52,7 @@ export {
   validateJsonString,
   type JsonSchema,
   type JsonSchemaValidationError,
-  type JsonSchemaValidationResult,
+  type JsonSchemaValidationResult
 } from "./schema-validator.js";
 
 export {
@@ -70,14 +67,14 @@ export {
   type ParsedCapturedRequest,
   type ParsedResponseAssertion,
   type ParsedMockEnvVar,
-  type ParsedRuleValidation,
+  type ParsedRuleValidation
 } from "./storage-parsers.js";
 
 export {
   compareContracts,
   compareContractStrings,
   type SnapshotDiffEntry,
-  type SnapshotComparisonResult,
+  type SnapshotComparisonResult
 } from "./contract-comparator.js";
 
 export {
@@ -85,7 +82,7 @@ export {
   evaluateRulesFromIndex,
   matchesCondition,
   computeRuleFingerprint,
-  type RuleIndex,
+  type RuleIndex
 } from "./rule-index.js";
 
 export {
@@ -95,7 +92,7 @@ export {
   type RuleConflict,
   type ConflictReport,
   type ConflictKind,
-  type ConflictSeverity,
+  type ConflictSeverity
 } from "./conflict-detector.js";
 
 export {
@@ -103,7 +100,7 @@ export {
   normalizeDiffText,
   type DiffResult,
   type DiffLine,
-  type DiffLineStatus,
+  type DiffLineStatus
 } from "./diff-engine.js";
 
 export {
@@ -117,7 +114,7 @@ export {
   type MockConditionKind,
   type MockCallContext,
   type MockState,
-  type MockEvalResult,
+  type MockEvalResult
 } from "./conditional-mock-evaluator.js";
 
 export {
@@ -125,5 +122,5 @@ export {
   inferSchemaFromString,
   inferSchemaFromSamples,
   mergeSchemas,
-  type InferenceOptions,
+  type InferenceOptions
 } from "./schema-inference.js";

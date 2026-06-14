@@ -8,7 +8,17 @@ type RuleCondition = {
 type Rule = {
   id: string;
   name: string;
-  type: "rewrite-url" | "rewrite-header" | "rewrite-query" | "rewrite-response" | "rewrite-request-body" | "mock-response" | "mock-status" | "redirect" | "block" | "delay";
+  type:
+    | "rewrite-url"
+    | "rewrite-header"
+    | "rewrite-query"
+    | "rewrite-response"
+    | "rewrite-request-body"
+    | "mock-response"
+    | "mock-status"
+    | "redirect"
+    | "block"
+    | "delay";
   enabled: boolean;
   priority: number;
   createdAt: string;
@@ -75,7 +85,11 @@ if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
       envVars?: MockEnvVar[];
     };
 
-    if (payload.source !== "qa-interceptor-content" || payload.type !== "RULES_UPDATE" || !Array.isArray(payload.rules)) {
+    if (
+      payload.source !== "qa-interceptor-content" ||
+      payload.type !== "RULES_UPDATE" ||
+      !Array.isArray(payload.rules)
+    ) {
       return;
     }
 
@@ -200,7 +214,11 @@ const resolveUrl = (input: RequestInfo | URL): string => {
 const resolveDelayMs = (url: string, method: string): number => {
   const enabledRules = rules
     .filter((rule) => rule.enabled)
-    .sort((a, b) => (a.priority !== b.priority ? a.priority - b.priority : Date.parse(a.createdAt) - Date.parse(b.createdAt)));
+    .sort((a, b) =>
+      a.priority !== b.priority
+        ? a.priority - b.priority
+        : Date.parse(a.createdAt) - Date.parse(b.createdAt)
+    );
 
   const delayRule = enabledRules.find(
     (rule) => rule.type === "delay" && matchesCondition(rule.condition, url, method)
@@ -236,7 +254,11 @@ const resolveMethod = (input: RequestInfo | URL, init?: RequestInit): string => 
 const findMockMatch = (url: string, method: string) => {
   const enabledRules = rules
     .filter((rule) => rule.enabled)
-    .sort((a, b) => (a.priority !== b.priority ? a.priority - b.priority : Date.parse(a.createdAt) - Date.parse(b.createdAt)));
+    .sort((a, b) =>
+      a.priority !== b.priority
+        ? a.priority - b.priority
+        : Date.parse(a.createdAt) - Date.parse(b.createdAt)
+    );
 
   const matched = enabledRules.filter((rule) => matchesCondition(rule.condition, url, method));
 
@@ -246,7 +268,9 @@ const findMockMatch = (url: string, method: string) => {
 
   const responseRuleEntry = matched.find((rule) => rule.type === "mock-response");
   const statusRuleEntry = matched.find((rule) => rule.type === "mock-status");
-  const responseRule = responseRuleEntry ? readMockResponsePayload(responseRuleEntry.payload) : null;
+  const responseRule = responseRuleEntry
+    ? readMockResponsePayload(responseRuleEntry.payload)
+    : null;
   const statusRule = statusRuleEntry ? readMockStatusPayload(statusRuleEntry.payload) : null;
 
   if (!responseRule && !statusRule) {
@@ -346,7 +370,11 @@ const readDelayPayload = (payload: Record<string, unknown>): DelayPayload | null
 const findRequestBodyRewrite = (url: string, method: string): RewriteRequestBodyPayload | null => {
   const enabledRules = rules
     .filter((rule) => rule.enabled)
-    .sort((a, b) => (a.priority !== b.priority ? a.priority - b.priority : Date.parse(a.createdAt) - Date.parse(b.createdAt)));
+    .sort((a, b) =>
+      a.priority !== b.priority
+        ? a.priority - b.priority
+        : Date.parse(a.createdAt) - Date.parse(b.createdAt)
+    );
 
   const matched = enabledRules.find(
     (rule) => rule.type === "rewrite-request-body" && matchesCondition(rule.condition, url, method)
@@ -359,7 +387,9 @@ const findRequestBodyRewrite = (url: string, method: string): RewriteRequestBody
   return readRewriteRequestBodyPayload(matched.payload);
 };
 
-const readRewriteRequestBodyPayload = (payload: Record<string, unknown>): RewriteRequestBodyPayload | null => {
+const readRewriteRequestBodyPayload = (
+  payload: Record<string, unknown>
+): RewriteRequestBodyPayload | null => {
   if (!("body" in payload)) {
     return null;
   }
@@ -377,18 +407,23 @@ const readRewriteRequestBodyPayload = (payload: Record<string, unknown>): Rewrit
 
   return {
     body,
-    contentType: typeof payload.contentType === "string"
-      ? payload.contentType
-      : typeof rawBody === "object"
-        ? "application/json"
-        : "text/plain"
+    contentType:
+      typeof payload.contentType === "string"
+        ? payload.contentType
+        : typeof rawBody === "object"
+          ? "application/json"
+          : "text/plain"
   };
 };
 
 const findRewriteResponseRule = (url: string, method: string) => {
   const enabledRules = rules
     .filter((rule) => rule.enabled)
-    .sort((a, b) => (a.priority !== b.priority ? a.priority - b.priority : Date.parse(a.createdAt) - Date.parse(b.createdAt)));
+    .sort((a, b) =>
+      a.priority !== b.priority
+        ? a.priority - b.priority
+        : Date.parse(a.createdAt) - Date.parse(b.createdAt)
+    );
 
   const matched = enabledRules.filter(
     (rule) => rule.type === "rewrite-response" && matchesCondition(rule.condition, url, method)
@@ -416,7 +451,9 @@ const findRewriteResponseRule = (url: string, method: string) => {
   };
 };
 
-const readRewriteResponsePayload = (payload: Record<string, unknown>): RewriteResponsePayload | null => {
+const readRewriteResponsePayload = (
+  payload: Record<string, unknown>
+): RewriteResponsePayload | null => {
   if (!("body" in payload)) {
     return null;
   }
@@ -434,11 +471,12 @@ const readRewriteResponsePayload = (payload: Record<string, unknown>): RewriteRe
 
   return {
     body,
-    contentType: typeof payload.contentType === "string"
-      ? payload.contentType
-      : typeof rawBody === "object"
-        ? "application/json"
-        : "text/plain"
+    contentType:
+      typeof payload.contentType === "string"
+        ? payload.contentType
+        : typeof rawBody === "object"
+          ? "application/json"
+          : "text/plain"
   };
 };
 
@@ -457,7 +495,10 @@ const applyDynamicVariables = (
 ): string => {
   const replacements: Record<string, string> = {
     timestamp: new Date().toISOString(),
-    uuid: typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+    uuid:
+      typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.floor(Math.random() * 100000)}`,
     method: context.method,
     url: context.url,
     ...context.envVars

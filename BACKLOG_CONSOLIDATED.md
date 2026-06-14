@@ -79,12 +79,13 @@
 
 ## Governance / Quality
 
-| ID          | Title                                                      | Status | Notes                                             |
-| ----------- | ---------------------------------------------------------- | ------ | ------------------------------------------------- |
-| QA-DOC-002  | Repair broken markdown links + link-check CI               | Todo   | —                                                 |
-| QA-CSS-001  | Class-by-class cleanup of orphan `styles/components/*.css` | Todo   | `modal.css` is mixed — do not remove in bulk (R6) |
-| QA-TEST-001 | Define a test strategy for the plain-TS UI                 | Todo   | `.tsx` tests were removed with the subtree        |
-| TD-014      | Decide `storage/adapter.ts` (adopt for Phase 4 or remove)  | Todo   | Orphan today                                      |
+| ID          | Title                                                      | Status   | Notes                                             |
+| ----------- | ---------------------------------------------------------- | -------- | ------------------------------------------------- |
+| QA-DOC-002  | Repair broken markdown links + link-check CI               | Todo     | —                                                 |
+| QA-CSS-001  | Class-by-class cleanup of orphan `styles/components/*.css` | Todo     | `modal.css` is mixed — do not remove in bulk (R6) |
+| QA-TEST-001 | Define a test strategy for the plain-TS UI                 | Todo     | `.tsx` tests were removed with the subtree        |
+| QA-FMT-001  | Repo-wide Prettier formatting + green `format:check`       | **Done** | `npm run format` applied; `format:check` green    |
+| TD-014      | Decide `storage/adapter.ts` (adopt for Phase 4 or remove)  | Todo     | Orphan today                                      |
 
 ---
 

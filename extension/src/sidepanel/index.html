@@ -17,11 +17,66 @@
         </div>
 
         <nav class="nav-stack" role="tablist" aria-label="workspace sections">
-          <button class="nav-item active" type="button" data-view="rules" id="nav-rules" role="tab" aria-selected="true" aria-controls="panel-rules" tabindex="0">Rules</button>
-          <button class="nav-item" type="button" data-view="network" id="nav-network" role="tab" aria-selected="false" aria-controls="panel-network" tabindex="-1">Network</button>
-          <button class="nav-item" type="button" data-view="mocks" id="nav-mocks" role="tab" aria-selected="false" aria-controls="panel-mocks" tabindex="-1">Mocks</button>
-          <button class="nav-item" type="button" data-view="history" id="nav-history" role="tab" aria-selected="false" aria-controls="panel-history" tabindex="-1">History</button>
-          <button class="nav-item" type="button" data-view="settings" id="nav-settings" role="tab" aria-selected="false" aria-controls="panel-settings" tabindex="-1">Settings</button>
+          <button
+            class="nav-item active"
+            type="button"
+            data-view="rules"
+            id="nav-rules"
+            role="tab"
+            aria-selected="true"
+            aria-controls="panel-rules"
+            tabindex="0"
+          >
+            Rules
+          </button>
+          <button
+            class="nav-item"
+            type="button"
+            data-view="network"
+            id="nav-network"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-network"
+            tabindex="-1"
+          >
+            Network
+          </button>
+          <button
+            class="nav-item"
+            type="button"
+            data-view="mocks"
+            id="nav-mocks"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-mocks"
+            tabindex="-1"
+          >
+            Mocks
+          </button>
+          <button
+            class="nav-item"
+            type="button"
+            data-view="history"
+            id="nav-history"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-history"
+            tabindex="-1"
+          >
+            History
+          </button>
+          <button
+            class="nav-item"
+            type="button"
+            data-view="settings"
+            id="nav-settings"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-settings"
+            tabindex="-1"
+          >
+            Settings
+          </button>
         </nav>
 
         <p class="sidebar-hint">Actions tagged as Preview are not wired yet.</p>
@@ -36,7 +91,13 @@
           <span class="pill">UI First</span>
         </header>
 
-        <section class="view-panel" data-panel="rules" id="panel-rules" role="tabpanel" aria-labelledby="nav-rules">
+        <section
+          class="view-panel"
+          data-panel="rules"
+          id="panel-rules"
+          role="tabpanel"
+          aria-labelledby="nav-rules"
+        >
           <section class="rules-workspace" aria-label="rules management">
             <section class="rules-section" aria-label="rules list">
               <div class="section-head">
@@ -87,11 +148,32 @@
               </div>
 
               <div class="rules-actions-row" aria-label="rules actions">
-                <button id="rules-create-button" type="button" class="action-btn primary">Create Rule</button>
-                <button id="rules-open-modal-editor-button" type="button" class="action-btn" aria-haspopup="dialog" aria-controls="rules-editor-modal-dialog" aria-expanded="false">Modal Editor</button>
-                <button id="rules-import-button" type="button" class="action-btn">Import JSON</button>
-                <button id="rules-export-button" type="button" class="action-btn">Export JSON</button>
-                <input id="rules-import-input" type="file" accept=".json,application/json" class="hidden" aria-hidden="true" />
+                <button id="rules-create-button" type="button" class="action-btn primary">
+                  Create Rule
+                </button>
+                <button
+                  id="rules-open-modal-editor-button"
+                  type="button"
+                  class="action-btn"
+                  aria-haspopup="dialog"
+                  aria-controls="rules-editor-modal-dialog"
+                  aria-expanded="false"
+                >
+                  Modal Editor
+                </button>
+                <button id="rules-import-button" type="button" class="action-btn">
+                  Import JSON
+                </button>
+                <button id="rules-export-button" type="button" class="action-btn">
+                  Export JSON
+                </button>
+                <input
+                  id="rules-import-input"
+                  type="file"
+                  accept=".json,application/json"
+                  class="hidden"
+                  aria-hidden="true"
+                />
               </div>
 
               <section class="rules-groups-manager" aria-label="rule groups manager">
@@ -100,7 +182,9 @@
                     <span>New Group</span>
                     <input id="rules-group-name-input" type="text" placeholder="Core QA" />
                   </label>
-                  <button id="rules-group-create-button" type="button" class="action-btn">Create Group</button>
+                  <button id="rules-group-create-button" type="button" class="action-btn">
+                    Create Group
+                  </button>
                 </div>
                 <ul id="rules-groups-list" class="rules-groups-list">
                   <li class="placeholder">No groups yet.</li>
@@ -111,9 +195,15 @@
                 <div class="rules-groups-toolbar">
                   <label class="field-inline" for="asset-collection-name-input">
                     <span>New Collection</span>
-                    <input id="asset-collection-name-input" type="text" placeholder="Checkout Scenarios" />
+                    <input
+                      id="asset-collection-name-input"
+                      type="text"
+                      placeholder="Checkout Scenarios"
+                    />
                   </label>
-                  <button id="asset-collection-create-button" type="button" class="action-btn">Create Collection</button>
+                  <button id="asset-collection-create-button" type="button" class="action-btn">
+                    Create Collection
+                  </button>
                 </div>
                 <ul id="asset-collections-list" class="rules-groups-list">
                   <li class="placeholder">No collections yet.</li>
@@ -163,7 +253,13 @@
 
                   <label class="field-block" for="editor-rule-priority">
                     <span>Priority</span>
-                    <input id="editor-rule-priority" name="priority" type="number" min="1" step="1" />
+                    <input
+                      id="editor-rule-priority"
+                      name="priority"
+                      type="number"
+                      min="1"
+                      step="1"
+                    />
                   </label>
                 </div>
 
@@ -206,7 +302,11 @@
                 <section class="editor-tags-section">
                   <label class="field-block" for="editor-rule-tags-input">
                     <span>Tags (comma-separated)</span>
-                    <input id="editor-rule-tags-input" type="text" placeholder="auth, critical, smoke-test" />
+                    <input
+                      id="editor-rule-tags-input"
+                      type="text"
+                      placeholder="auth, critical, smoke-test"
+                    />
                   </label>
                   <ul id="editor-rule-tags-list" class="tags-list">
                     <li class="placeholder">No tags assigned.</li>
@@ -215,7 +315,12 @@
 
                 <label class="field-block" for="editor-rule-url">
                   <span>URL contains</span>
-                  <input id="editor-rule-url" name="urlContains" type="text" placeholder="/api/orders" />
+                  <input
+                    id="editor-rule-url"
+                    name="urlContains"
+                    type="text"
+                    placeholder="/api/orders"
+                  />
                 </label>
 
                 <label class="field-block" for="editor-rule-payload">
@@ -229,18 +334,35 @@
                   ></textarea>
                 </label>
 
-                <p id="editor-save-status" class="editor-save-status" role="status" aria-live="polite" aria-atomic="true">Edit fields and click Save Changes.</p>
+                <p
+                  id="editor-save-status"
+                  class="editor-save-status"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  Edit fields and click Save Changes.
+                </p>
 
                 <div class="editor-actions">
-                  <button id="editor-save-button" type="submit" class="action-btn primary">Save Changes</button>
-                  <button id="editor-duplicate-button" type="button" class="action-btn">Duplicate</button>
+                  <button id="editor-save-button" type="submit" class="action-btn primary">
+                    Save Changes
+                  </button>
+                  <button id="editor-duplicate-button" type="button" class="action-btn">
+                    Duplicate
+                  </button>
                   <button id="editor-delete-button" type="button" class="action-btn">Delete</button>
                 </div>
               </form>
             </aside>
           </section>
 
-          <div id="rules-editor-modal-panel" class="modal-backdrop hidden" aria-label="rules editor modal" aria-hidden="true">
+          <div
+            id="rules-editor-modal-panel"
+            class="modal-backdrop hidden"
+            aria-label="rules editor modal"
+            aria-hidden="true"
+          >
             <div
               id="rules-editor-modal-dialog"
               class="modal rules-editor-dialog"
@@ -252,13 +374,27 @@
               <div class="rules-editor-modal-shell">
                 <header class="rules-editor-modal-header">
                   <div>
-                    <h4 id="rules-editor-modal-title" class="rules-editor-modal-title">Rule Editor (Modal Preview)</h4>
-                    <p id="rules-editor-modal-caption" class="preview-note">Form skeleton for FE-2 layout. Save action remains preview-only.</p>
+                    <h4 id="rules-editor-modal-title" class="rules-editor-modal-title">
+                      Rule Editor (Modal Preview)
+                    </h4>
+                    <p id="rules-editor-modal-caption" class="preview-note">
+                      Form skeleton for FE-2 layout. Save action remains preview-only.
+                    </p>
                   </div>
-                  <button id="rules-editor-modal-close-button" type="button" class="action-btn muted">Close</button>
+                  <button
+                    id="rules-editor-modal-close-button"
+                    type="button"
+                    class="action-btn muted"
+                  >
+                    Close
+                  </button>
                 </header>
 
-                <div class="rules-editor-modal-tabs" role="tablist" aria-label="rule editor sections">
+                <div
+                  class="rules-editor-modal-tabs"
+                  role="tablist"
+                  aria-label="rule editor sections"
+                >
                   <button
                     id="rules-editor-tab-basic"
                     type="button"
@@ -281,7 +417,12 @@
                   </button>
                 </div>
 
-                <section id="rules-editor-panel-basic" class="rules-editor-tab-panel" role="tabpanel" aria-labelledby="rules-editor-tab-basic">
+                <section
+                  id="rules-editor-panel-basic"
+                  class="rules-editor-tab-panel"
+                  role="tabpanel"
+                  aria-labelledby="rules-editor-tab-basic"
+                >
                   <div class="editor-grid">
                     <label class="field-block" for="rules-modal-name">
                       <span>Name</span>
@@ -308,7 +449,13 @@
                   <div class="editor-grid">
                     <label class="field-block" for="rules-modal-priority">
                       <span>Priority</span>
-                      <input id="rules-modal-priority" type="number" min="1" step="1" placeholder="100" />
+                      <input
+                        id="rules-modal-priority"
+                        type="number"
+                        min="1"
+                        step="1"
+                        placeholder="100"
+                      />
                     </label>
 
                     <label class="field-block" for="rules-modal-enabled">
@@ -327,11 +474,21 @@
 
                   <label class="field-block" for="rules-modal-payload">
                     <span>Payload JSON</span>
-                    <textarea id="rules-modal-payload" rows="8" spellcheck="false" placeholder='{"status":200,"body":{"ok":true}}'></textarea>
+                    <textarea
+                      id="rules-modal-payload"
+                      rows="8"
+                      spellcheck="false"
+                      placeholder='{"status":200,"body":{"ok":true}}'
+                    ></textarea>
                   </label>
                 </section>
 
-                <section id="rules-editor-panel-advanced" class="rules-editor-tab-panel hidden" role="tabpanel" aria-labelledby="rules-editor-tab-advanced">
+                <section
+                  id="rules-editor-panel-advanced"
+                  class="rules-editor-tab-panel hidden"
+                  role="tabpanel"
+                  aria-labelledby="rules-editor-tab-advanced"
+                >
                   <div class="editor-grid">
                     <label class="field-block" for="rules-modal-method">
                       <span>Method</span>
@@ -360,15 +517,30 @@
 
                   <label class="field-block" for="rules-modal-notes">
                     <span>Notes</span>
-                    <textarea id="rules-modal-notes" rows="4" placeholder="Internal QA notes (layout preview only)."></textarea>
+                    <textarea
+                      id="rules-modal-notes"
+                      rows="4"
+                      placeholder="Internal QA notes (layout preview only)."
+                    ></textarea>
                   </label>
                 </section>
 
-                <p class="editor-save-status" role="status" aria-live="polite" aria-atomic="true">Modal skeleton (FE-2): visual structure ready, save wiring remains in existing editor.</p>
+                <p class="editor-save-status" role="status" aria-live="polite" aria-atomic="true">
+                  Modal skeleton (FE-2): visual structure ready, save wiring remains in existing
+                  editor.
+                </p>
 
                 <div class="editor-actions">
-                  <button id="rules-modal-save-preview-button" type="button" class="action-btn primary">Save (Preview)</button>
-                  <button id="rules-modal-cancel-button" type="button" class="action-btn">Cancel</button>
+                  <button
+                    id="rules-modal-save-preview-button"
+                    type="button"
+                    class="action-btn primary"
+                  >
+                    Save (Preview)
+                  </button>
+                  <button id="rules-modal-cancel-button" type="button" class="action-btn">
+                    Cancel
+                  </button>
                 </div>
               </div>
             </div>
@@ -387,7 +559,14 @@
           </section>
         </section>
 
-        <section class="view-panel hidden" data-panel="network" id="panel-network" role="tabpanel" aria-labelledby="nav-network" aria-hidden="true">
+        <section
+          class="view-panel hidden"
+          data-panel="network"
+          id="panel-network"
+          role="tabpanel"
+          aria-labelledby="nav-network"
+          aria-hidden="true"
+        >
           <section class="network-inspector" aria-label="network inspector">
             <div class="section-head">
               <div>
@@ -428,14 +607,40 @@
             </div>
 
             <div class="network-actions-row" aria-label="network actions">
-              <button id="network-clear-button" type="button" class="action-btn">Clear Session</button>
-              <button id="network-compose-button" type="button" class="action-btn" aria-haspopup="dialog" aria-controls="network-compose-dialog" aria-expanded="false">Compose Request</button>
-              <button id="network-import-har-button" type="button" class="action-btn">Import HAR</button>
-              <button id="network-export-har-button" type="button" class="action-btn">Export HAR</button>
-              <input id="network-import-har-input" type="file" accept=".har,.json,application/json" class="hidden" aria-hidden="true" />
+              <button id="network-clear-button" type="button" class="action-btn">
+                Clear Session
+              </button>
+              <button
+                id="network-compose-button"
+                type="button"
+                class="action-btn"
+                aria-haspopup="dialog"
+                aria-controls="network-compose-dialog"
+                aria-expanded="false"
+              >
+                Compose Request
+              </button>
+              <button id="network-import-har-button" type="button" class="action-btn">
+                Import HAR
+              </button>
+              <button id="network-export-har-button" type="button" class="action-btn">
+                Export HAR
+              </button>
+              <input
+                id="network-import-har-input"
+                type="file"
+                accept=".har,.json,application/json"
+                class="hidden"
+                aria-hidden="true"
+              />
             </div>
 
-            <section id="network-compose-panel" class="modal-backdrop hidden" aria-label="compose request panel" aria-hidden="true">
+            <section
+              id="network-compose-panel"
+              class="modal-backdrop hidden"
+              aria-label="compose request panel"
+              aria-hidden="true"
+            >
               <div
                 id="network-compose-dialog"
                 class="modal network-compose-dialog"
@@ -444,85 +649,127 @@
                 aria-labelledby="network-compose-title"
                 tabindex="-1"
               >
-              <div class="section-head compact">
-                <div>
-                  <h4 id="network-compose-title">Compose Request</h4>
-                  <p>Build and send a custom HTTP request directly from the inspector.</p>
-                </div>
-              </div>
-
-              <div class="editor-grid">
-                <label class="field-block" for="network-compose-method">
-                  <span>Method</span>
-                  <select id="network-compose-method">
-                    <option value="GET">GET</option>
-                    <option value="POST">POST</option>
-                    <option value="PUT">PUT</option>
-                    <option value="PATCH">PATCH</option>
-                    <option value="DELETE">DELETE</option>
-                  </select>
-                </label>
-
-                <label class="field-block" for="network-compose-url">
-                  <span>URL</span>
-                  <input id="network-compose-url" type="url" placeholder="https://api.example.com/orders" />
-                </label>
-              </div>
-
-              <label class="field-block" for="network-compose-headers">
-                <span>Headers (JSON object)</span>
-                <textarea id="network-compose-headers" rows="4" placeholder='{"content-type":"application/json"}'></textarea>
-              </label>
-
-              <label class="field-block" for="network-compose-body">
-                <span>Body (optional)</span>
-                <textarea id="network-compose-body" rows="6" placeholder='{"example": true}'></textarea>
-              </label>
-
-              <div class="editor-grid">
-                <label class="field-block" for="network-compose-name">
-                  <span>Saved Request Name</span>
-                  <input id="network-compose-name" type="text" placeholder="Create order smoke" />
-                </label>
-
-                <label class="field-block" for="network-compose-collection">
-                  <span>Collection</span>
-                  <select id="network-compose-collection">
-                    <option value="">Unassigned</option>
-                  </select>
-                </label>
-              </div>
-
-              <label class="field-block" for="network-compose-tags-input">
-                <span>Tags (comma-separated)</span>
-                <input id="network-compose-tags-input" type="text" placeholder="smoke-test, checkout" />
-              </label>
-              <ul id="network-compose-tags-list" class="tags-list">
-                <li class="placeholder">No tags assigned.</li>
-              </ul>
-
-              <div class="editor-actions">
-                <button id="network-compose-send-button" type="button" class="action-btn primary">Send Request</button>
-                <button id="network-compose-save-button" type="button" class="action-btn">Save Composed</button>
-                <button id="network-compose-close-button" type="button" class="action-btn">Close</button>
-              </div>
-              <p id="network-compose-status" class="editor-save-status" role="status" aria-live="polite" aria-atomic="true">Compose panel ready.</p>
-
-              <section class="network-composed-library" aria-label="saved composed requests">
                 <div class="section-head compact">
-                  <h4>Saved Composed Requests</h4>
+                  <div>
+                    <h4 id="network-compose-title">Compose Request</h4>
+                    <p>Build and send a custom HTTP request directly from the inspector.</p>
+                  </div>
                 </div>
-                <ul id="network-composed-list" class="network-composed-list">
-                  <li class="placeholder">No composed requests saved.</li>
+
+                <div class="editor-grid">
+                  <label class="field-block" for="network-compose-method">
+                    <span>Method</span>
+                    <select id="network-compose-method">
+                      <option value="GET">GET</option>
+                      <option value="POST">POST</option>
+                      <option value="PUT">PUT</option>
+                      <option value="PATCH">PATCH</option>
+                      <option value="DELETE">DELETE</option>
+                    </select>
+                  </label>
+
+                  <label class="field-block" for="network-compose-url">
+                    <span>URL</span>
+                    <input
+                      id="network-compose-url"
+                      type="url"
+                      placeholder="https://api.example.com/orders"
+                    />
+                  </label>
+                </div>
+
+                <label class="field-block" for="network-compose-headers">
+                  <span>Headers (JSON object)</span>
+                  <textarea
+                    id="network-compose-headers"
+                    rows="4"
+                    placeholder='{"content-type":"application/json"}'
+                  ></textarea>
+                </label>
+
+                <label class="field-block" for="network-compose-body">
+                  <span>Body (optional)</span>
+                  <textarea
+                    id="network-compose-body"
+                    rows="6"
+                    placeholder='{"example": true}'
+                  ></textarea>
+                </label>
+
+                <div class="editor-grid">
+                  <label class="field-block" for="network-compose-name">
+                    <span>Saved Request Name</span>
+                    <input id="network-compose-name" type="text" placeholder="Create order smoke" />
+                  </label>
+
+                  <label class="field-block" for="network-compose-collection">
+                    <span>Collection</span>
+                    <select id="network-compose-collection">
+                      <option value="">Unassigned</option>
+                    </select>
+                  </label>
+                </div>
+
+                <label class="field-block" for="network-compose-tags-input">
+                  <span>Tags (comma-separated)</span>
+                  <input
+                    id="network-compose-tags-input"
+                    type="text"
+                    placeholder="smoke-test, checkout"
+                  />
+                </label>
+                <ul id="network-compose-tags-list" class="tags-list">
+                  <li class="placeholder">No tags assigned.</li>
                 </ul>
-              </section>
+
+                <div class="editor-actions">
+                  <button id="network-compose-send-button" type="button" class="action-btn primary">
+                    Send Request
+                  </button>
+                  <button id="network-compose-save-button" type="button" class="action-btn">
+                    Save Composed
+                  </button>
+                  <button id="network-compose-close-button" type="button" class="action-btn">
+                    Close
+                  </button>
+                </div>
+                <p
+                  id="network-compose-status"
+                  class="editor-save-status"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  Compose panel ready.
+                </p>
+
+                <section class="network-composed-library" aria-label="saved composed requests">
+                  <div class="section-head compact">
+                    <h4>Saved Composed Requests</h4>
+                  </div>
+                  <ul id="network-composed-list" class="network-composed-list">
+                    <li class="placeholder">No composed requests saved.</li>
+                  </ul>
+                </section>
 
                 <section class="response-assertions-library" aria-label="response assertions">
                   <div class="section-head compact">
                     <h4>Response Assertions</h4>
-                    <button id="assertions-add-button" type="button" class="action-btn" title="Add assertion">+</button>
+                    <button
+                      id="assertions-add-button"
+                      type="button"
+                      class="action-btn"
+                      title="Add assertion"
+                    >
+                      +
+                    </button>
                   </div>
-                  <ul id="response-assertions-list" class="response-assertions-list" aria-live="polite" aria-relevant="additions removals text">
+                  <ul
+                    id="response-assertions-list"
+                    class="response-assertions-list"
+                    aria-live="polite"
+                    aria-relevant="additions removals text"
+                  >
                     <li class="placeholder">No assertions added. Add one to validate responses.</li>
                   </ul>
                 </section>
@@ -543,7 +790,9 @@
               </section>
 
               <aside class="network-detail" aria-label="network detail drawer">
-                <p id="network-detail-empty" class="placeholder">Select a request to inspect details.</p>
+                <p id="network-detail-empty" class="placeholder">
+                  Select a request to inspect details.
+                </p>
 
                 <div id="network-detail-content" class="network-detail-content hidden">
                   <div class="network-detail-top">
@@ -614,10 +863,19 @@
                   <section class="network-assertions-section" aria-label="assertion results">
                     <div class="section-head compact">
                       <h4>Assertion Results</h4>
-                      <span id="network-assertion-summary" class="assertion-summary" role="status" aria-live="polite" aria-atomic="true">—</span>
+                      <span
+                        id="network-assertion-summary"
+                        class="assertion-summary"
+                        role="status"
+                        aria-live="polite"
+                        aria-atomic="true"
+                        >—</span
+                      >
                     </div>
                     <ul id="network-assertion-results" class="assertion-results-list">
-                      <li class="placeholder">Select a request with a response to evaluate assertions.</li>
+                      <li class="placeholder">
+                        Select a request with a response to evaluate assertions.
+                      </li>
                     </ul>
                   </section>
 
@@ -625,14 +883,22 @@
                   <section class="network-diff-section" aria-label="response diff">
                     <div class="section-head compact">
                       <h4>Compare Response</h4>
-                      <button id="network-diff-clear-button" type="button" class="action-btn muted xs hidden">Clear</button>
+                      <button
+                        id="network-diff-clear-button"
+                        type="button"
+                        class="action-btn muted xs hidden"
+                      >
+                        Clear
+                      </button>
                     </div>
                     <p id="network-diff-hint" class="placeholder">
                       Pin a response to compare, then select another request to diff bodies.
                     </p>
                     <div id="network-diff-pin-row" class="network-diff-pin-row hidden">
                       <span id="network-diff-pin-label" class="pill muted">Pinned: —</span>
-                      <button id="network-diff-compare-button" type="button" class="action-btn xs">Compare with selected</button>
+                      <button id="network-diff-compare-button" type="button" class="action-btn xs">
+                        Compare with selected
+                      </button>
                     </div>
                     <div id="network-diff-result" class="network-diff-result hidden">
                       <div class="network-diff-header">
@@ -650,15 +916,29 @@
                       </div>
                     </div>
                     <div class="editor-actions network-diff-actions">
-                      <button id="network-diff-pin-button" type="button" class="action-btn xs">Pin selected as baseline</button>
+                      <button id="network-diff-pin-button" type="button" class="action-btn xs">
+                        Pin selected as baseline
+                      </button>
                     </div>
                   </section>
 
                   <div class="network-detail-actions">
-                    <button id="network-clone-request-button" type="button" class="action-btn">Clone Request</button>
-                    <button id="network-edit-resend-button" type="button" class="action-btn">Edit &amp; Resend</button>
-                    <button id="network-repeat-request-button" type="button" class="action-btn primary">Repeat Request</button>
-                    <button id="network-copy-curl-button" type="button" class="action-btn">Copy as cURL</button>
+                    <button id="network-clone-request-button" type="button" class="action-btn">
+                      Clone Request
+                    </button>
+                    <button id="network-edit-resend-button" type="button" class="action-btn">
+                      Edit &amp; Resend
+                    </button>
+                    <button
+                      id="network-repeat-request-button"
+                      type="button"
+                      class="action-btn primary"
+                    >
+                      Repeat Request
+                    </button>
+                    <button id="network-copy-curl-button" type="button" class="action-btn">
+                      Copy as cURL
+                    </button>
                   </div>
                 </div>
               </aside>
@@ -666,7 +946,14 @@
           </section>
         </section>
 
-        <section class="view-panel hidden" data-panel="mocks" id="panel-mocks" role="tabpanel" aria-labelledby="nav-mocks" aria-hidden="true">
+        <section
+          class="view-panel hidden"
+          data-panel="mocks"
+          id="panel-mocks"
+          role="tabpanel"
+          aria-labelledby="nav-mocks"
+          aria-hidden="true"
+        >
           <section class="mock-playground" aria-label="mock playground">
             <div class="section-head">
               <div>
@@ -704,10 +991,14 @@
               <section class="mock-list-panel" aria-label="mock list">
                 <div class="mock-actions-row">
                   <button type="button" class="action-btn preview">Create Mock (Preview)</button>
-                  <button type="button" class="action-btn preview">Import Collection (Preview)</button>
+                  <button type="button" class="action-btn preview">
+                    Import Collection (Preview)
+                  </button>
                 </div>
 
-                <div id="mock-empty-state" class="placeholder hidden">No mock rules match current filters.</div>
+                <div id="mock-empty-state" class="placeholder hidden">
+                  No mock rules match current filters.
+                </div>
                 <ul id="mock-rule-list" class="mock-rule-list"></ul>
               </section>
 
@@ -761,10 +1052,14 @@
                       </label>
                       <div class="field-block mock-template-actions">
                         <span>Apply</span>
-                        <button id="mock-template-apply-button" type="button" class="action-btn">Apply Template</button>
+                        <button id="mock-template-apply-button" type="button" class="action-btn">
+                          Apply Template
+                        </button>
                       </div>
                     </div>
-                    <p id="mock-template-description" class="preview-note">Choose a template to auto-fill mock fields.</p>
+                    <p id="mock-template-description" class="preview-note">
+                      Choose a template to auto-fill mock fields.
+                    </p>
                   </section>
 
                   <section class="mock-env-manager" aria-label="mock environment variables">
@@ -784,28 +1079,49 @@
                     <div class="editor-grid">
                       <label class="field-block" for="mock-env-scope-url-input">
                         <span>Scope URL Contains (optional)</span>
-                        <input id="mock-env-scope-url-input" type="text" placeholder="/api/orders" />
+                        <input
+                          id="mock-env-scope-url-input"
+                          type="text"
+                          placeholder="/api/orders"
+                        />
                       </label>
                       <div class="field-block mock-template-actions">
                         <span>Manage</span>
-                        <button id="mock-env-add-button" type="button" class="action-btn">Add Variable</button>
+                        <button id="mock-env-add-button" type="button" class="action-btn">
+                          Add Variable
+                        </button>
                       </div>
                     </div>
                     <ul id="mock-env-list" class="mock-env-list">
                       <li class="placeholder">No environment variables defined.</li>
                     </ul>
-                    <p class="preview-note">Use tokens like {{env.tenantId}} or {{tenantId}} in mock/rewrite response templates.</p>
+                    <p class="preview-note">
+                      Use tokens like {{env.tenantId}} or {{tenantId}} in mock/rewrite response
+                      templates.
+                    </p>
                   </section>
 
                   <div class="editor-grid">
                     <label class="field-block" for="mock-editor-http-status">
                       <span>HTTP Status</span>
-                      <input id="mock-editor-http-status" type="number" min="100" max="599" step="1" />
+                      <input
+                        id="mock-editor-http-status"
+                        type="number"
+                        min="100"
+                        max="599"
+                        step="1"
+                      />
                     </label>
 
                     <label class="field-block" for="mock-editor-delay-ms">
                       <span>Delay (ms)</span>
-                      <input id="mock-editor-delay-ms" type="number" min="0" step="50" placeholder="0" />
+                      <input
+                        id="mock-editor-delay-ms"
+                        type="number"
+                        min="0"
+                        step="50"
+                        placeholder="0"
+                      />
                     </label>
                   </div>
 
@@ -829,11 +1145,23 @@
                     ></textarea>
                   </label>
 
-                  <p id="mock-save-status" class="editor-save-status" role="status" aria-live="polite" aria-atomic="true">Edit fields and click Save Mock.</p>
+                  <p
+                    id="mock-save-status"
+                    class="editor-save-status"
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                  >
+                    Edit fields and click Save Mock.
+                  </p>
 
                   <div class="editor-actions">
-                    <button id="mock-save-button" type="submit" class="action-btn primary">Save Mock</button>
-                    <button type="button" class="action-btn preview">Test Scenario (Preview)</button>
+                    <button id="mock-save-button" type="submit" class="action-btn primary">
+                      Save Mock
+                    </button>
+                    <button type="button" class="action-btn preview">
+                      Test Scenario (Preview)
+                    </button>
                     <button type="button" class="action-btn preview">Delete Mock (Preview)</button>
                   </div>
                 </form>
@@ -851,7 +1179,14 @@
           </section>
         </section>
 
-        <section class="view-panel hidden" data-panel="history" id="panel-history" role="tabpanel" aria-labelledby="nav-history" aria-hidden="true">
+        <section
+          class="view-panel hidden"
+          data-panel="history"
+          id="panel-history"
+          role="tabpanel"
+          aria-labelledby="nav-history"
+          aria-hidden="true"
+        >
           <section class="history-evidence" aria-label="history and evidence">
             <div class="section-head">
               <div>
@@ -892,12 +1227,16 @@
                   <button type="button" class="action-btn preview">Pin Session (Preview)</button>
                 </div>
 
-                <div id="history-empty-state" class="placeholder hidden">No sessions match current filters.</div>
+                <div id="history-empty-state" class="placeholder hidden">
+                  No sessions match current filters.
+                </div>
                 <ul id="history-session-list" class="history-session-list"></ul>
               </section>
 
               <aside class="history-detail" aria-label="evidence detail">
-                <p id="history-detail-empty" class="placeholder">Select a session to inspect evidence timeline.</p>
+                <p id="history-detail-empty" class="placeholder">
+                  Select a session to inspect evidence timeline.
+                </p>
 
                 <div id="history-detail-content" class="history-detail-content hidden">
                   <div class="history-detail-head">
@@ -931,13 +1270,38 @@
 
                   <section class="history-export-card">
                     <h4>Evidence Export</h4>
-                    <p class="preview-note">Generate QA proof package with timeline and assertions.</p>
+                    <p class="preview-note">
+                      Generate QA proof package with timeline and assertions.
+                    </p>
                     <div class="editor-actions">
-                      <button id="history-export-json-button" type="button" class="action-btn" aria-haspopup="dialog" aria-controls="history-export-dialog" aria-expanded="false">Export JSON</button>
-                      <button id="history-export-md-button" type="button" class="action-btn" aria-haspopup="dialog" aria-controls="history-export-dialog" aria-expanded="false">Export Markdown</button>
+                      <button
+                        id="history-export-json-button"
+                        type="button"
+                        class="action-btn"
+                        aria-haspopup="dialog"
+                        aria-controls="history-export-dialog"
+                        aria-expanded="false"
+                      >
+                        Export JSON
+                      </button>
+                      <button
+                        id="history-export-md-button"
+                        type="button"
+                        class="action-btn"
+                        aria-haspopup="dialog"
+                        aria-controls="history-export-dialog"
+                        aria-expanded="false"
+                      >
+                        Export Markdown
+                      </button>
                     </div>
 
-                    <div id="history-export-panel" class="modal-backdrop hidden" aria-label="history export dialog" aria-hidden="true">
+                    <div
+                      id="history-export-panel"
+                      class="modal-backdrop hidden"
+                      aria-label="history export dialog"
+                      aria-hidden="true"
+                    >
                       <div
                         id="history-export-dialog"
                         class="modal history-export-dialog"
@@ -948,8 +1312,12 @@
                       >
                         <div class="history-export-panel-body">
                           <div class="history-export-header">
-                            <h5 id="history-export-title" class="history-export-title">Evidence Export</h5>
-                            <p class="preview-note">Select the output format and review preview before download.</p>
+                            <h5 id="history-export-title" class="history-export-title">
+                              Evidence Export
+                            </h5>
+                            <p class="preview-note">
+                              Select the output format and review preview before download.
+                            </p>
                           </div>
 
                           <label class="field-block" for="history-export-format">
@@ -973,8 +1341,20 @@
                           </label>
 
                           <div class="editor-actions">
-                            <button id="history-export-download-button" type="button" class="action-btn primary">Download</button>
-                            <button id="history-export-close-button" type="button" class="action-btn muted">Close</button>
+                            <button
+                              id="history-export-download-button"
+                              type="button"
+                              class="action-btn primary"
+                            >
+                              Download
+                            </button>
+                            <button
+                              id="history-export-close-button"
+                              type="button"
+                              class="action-btn muted"
+                            >
+                              Close
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -983,14 +1363,44 @@
 
                   <section class="history-replay-card">
                     <h4>Session Replay</h4>
-                    <p class="preview-note">Re-send all captured requests from this session in sequence.</p>
+                    <p class="preview-note">
+                      Re-send all captured requests from this session in sequence.
+                    </p>
                     <div class="editor-actions">
-                      <button id="history-replay-save-artifact-button" type="button" class="action-btn">Save Replay Artifact</button>
-                      <button id="history-replay-delete-artifact-button" type="button" class="action-btn muted">Remove Artifact</button>
-                      <button id="history-replay-button" type="button" class="action-btn" aria-haspopup="dialog" aria-controls="history-replay-dialog" aria-expanded="false">Replay Session</button>
+                      <button
+                        id="history-replay-save-artifact-button"
+                        type="button"
+                        class="action-btn"
+                      >
+                        Save Replay Artifact
+                      </button>
+                      <button
+                        id="history-replay-delete-artifact-button"
+                        type="button"
+                        class="action-btn muted"
+                      >
+                        Remove Artifact
+                      </button>
+                      <button
+                        id="history-replay-button"
+                        type="button"
+                        class="action-btn"
+                        aria-haspopup="dialog"
+                        aria-controls="history-replay-dialog"
+                        aria-expanded="false"
+                      >
+                        Replay Session
+                      </button>
                     </div>
-                    <p id="history-replay-artifact-status" class="preview-note">Artifact not loaded.</p>
-                    <div id="history-replay-panel" class="modal-backdrop hidden" aria-label="history replay panel" aria-hidden="true">
+                    <p id="history-replay-artifact-status" class="preview-note">
+                      Artifact not loaded.
+                    </p>
+                    <div
+                      id="history-replay-panel"
+                      class="modal-backdrop hidden"
+                      aria-label="history replay panel"
+                      aria-hidden="true"
+                    >
                       <div
                         id="history-replay-dialog"
                         class="modal history-replay-dialog"
@@ -999,19 +1409,46 @@
                         aria-labelledby="history-replay-title"
                         tabindex="-1"
                       >
-                      <div class="history-replay-panel-body">
-                        <div class="history-replay-progress">
-                          <h5 id="history-replay-title" class="history-replay-title">Session Replay</h5>
-                          <span id="history-replay-status" class="history-replay-status" role="status" aria-live="polite" aria-atomic="true">Ready</span>
-                          <span id="history-replay-counter" class="pill muted">0 / 0</span>
+                        <div class="history-replay-panel-body">
+                          <div class="history-replay-progress">
+                            <h5 id="history-replay-title" class="history-replay-title">
+                              Session Replay
+                            </h5>
+                            <span
+                              id="history-replay-status"
+                              class="history-replay-status"
+                              role="status"
+                              aria-live="polite"
+                              aria-atomic="true"
+                              >Ready</span
+                            >
+                            <span id="history-replay-counter" class="pill muted">0 / 0</span>
+                          </div>
+                          <ul id="history-replay-list" class="history-replay-list"></ul>
+                          <div class="editor-actions">
+                            <button
+                              id="history-replay-start-button"
+                              type="button"
+                              class="action-btn ok"
+                            >
+                              Start
+                            </button>
+                            <button
+                              id="history-replay-cancel-button"
+                              type="button"
+                              class="action-btn client hidden"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              id="history-replay-close-button"
+                              type="button"
+                              class="action-btn muted"
+                            >
+                              Close
+                            </button>
+                          </div>
                         </div>
-                        <ul id="history-replay-list" class="history-replay-list"></ul>
-                        <div class="editor-actions">
-                          <button id="history-replay-start-button" type="button" class="action-btn ok">Start</button>
-                          <button id="history-replay-cancel-button" type="button" class="action-btn client hidden">Cancel</button>
-                          <button id="history-replay-close-button" type="button" class="action-btn muted">Close</button>
-                        </div>
-                      </div>
                       </div>
                     </div>
                   </section>
@@ -1021,7 +1458,14 @@
           </section>
         </section>
 
-        <section class="view-panel hidden" data-panel="settings" id="panel-settings" role="tabpanel" aria-labelledby="nav-settings" aria-hidden="true">
+        <section
+          class="view-panel hidden"
+          data-panel="settings"
+          id="panel-settings"
+          role="tabpanel"
+          aria-labelledby="nav-settings"
+          aria-hidden="true"
+        >
           <section class="settings-panel" aria-label="settings preview">
             <div class="section-head">
               <div>
@@ -1051,7 +1495,9 @@
                   </select>
                 </label>
                 <div class="editor-actions">
-                  <button type="button" class="action-btn preview">Save Preferences (Preview)</button>
+                  <button type="button" class="action-btn preview">
+                    Save Preferences (Preview)
+                  </button>
                 </div>
               </section>
 
@@ -1077,25 +1523,38 @@
                 <h4>Runtime Diagnostics</h4>
                 <p class="preview-note">Quick checks and logs for QA troubleshooting workflows.</p>
                 <div class="editor-actions">
-                  <button type="button" class="action-btn preview">Run Health Check (Preview)</button>
+                  <button type="button" class="action-btn preview">
+                    Run Health Check (Preview)
+                  </button>
                   <button type="button" class="action-btn preview">Download Logs (Preview)</button>
                 </div>
               </section>
 
               <section class="settings-card" aria-label="danger zone">
                 <h4>Danger Zone</h4>
-                <p class="preview-note">Reset local rules and captured evidence in this workspace.</p>
+                <p class="preview-note">
+                  Reset local rules and captured evidence in this workspace.
+                </p>
                 <div class="editor-actions">
-                  <button type="button" class="action-btn preview">Reset Workspace (Preview)</button>
+                  <button type="button" class="action-btn preview">
+                    Reset Workspace (Preview)
+                  </button>
                 </div>
               </section>
             </div>
 
-            <section class="settings-card error-profiles-section" aria-label="error simulation profiles">
+            <section
+              class="settings-card error-profiles-section"
+              aria-label="error simulation profiles"
+            >
               <div class="section-head">
                 <div>
                   <h4>QA Error Simulation Profiles</h4>
-                  <p>One-click profiles to simulate common error scenarios. Activating a profile creates an intercept rule that returns the configured response for all <code>/api</code> requests.</p>
+                  <p>
+                    One-click profiles to simulate common error scenarios. Activating a profile
+                    creates an intercept rule that returns the configured response for all
+                    <code>/api</code> requests.
+                  </p>
                 </div>
               </div>
               <ul id="error-profiles-list" class="error-profiles-list">

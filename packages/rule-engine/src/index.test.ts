@@ -43,10 +43,7 @@ describe("evaluateRules", () => {
   });
 
   it("returns empty matchedRules when all rules are disabled", () => {
-    const rules = [
-      makeRule({ id: "r1", enabled: false }),
-      makeRule({ id: "r2", enabled: false })
-    ];
+    const rules = [makeRule({ id: "r1", enabled: false }), makeRule({ id: "r2", enabled: false })];
     const result = evaluateRules(rules, makeRequest());
     expect(result.matchedRules).toHaveLength(0);
   });
@@ -250,10 +247,7 @@ describe("multiple matching rules", () => {
       makeRule({ id: "r2", condition: { urlContains: "/orders" } }),
       makeRule({ id: "r3", condition: { urlContains: "/checkout" } })
     ];
-    const result = evaluateRules(
-      rules,
-      makeRequest({ url: "https://example.com/api/orders" })
-    );
+    const result = evaluateRules(rules, makeRequest({ url: "https://example.com/api/orders" }));
     const ids = result.matchedRules.map((r) => r.ruleId);
     expect(ids).toContain("r1");
     expect(ids).toContain("r2");
@@ -265,10 +259,7 @@ describe("multiple matching rules", () => {
       makeRule({ id: "enabled", enabled: true, condition: { urlContains: "/api" } }),
       makeRule({ id: "disabled", enabled: false, condition: { urlContains: "/api" } })
     ];
-    const result = evaluateRules(
-      rules,
-      makeRequest({ url: "https://example.com/api/data" })
-    );
+    const result = evaluateRules(rules, makeRequest({ url: "https://example.com/api/data" }));
     expect(result.matchedRules).toHaveLength(1);
     expect(result.matchedRules[0].ruleId).toBe("enabled");
   });
@@ -314,10 +305,7 @@ describe("rule type: rewrite-query", () => {
       condition: { urlContains: "/checkout" },
       payload: { addOrReplace: [{ key: "env", value: "test" }] }
     });
-    const result = evaluateRules(
-      [rule],
-      makeRequest({ url: "https://example.com/checkout" })
-    );
+    const result = evaluateRules([rule], makeRequest({ url: "https://example.com/checkout" }));
     expect(result.matchedRules).toHaveLength(1);
     expect(result.matchedRules[0].type).toBe("rewrite-query");
   });
@@ -328,10 +316,7 @@ describe("rule type: rewrite-query", () => {
       condition: { urlContains: "/checkout" },
       payload: { addOrReplace: [{ key: "env", value: "test" }] }
     });
-    const result = evaluateRules(
-      [rule],
-      makeRequest({ url: "https://example.com/api/orders" })
-    );
+    const result = evaluateRules([rule], makeRequest({ url: "https://example.com/api/orders" }));
     expect(result.matchedRules).toHaveLength(0);
   });
 
@@ -350,18 +335,25 @@ describe("rule type: rewrite-response", () => {
       condition: { urlContains: "/api/orders" },
       payload: { body: '{"ok":true}' }
     });
-    const result = evaluateRules(
-      [rule],
-      makeRequest({ url: "https://example.com/api/orders" })
-    );
+    const result = evaluateRules([rule], makeRequest({ url: "https://example.com/api/orders" }));
     expect(result.matchedRules).toHaveLength(1);
     expect(result.matchedRules[0].type).toBe("rewrite-response");
   });
 
   it("can coexist with other rule types in the same match", () => {
     const rules = [
-      makeRule({ id: "rr", type: "rewrite-response", condition: { urlContains: "/api" }, payload: { body: "{}" } }),
-      makeRule({ id: "rq", type: "rewrite-query", condition: { urlContains: "/api" }, payload: { addOrReplace: [{ key: "x", value: "1" }] } })
+      makeRule({
+        id: "rr",
+        type: "rewrite-response",
+        condition: { urlContains: "/api" },
+        payload: { body: "{}" }
+      }),
+      makeRule({
+        id: "rq",
+        type: "rewrite-query",
+        condition: { urlContains: "/api" },
+        payload: { addOrReplace: [{ key: "x", value: "1" }] }
+      })
     ];
     const result = evaluateRules(rules, makeRequest({ url: "https://example.com/api/orders" }));
     const types = result.matchedRules.map((r) => r.type);
@@ -381,10 +373,7 @@ describe("rule type: rewrite-request-body", () => {
       condition: { urlContains: "/api/orders" },
       payload: { body: '{"items":[]}' }
     });
-    const result = evaluateRules(
-      [rule],
-      makeRequest({ url: "https://example.com/api/orders" })
-    );
+    const result = evaluateRules([rule], makeRequest({ url: "https://example.com/api/orders" }));
     expect(result.matchedRules).toHaveLength(1);
     expect(result.matchedRules[0].type).toBe("rewrite-request-body");
   });
@@ -395,10 +384,7 @@ describe("rule type: rewrite-request-body", () => {
       condition: { urlContains: "/api/orders" },
       payload: { body: '{"items":[]}' }
     });
-    const result = evaluateRules(
-      [rule],
-      makeRequest({ url: "https://example.com/api/users" })
-    );
+    const result = evaluateRules([rule], makeRequest({ url: "https://example.com/api/users" }));
     expect(result.matchedRules).toHaveLength(0);
   });
 
@@ -408,8 +394,14 @@ describe("rule type: rewrite-request-body", () => {
       condition: { method: "POST", urlContains: "/api" },
       payload: { body: "{}" }
     });
-    const postResult = evaluateRules([rule], makeRequest({ method: "POST", url: "https://example.com/api/orders" }));
-    const getResult = evaluateRules([rule], makeRequest({ method: "GET", url: "https://example.com/api/orders" }));
+    const postResult = evaluateRules(
+      [rule],
+      makeRequest({ method: "POST", url: "https://example.com/api/orders" })
+    );
+    const getResult = evaluateRules(
+      [rule],
+      makeRequest({ method: "GET", url: "https://example.com/api/orders" })
+    );
     expect(postResult.matchedRules).toHaveLength(1);
     expect(getResult.matchedRules).toHaveLength(0);
   });

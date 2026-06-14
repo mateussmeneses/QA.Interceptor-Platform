@@ -18,29 +18,30 @@ Phase FE-0 (Design System & Foundation) has been **fully completed**. All design
 
 ### Design Tokens & Setup (6 Tasks)
 
-| Task ID | Title | Owner | Status | Details |
-|---------|-------|-------|--------|---------|
-| **DES-001** | CSS custom properties & color palette | DESIGNER | ✅ | 10 semantic colors + light/dark variants |
-| **DES-002** | Typography system & font stack | DESIGNER | ✅ | Inter 16px body, heading scales, Fira Code mono |
-| **DES-003** | Spacing scale & layout grid | DESIGNER | ✅ | 8-point scale (2/4/8/12/16/24/32/48/64px) |
-| **DES-004** | Animation primitives & easing | DESIGNER | ✅ | Micro/Fast/Base/Slow + 4 easing functions |
-| **DES-005** | Focus ring & keyboard focus styles | DESIGNER | ✅ | 2px blue outline, :focus-visible support |
-| **DES-006** | Light/dark theme CSS variables | DESIGNER | ✅ | Dual palettes, `[data-theme]` selector |
+| Task ID     | Title                                 | Owner    | Status | Details                                         |
+| ----------- | ------------------------------------- | -------- | ------ | ----------------------------------------------- |
+| **DES-001** | CSS custom properties & color palette | DESIGNER | ✅     | 10 semantic colors + light/dark variants        |
+| **DES-002** | Typography system & font stack        | DESIGNER | ✅     | Inter 16px body, heading scales, Fira Code mono |
+| **DES-003** | Spacing scale & layout grid           | DESIGNER | ✅     | 8-point scale (2/4/8/12/16/24/32/48/64px)       |
+| **DES-004** | Animation primitives & easing         | DESIGNER | ✅     | Micro/Fast/Base/Slow + 4 easing functions       |
+| **DES-005** | Focus ring & keyboard focus styles    | DESIGNER | ✅     | 2px blue outline, :focus-visible support        |
+| **DES-006** | Light/dark theme CSS variables        | DESIGNER | ✅     | Dual palettes, `[data-theme]` selector          |
 
 ### Base HTML & Global Styles (4 Tasks)
 
-| Task ID | Title | Owner | Status | Details |
-|---------|-------|-------|--------|---------|
-| **CSS-001** | Global reset & base styles | DEVELOPER | ✅ | Normalize, box-sizing, typography, defaults |
-| **CSS-002** | Dark mode toggle hook in HTML | DEVELOPER | ✅ | data-theme attribute, localStorage persistence |
-| **CSS-003** | Responsive breakpoint variables | DEVELOPER | ✅ | mobile/tablet/laptop/desktop/xl breakpoints |
-| **CSS-004** | Print styles (export evidence) | DEVELOPER | ✅ | Hide UI, full-width, paper-friendly colors |
+| Task ID     | Title                           | Owner     | Status | Details                                        |
+| ----------- | ------------------------------- | --------- | ------ | ---------------------------------------------- |
+| **CSS-001** | Global reset & base styles      | DEVELOPER | ✅     | Normalize, box-sizing, typography, defaults    |
+| **CSS-002** | Dark mode toggle hook in HTML   | DEVELOPER | ✅     | data-theme attribute, localStorage persistence |
+| **CSS-003** | Responsive breakpoint variables | DEVELOPER | ✅     | mobile/tablet/laptop/desktop/xl breakpoints    |
+| **CSS-004** | Print styles (export evidence)  | DEVELOPER | ✅     | Hide UI, full-width, paper-friendly colors     |
 
 ---
 
 ## 📁 Files Created
 
 ### Design Tokens & Styles
+
 - ✅ **`tokens.css`** (280 lines)
   - 10 semantic colors (light + dark)
   - 8 typography scales
@@ -60,13 +61,13 @@ Phase FE-0 (Design System & Foundation) has been **fully completed**. All design
   - 9 keyframe animations (fadeIn, slideIn, spin, pulse, etc)
 
 - ✅ **`layout.css`** (450+ lines)
-  - Flexbox utilities (flex, flex-col, flex-between, gap-*)
-  - Grid utilities (grid-cols-1-4, grid-gap-*)
-  - Padding utilities (p-*, px-*, py-*, pt-*, etc)
-  - Margin utilities (m-*, mx-auto, mt-*, mb-*, etc)
+  - Flexbox utilities (flex, flex-col, flex-between, gap-\*)
+  - Grid utilities (grid-cols-1-4, grid-gap-\*)
+  - Padding utilities (p-_, px-_, py-_, pt-_, etc)
+  - Margin utilities (m-_, mx-auto, mt-_, mb-\*, etc)
   - Sizing, display, overflow utilities
   - Text utilities (align, size, weight, truncate, line-clamp)
-  - Color utilities (bg-*, text-*)
+  - Color utilities (bg-_, text-_)
   - Shadow utilities (shadow-sm/md/lg/xl)
   - Position & z-index utilities
   - Container patterns (.panel, .card)
@@ -75,6 +76,7 @@ Phase FE-0 (Design System & Foundation) has been **fully completed**. All design
   - Imports tokens → global → layout → components (in order)
 
 ### Theme Management
+
 - ✅ **`theme-manager.ts`** (165 lines)
   - Detect system preference (prefers-color-scheme)
   - Save preference to localStorage
@@ -84,6 +86,7 @@ Phase FE-0 (Design System & Foundation) has been **fully completed**. All design
   - Singleton pattern
 
 ### Component Foundational Work
+
 - ✅ **`Button.tsx`** (First component example, 110 lines)
   - 5 variants: primary, secondary, ghost, danger, compact
   - 3 sizes: sm (32px), m (40px), lg (48px)
@@ -113,6 +116,7 @@ Phase FE-0 (Design System & Foundation) has been **fully completed**. All design
   - HTML attributes tests
 
 ### Documentation
+
 - ✅ **`DESIGN_SYSTEM_IMPLEMENTATION_GUIDE.md`** (650+ lines)
   - How to use tokens (colors, spacing, typography)
   - Utility classes reference
@@ -126,28 +130,33 @@ Phase FE-0 (Design System & Foundation) has been **fully completed**. All design
 ## 🎨 Design System Features
 
 ### Color Palette
+
 - 10 semantic colors (primary, success, warning, error, info, surfaces, text, borders)
 - Light mode: `#2F6DC4` primary (blue)
 - Dark mode: `#5B9FFF` primary (lighter blue)
 - Automatic dark mode support via CSS variables
 
 ### Typography
+
 - **Font families**: Inter (body), Fira Code (mono)
 - **Sizes**: 12px to 28px (8 variants)
 - **Weights**: 400/500/600/700
 - **Line heights**: 1.2 (tight), 1.5 (normal), 1.75 (relaxed)
 
 ### Spacing
+
 - 8-point scale: 2, 4, 8, 12, 16, 24, 32, 48, 64px
 - Gap, padding, margin utilities for all scales
 - Responsive gaps on mobile
 
 ### Animations
+
 - Durations: 100ms (micro), 150ms (fast), 300ms (base), 500ms (slow)
 - Easings: in, out, in-out, linear
 - 9 predefined keyframes: fadeIn, slideIn, spin, pulse, etc
 
 ### Accessibility
+
 - WCAG 2.1 AA compliant
 - Focus rings on all interactive elements (:focus-visible)
 - High contrast mode support
@@ -161,6 +170,7 @@ Phase FE-0 (Design System & Foundation) has been **fully completed**. All design
 Ready to build **25 core components** in 5 categories:
 
 ### 1. Button Components (5 tasks)
+
 - ✅ Primary button (BTN-001)
 - ✅ Secondary button (BTN-002)
 - ✅ Ghost button (BTN-003)
@@ -170,6 +180,7 @@ Ready to build **25 core components** in 5 categories:
 → **Button component is partially done** (can be used as template for others)
 
 ### 2. Input Components (8 tasks)
+
 - Text input (INP-001)
 - Search input with icon (INP-002)
 - Select/dropdown (INP-003)
@@ -180,6 +191,7 @@ Ready to build **25 core components** in 5 categories:
 - Textarea (INP-008)
 
 ### 3. Display Components (7 tasks)
+
 - Card (DSP-001)
 - Badge/pill (DSP-002)
 - Status indicator (DSP-003)
@@ -189,12 +201,14 @@ Ready to build **25 core components** in 5 categories:
 - Toast/notification (DSP-007)
 
 ### 4. Data Display (4 tasks)
+
 - Table (TAB-001)
 - List item (TAB-002)
 - Code block (TAB-003)
 - Diff viewer (TAB-004)
 
 ### 5. Modal & Dialog (4 tasks)
+
 - Modal (MOD-001)
 - Dialog/form modal (MOD-002)
 - Confirmation dialog (MOD-003)
@@ -204,15 +218,15 @@ Ready to build **25 core components** in 5 categories:
 
 ## 📊 Metrics
 
-| Metric | Value |
-|--------|-------|
-| CSS Lines Written | 1,700+ |
-| TypeScript Lines | 300+ |
-| Test Cases | 25+ |
-| Documentation | 650+ lines |
-| Design Tokens | 100+ |
-| Utility Classes | 150+ |
-| Color Variants | 40+ (light + dark) |
+| Metric            | Value              |
+| ----------------- | ------------------ |
+| CSS Lines Written | 1,700+             |
+| TypeScript Lines  | 300+               |
+| Test Cases        | 25+                |
+| Documentation     | 650+ lines         |
+| Design Tokens     | 100+               |
+| Utility Classes   | 150+               |
+| Color Variants    | 40+ (light + dark) |
 
 ---
 
@@ -230,6 +244,7 @@ Ready to build **25 core components** in 5 categories:
 ## 📝 Implementation Notes
 
 ### Token Architecture
+
 ```
 html (light mode defaults)
 ├── --primary: #2F6DC4
@@ -249,30 +264,55 @@ html[data-theme="dark"] (dark mode overrides)
 ```
 
 ### Component CSS Pattern
+
 ```css
 /* 1. Base styles */
-.btn { /* common properties */ }
+.btn {
+  /* common properties */
+}
 
 /* 2. Sizes */
-.btn-sm { /* 32px */ }
-.btn-m { /* 40px */ }
-.btn-lg { /* 48px */ }
+.btn-sm {
+  /* 32px */
+}
+.btn-m {
+  /* 40px */
+}
+.btn-lg {
+  /* 48px */
+}
 
 /* 3. Variants */
-.btn-primary { /* main CTAs */ }
-.btn-secondary { /* alt CTAs */ }
-.btn-ghost { /* minimal */ }
-.btn-danger { /* destructive */ }
+.btn-primary {
+  /* main CTAs */
+}
+.btn-secondary {
+  /* alt CTAs */
+}
+.btn-ghost {
+  /* minimal */
+}
+.btn-danger {
+  /* destructive */
+}
 
 /* 4. States */
-.btn:hover { /* interactive */ }
-.btn:disabled { /* disabled */ }
+.btn:hover {
+  /* interactive */
+}
+.btn:disabled {
+  /* disabled */
+}
 
 /* 5. Dark mode */
-html[data-theme="dark"] .btn { /* dark variants */ }
+html[data-theme="dark"] .btn {
+  /* dark variants */
+}
 
 /* 6. Accessibility */
-@media (prefers-reduced-motion: reduce) { /* respect preferences */ }
+@media (prefers-reduced-motion: reduce) {
+  /* respect preferences */
+}
 ```
 
 ---
@@ -280,6 +320,7 @@ html[data-theme="dark"] .btn { /* dark variants */ }
 ## 📚 Quick Reference
 
 ### Using Tokens in Components
+
 ```css
 .my-component {
   background: var(--surface-bg);
@@ -296,6 +337,7 @@ html[data-theme="dark"] .btn { /* dark variants */ }
 ```
 
 ### Using Utility Classes in HTML
+
 ```html
 <div class="flex gap-m p-l rounded bg-surface shadow-md">
   <div class="flex-1">
@@ -307,6 +349,7 @@ html[data-theme="dark"] .btn { /* dark variants */ }
 ```
 
 ### Theme Toggle
+
 ```typescript
 import { toggleTheme } from "./shared/theme-manager";
 

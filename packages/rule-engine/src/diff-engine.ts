@@ -100,7 +100,7 @@ const buildDiffResult = (
   let rightNum = 1;
 
   while (li < m || ri < n) {
-    const matched = li < m && ri < n && (match[li]?.[ri] === true);
+    const matched = li < m && ri < n && match[li]?.[ri] === true;
 
     if (matched) {
       const content = leftLines[li] ?? "";
@@ -116,22 +116,38 @@ const buildDiffResult = (
       if (nextMatchLeft <= nextMatchRight) {
         // Prefer consuming left (removed)
         if (li < m) {
-          leftResult.push({ status: "removed", lineNumber: leftNum++, content: leftLines[li] ?? "" });
+          leftResult.push({
+            status: "removed",
+            lineNumber: leftNum++,
+            content: leftLines[li] ?? ""
+          });
           rightResult.push({ status: "removed", lineNumber: -1, content: "" });
           li++;
         } else {
           leftResult.push({ status: "added", lineNumber: -1, content: "" });
-          rightResult.push({ status: "added", lineNumber: rightNum++, content: rightLines[ri] ?? "" });
+          rightResult.push({
+            status: "added",
+            lineNumber: rightNum++,
+            content: rightLines[ri] ?? ""
+          });
           ri++;
         }
       } else {
         // Prefer consuming right (added)
         if (ri < n) {
           leftResult.push({ status: "added", lineNumber: -1, content: "" });
-          rightResult.push({ status: "added", lineNumber: rightNum++, content: rightLines[ri] ?? "" });
+          rightResult.push({
+            status: "added",
+            lineNumber: rightNum++,
+            content: rightLines[ri] ?? ""
+          });
           ri++;
         } else {
-          leftResult.push({ status: "removed", lineNumber: leftNum++, content: leftLines[li] ?? "" });
+          leftResult.push({
+            status: "removed",
+            lineNumber: leftNum++,
+            content: leftLines[li] ?? ""
+          });
           rightResult.push({ status: "removed", lineNumber: -1, content: "" });
           li++;
         }
@@ -147,7 +163,7 @@ const buildDiffResult = (
     rightLines: rightResult,
     hasChanges: addedCount > 0 || removedCount > 0,
     addedCount,
-    removedCount,
+    removedCount
   };
 };
 

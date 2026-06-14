@@ -5,7 +5,7 @@ import {
   parseCapturedRequests,
   parseResponseAssertions,
   parseMockEnvVars,
-  parseRuleValidation,
+  parseRuleValidation
 } from "./storage-parsers.js";
 
 // ---------------------------------------------------------------------------
@@ -21,7 +21,7 @@ describe("parseRules", () => {
     priority: 10,
     createdAt: "2026-01-01T00:00:00Z",
     condition: { urlContains: "/api" },
-    payload: {},
+    payload: {}
   };
 
   it("returns empty array for non-array input", () => {
@@ -53,7 +53,7 @@ describe("parseRules", () => {
       undefined,
       { id: "bad" }, // missing required fields
       { ...validRule, enabled: "yes" }, // wrong type
-      { ...validRule, priority: "high" }, // wrong type
+      { ...validRule, priority: "high" } // wrong type
     ];
     expect(parseRules(invalid)).toHaveLength(0);
   });
@@ -75,7 +75,7 @@ describe("parseRuleGroups", () => {
     name: "Core",
     enabled: true,
     priority: 0,
-    createdAt: "2026-01-01T00:00:00Z",
+    createdAt: "2026-01-01T00:00:00Z"
   };
 
   it("returns empty for non-array", () => {
@@ -107,7 +107,7 @@ describe("parseCapturedRequests", () => {
     timestamp: "2026-01-01T10:00:00Z",
     captureSource: "network",
     startedAtMs: 1735725600000,
-    matchedRules: [],
+    matchedRules: []
   };
 
   it("returns empty for non-array", () => {
@@ -126,7 +126,7 @@ describe("parseCapturedRequests", () => {
       body: '{"key":"val"}',
       resourceType: "xmlhttprequest",
       tabId: 42,
-      response: { status: 200, durationMs: 120, timestamp: "2026-01-01T10:00:00Z" },
+      response: { status: 200, durationMs: 120, timestamp: "2026-01-01T10:00:00Z" }
     };
     const result = parseCapturedRequests([withOptional]);
     expect(result[0].body).toBe('{"key":"val"}');
@@ -152,7 +152,7 @@ describe("parseCapturedRequests", () => {
   it("accepts matchedRules with all required fields", () => {
     const withRules = {
       ...validRequest,
-      matchedRules: [{ ruleId: "r1", ruleName: "Block tracking", type: "block" }],
+      matchedRules: [{ ruleId: "r1", ruleName: "Block tracking", type: "block" }]
     };
     const result = parseCapturedRequests([withRules]);
     expect(result[0].matchedRules).toHaveLength(1);
@@ -169,7 +169,7 @@ describe("parseResponseAssertions", () => {
     type: "status",
     enabled: true,
     expected: 200,
-    createdAt: "2026-01-01T00:00:00Z",
+    createdAt: "2026-01-01T00:00:00Z"
   };
 
   it("returns empty for non-array", () => {
@@ -201,7 +201,7 @@ describe("parseResponseAssertions", () => {
       ...validAssertion,
       path: "$.user.id",
       actual: 42,
-      error: "Some error",
+      error: "Some error"
     };
     const result = parseResponseAssertions([withOptional]);
     expect(result[0].path).toBe("$.user.id");
@@ -219,7 +219,7 @@ describe("parseMockEnvVars", () => {
     name: "baseUrl",
     value: "https://qa.example.com",
     enabled: true,
-    createdAt: "2026-01-01T00:00:00Z",
+    createdAt: "2026-01-01T00:00:00Z"
   };
 
   it("returns empty for non-array", () => {
@@ -251,7 +251,7 @@ describe("parseRuleValidation", () => {
   const validValidation = {
     timestamp: "2026-01-01T10:00:00Z",
     passed: true,
-    checks: [{ name: "rewrite-enabled", passed: true, details: "1 rule enabled" }],
+    checks: [{ name: "rewrite-enabled", passed: true, details: "1 rule enabled" }]
   };
 
   it("returns null for non-object input", () => {
@@ -277,8 +277,8 @@ describe("parseRuleValidation", () => {
       ...validValidation,
       checks: [
         { name: "ok-check", passed: true, details: "looks good" },
-        { name: "bad-check" }, // missing passed and details
-      ],
+        { name: "bad-check" } // missing passed and details
+      ]
     };
     const result = parseRuleValidation(withBadChecks);
     expect(result?.checks).toHaveLength(1);
@@ -287,7 +287,7 @@ describe("parseRuleValidation", () => {
   it("returns empty checks array when all checks are invalid", () => {
     const withNoValidChecks = {
       ...validValidation,
-      checks: [{ name: "x" }, null, "bad"],
+      checks: [{ name: "x" }, null, "bad"]
     };
     const result = parseRuleValidation(withNoValidChecks);
     expect(result?.checks).toHaveLength(0);

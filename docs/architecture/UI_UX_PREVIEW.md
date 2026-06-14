@@ -473,11 +473,13 @@ Example card in dark mode:
 ## Mobile-Responsive Considerations (Future)
 
 Tablet layout (768–1024px):
+
 - Sidebar collapses to icon-only navigation
 - Content expands to full width
 - Toolbar labels hide, show on hover
 
 Mobile layout (< 768px):
+
 - Full-screen modal per view (not sidepanel)
 - Bottom navigation tabs
 - Touch-friendly buttons (44px min height)
