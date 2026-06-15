@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { Rule, InterceptedRequest } from "@qa-interceptor/shared-types";
-import { evaluateRules } from "./index.js";
+import { evaluateRules, describeRuleCoverage } from "./index.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -411,5 +411,118 @@ describe("rule type: rewrite-request-body", () => {
     const rule = makeRule({ type: "rewrite-request-body", condition: {}, payload });
     const result = evaluateRules([rule], makeRequest());
     expect(result.matchedRules[0].payload).toEqual(payload);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// New rule type: insert-script (QAI-003 / ADR-009)
+// ---------------------------------------------------------------------------
+
+describe("rule type: insert-script", () => {
+  it("matches an insert-script rule by urlContains and exposes its code payload", () => {
+    const rule = makeRule({
+      type: "insert-script",
+      condition: { urlContains: "/app" },
+      payload: { code: "console.log('qa')" }
+    });
+    const result = evaluateRules([rule], makeRequest({ url: "https://example.com/app/home" }));
+    expect(result.matchedRules).toHaveLength(1);
+    expect(result.matchedRules[0].type).toBe("insert-script");
+    expect(result.matchedRules[0].payload).toEqual({ code: "console.log('qa')" });
+  });
+
+  it("does not match when the URL does not contain the substring", () => {
+    const rule = makeRule({
+      type: "insert-script",
+      condition: { urlContains: "/admin" },
+      payload: { code: "x" }
+    });
+    const result = evaluateRules([rule], makeRequest({ url: "https://example.com/app" }));
+    expect(result.matchedRules).toHaveLength(0);
+  });
+
+  it("matches all pages when the condition has no urlContains (method-only/none)", () => {
+    const rule = makeRule({ type: "insert-script", condition: {}, payload: { code: "x" } });
+    const result = evaluateRules([rule], makeRequest({ url: "https://anything.test/" }));
+    expect(result.matchedRules).toHaveLength(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// New rule type: inject-css (QAI-004 / ADR-009 trail)
+// ---------------------------------------------------------------------------
+
+describe("rule type: inject-css", () => {
+  it("matches an inject-css rule by urlContains and exposes its css payload", () => {
+    const rule = makeRule({
+      type: "inject-css",
+      condition: { urlContains: "/app" },
+      payload: { css: "body{background:red}" }
+    });
+    const result = evaluateRules([rule], makeRequest({ url: "https://example.com/app" }));
+    expect(result.matchedRules).toHaveLength(1);
+    expect(result.matchedRules[0].type).toBe("inject-css");
+    expect(result.matchedRules[0].payload).toEqual({ css: "body{background:red}" });
+  });
+
+  it("does not match when the URL does not contain the substring", () => {
+    const rule = makeRule({
+      type: "inject-css",
+      condition: { urlContains: "/admin" },
+      payload: { css: "x" }
+    });
+    const result = evaluateRules([rule], makeRequest({ url: "https://example.com/app" }));
+    expect(result.matchedRules).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// describeRuleCoverage (QAI-001 / ADR-008)
+// ---------------------------------------------------------------------------
+
+describe("describeRuleCoverage", () => {
+  it("reports matchesAllUrls when there is no urlContains", () => {
+    expect(describeRuleCoverage(makeRule({ condition: {} }))).toEqual({
+      matchesAllUrls: true,
+      methodScoped: false
+    });
+  });
+
+  it("treats an empty urlContains string as match-all (consistent with the matcher)", () => {
+    expect(describeRuleCoverage(makeRule({ condition: { urlContains: "" } })).matchesAllUrls).toBe(
+      true
+    );
+  });
+
+  it("reports a URL-scoped rule as not matchesAllUrls", () => {
+    expect(
+      describeRuleCoverage(makeRule({ condition: { urlContains: "/api" } })).matchesAllUrls
+    ).toBe(false);
+  });
+
+  it("flags methodScoped when a method is present", () => {
+    expect(describeRuleCoverage(makeRule({ condition: { method: "POST" } }))).toEqual({
+      matchesAllUrls: true,
+      methodScoped: true
+    });
+  });
+
+  it("reports both flags for a fully scoped condition", () => {
+    expect(
+      describeRuleCoverage(makeRule({ condition: { method: "PUT", urlContains: "/api" } }))
+    ).toEqual({ matchesAllUrls: false, methodScoped: true });
+  });
+
+  // Parity guard: when the engine says a method-only rule matches all URLs, the
+  // matcher must actually match every URL for that method (no adapter drift).
+  it("coverage agrees with evaluateRules for a method-only rule", () => {
+    const rule = makeRule({ condition: { method: "POST" } });
+    const coverage = describeRuleCoverage(rule);
+    expect(coverage.matchesAllUrls).toBe(true);
+
+    for (const url of ["https://a.com/", "https://b.com/x/y", "https://c.com/api/orders?z=1"]) {
+      const matched = evaluateRules([rule], makeRequest({ method: "POST", url })).matchedRules;
+      expect(matched).toHaveLength(1);
+    }
   });
 });

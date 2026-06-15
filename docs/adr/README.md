@@ -22,3 +22,5 @@ Each ADR follows the [Nygard format](https://cognitect.com/blog/2011/11/15/docum
 | [ADR-005](ADR-005-pure-function-modules.md)             | Pure function modules for testability   | Accepted |
 | [ADR-006](ADR-006-phase4-proxy-architecture.md)         | Phase 4 proxy engine architecture       | Proposed |
 | [ADR-007](ADR-007-websocket-capture-feasibility.md)     | WebSocket capture feasibility (CAP-003) | Accepted |
+| [ADR-008](ADR-008-method-only-rule-semantics.md)        | Method-only rule semantics (QAI-001)    | Accepted |
+| [ADR-009](ADR-009-insert-scripts-injection.md)          | Insert Scripts injection (QAI-003)      | Accepted |

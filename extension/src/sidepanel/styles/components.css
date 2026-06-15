@@ -88,10 +88,21 @@ body {
 }
 
 .sidebar-hint {
-  margin: auto 0 0;
+  margin: 0;
   font-size: var(--font-xs);
   color: var(--text-tertiary);
   line-height: var(--lh-normal);
+}
+
+/* QAI-014: open-in-window action sits at the bottom of the sidebar. */
+.sidebar-action {
+  margin-top: auto;
+  width: 100%;
+  justify-content: center;
+}
+
+.sidebar-action + .sidebar-hint {
+  margin-top: var(--spacing-sm);
 }
 
 /* ----- Workspace ----- */
@@ -764,6 +775,7 @@ textarea::placeholder {
   padding: var(--spacing-sm);
   background: var(--surface-alt);
   border-radius: var(--radius-m);
+  min-width: 0;
 }
 
 .exec-badge {
@@ -813,6 +825,8 @@ textarea::placeholder {
 
 .exec-body small {
   color: var(--text-secondary);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .response-body-preview {
@@ -826,6 +840,12 @@ textarea::placeholder {
   font-size: var(--font-xs);
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.response-body-preview.muted {
+  color: var(--text-tertiary);
+  font-family: var(--font-sans);
+  font-style: italic;
 }
 
 .response-headers-list {
@@ -1109,4 +1129,112 @@ textarea::placeholder {
 .history-replay-status {
   font-size: var(--font-xs);
   color: var(--text-secondary);
+}
+
+/* ============================================================================
+   QAI-012: long-URL containment (no horizontal overflow)
+   ============================================================================ */
+
+/* Detail panels can receive very long URLs/IDs; keep them inside the panel. */
+.network-detail,
+.history-detail,
+.network-detail-content,
+.history-detail-content {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.network-detail-top {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+  min-width: 0;
+}
+
+#network-detail-url,
+#network-detail-id,
+.history-detail-head strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Detail grid values (IDs, URLs, timestamps) must not push the grid wider. */
+.network-detail-grid > div {
+  min-width: 0;
+}
+
+.network-detail-grid > div > span {
+  display: block;
+  font-size: var(--font-xs);
+  color: var(--text-tertiary);
+}
+
+.network-detail-grid > div > strong {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* List-row URLs already ellipsize; ensure their flex parent can shrink. */
+.network-row-main,
+.mock-rule-top,
+.history-session-top {
+  min-width: 0;
+}
+
+/* ============================================================================
+   QAI-013: spacing review — breathing room between stacked sections
+   ============================================================================ */
+
+/* Sibling cards/sections inside a column get vertical rhythm even if a parent
+   forgot a gap. */
+.rules-groups-manager,
+.rules-collections-manager,
+.network-assertions-section,
+.network-composed-library,
+.network-diff-section,
+.response-assertions-library,
+.mock-template-library,
+.mock-env-manager,
+.history-export-card,
+.history-replay-card,
+.history-baseline-card {
+  margin-top: var(--spacing-m);
+}
+
+/* The error-profiles section sits below the settings grid. */
+.error-profiles-section {
+  margin-top: var(--spacing-m);
+}
+
+/* Toolbars and action rows should not hug the content above them. */
+.network-actions-row,
+.rules-actions-row {
+  margin-top: var(--spacing-2xs);
+}
+
+/* ============================================================================
+   QAI-011: list pagination controls
+   ============================================================================ */
+
+.list-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.list-pagination .action-btn {
+  padding: var(--spacing-2xs) var(--spacing-sm);
+}
+
+.list-pagination-info {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  min-width: 96px;
+  text-align: center;
 }

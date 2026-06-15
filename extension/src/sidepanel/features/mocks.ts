@@ -14,6 +14,7 @@ import type {
 } from "../shared/types";
 import { isMockRule } from "../shared/types";
 import { escapeHtml, formatRuleType, formatRuleCondition, generateId } from "../shared/utils";
+import { buildMockFromEditorValues } from "../shared/rule-builders";
 import { saveRules, saveConditionalMocks } from "../../storage/index";
 
 // ---------------------------------------------------------------------------
@@ -461,75 +462,25 @@ const bindEvents = (): void => {
       return;
     }
 
-    const nextStatus = Number.parseInt(mockEditorHttpStatusEl.value, 10);
+    // QAI-008: assembly is a pure, tested builder so no field is ever dropped.
+    const built = buildMockFromEditorValues(currentRule, {
+      enabled: mockEditorEnabledEl.value,
+      method: mockEditorMethodEl.value,
+      urlContains: mockEditorUrlEl.value,
+      httpStatus: mockEditorHttpStatusEl.value,
+      delayMs: mockEditorDelayMsEl.value,
+      headersJson: mockEditorHeadersEl.value,
+      bodyText: mockEditorBodyEl.value
+    });
 
-    if (!Number.isFinite(nextStatus) || nextStatus < 100 || nextStatus > 599) {
-      setMockSaveStatus("HTTP status must be a number between 100 and 599.", "error");
+    if (!built.ok) {
+      setMockSaveStatus(built.error, "error");
       return;
     }
 
-    const nextDelayRaw = Number.parseInt(mockEditorDelayMsEl.value || "0", 10);
-    const nextDelay = Number.isFinite(nextDelayRaw) && nextDelayRaw > 0 ? nextDelayRaw : 0;
-
-    let nextHeaders: Record<string, string> = {};
-
-    if (mockEditorHeadersEl.value.trim()) {
-      try {
-        const parsed = JSON.parse(mockEditorHeadersEl.value);
-
-        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-          setMockSaveStatus("Headers must be a JSON object.", "error");
-          return;
-        }
-
-        nextHeaders = Object.fromEntries(
-          Object.entries(parsed as Record<string, unknown>).map(([k, v]) => [k, String(v)])
-        );
-      } catch {
-        setMockSaveStatus("Headers JSON is invalid.", "error");
-        return;
-      }
-    }
-
-    let nextBody: unknown = "";
-
-    if (mockEditorBodyEl.value.trim()) {
-      try {
-        nextBody = JSON.parse(mockEditorBodyEl.value);
-      } catch {
-        nextBody = mockEditorBodyEl.value;
-      }
-    }
-
-    const methodValue = mockEditorMethodEl.value.trim().toUpperCase() as HttpMethod | "";
-    const urlContainsValue = mockEditorUrlEl.value.trim();
-
-    const nextRules = _state.rules.map((rule) => {
-      if (rule.id !== selectedMockRuleId) {
-        return rule;
-      }
-
-      const payload: Record<string, unknown> = {
-        ...(rule.payload ?? {}),
-        status: nextStatus,
-        ...(nextDelay > 0 ? { delayMs: nextDelay } : {}),
-        ...(Object.keys(nextHeaders).length > 0 ? { headers: nextHeaders } : {})
-      };
-
-      if (rule.type === "mock-response") {
-        payload.body = nextBody;
-      }
-
-      return {
-        ...rule,
-        enabled: mockEditorEnabledEl.value === "true",
-        condition: {
-          ...(methodValue ? { method: methodValue as HttpMethod } : {}),
-          ...(urlContainsValue ? { urlContains: urlContainsValue } : {})
-        },
-        payload
-      };
-    });
+    const nextRules = _state.rules.map((rule) =>
+      rule.id === selectedMockRuleId ? built.rule : rule
+    );
 
     void saveRules(nextRules);
     setMockSaveStatus("Mock rule saved to local storage.", "ok");

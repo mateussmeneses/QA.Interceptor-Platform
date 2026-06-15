@@ -40,7 +40,9 @@ export type RuleType =
   | "redirect"
   | "delay"
   | "mock-response"
-  | "mock-status";
+  | "mock-status"
+  | "insert-script"
+  | "inject-css";
 
 export type RulesFilterType = "all" | RuleType;
 export type RulesStatusFilter = "all" | "enabled" | "disabled";
@@ -200,7 +202,9 @@ export const isRuleType = (value: unknown): value is RuleType =>
   value === "delay" ||
   value === "redirect" ||
   value === "mock-response" ||
-  value === "mock-status";
+  value === "mock-status" ||
+  value === "insert-script" ||
+  value === "inject-css";
 
 export const isNetworkStatusFilter = (value: string): value is NetworkStatusFilter =>
   value === "all" ||

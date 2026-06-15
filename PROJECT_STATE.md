@@ -5,7 +5,7 @@
 > Update this document whenever you finish a feature or change the architecture.
 
 **Last audit:** 2026-06-13 (full 9-phase audit, evidence by code + build + tests)
-**Current health evidence:** `npm run build` ✅ · full `tsc` ✅ (no errors) · `npm test` ✅ 628 engine + 31 extension tests
+**Current health evidence:** `npm run build` ✅ · full `tsc` ✅ (no errors) · `npm test` ✅ 650 engine + 61 extension tests
 
 ---
 
@@ -52,8 +52,10 @@ No circular dependencies. Import direction is unidirectional.
 
 - Request capture via `webRequest` + render in the inspector.
 - Rules via DNR (all traffic): `rewrite-url`, `rewrite-header`, `redirect`, `block`, `rewrite-query`.
-- Mocks via page bridge: `mock-response`, `mock-status`, `delay`, and sequence mocks work on both `fetch` and `XMLHttpRequest` (CAP-002); `rewrite-response`/`rewrite-request-body` are `fetch`-only.
-- Replay (`REPEAT_REQUEST`), compose, clone request.
+- Mocks via page bridge: `mock-response`, `mock-status`, `delay`, sequence mocks, and `rewrite-response`/`rewrite-request-body` all work on both `fetch` and `XMLHttpRequest` (CAP-002 + QAI-002).
+- Insert Scripts: `insert-script` rule type injects custom JS into matching pages via `chrome.scripting` in the MAIN world on navigation completion (QAI-003 / ADR-009); default-disabled, restricted-URL skip.
+- Inject CSS: `inject-css` rule type injects custom CSS into matching pages via `chrome.scripting.insertCSS` (QAI-004, same trail).
+- Replay (`REPEAT_REQUEST`), compose, clone request. Real request headers (Authorization, etc.) are captured via `webRequest.onSendHeaders` and replayed with cookies (`credentials: "include"`), so Repeat / Edit-and-resend / Compose reuse the original auth token instead of 403ing (QAI-015).
 - Response assertions (`evaluateAssertions` — wired in `network.ts`).
 - Response diff (`diffText` — wired).
 - Rule groups (priority + enabled-group filtering).
@@ -79,7 +81,7 @@ No circular dependencies. Import direction is unidirectional.
 
 - `OBS-001` Diff UI — functional, partial UX.
 - `OBS-004` Execution trace — uses `conflict-detector` (INT-003): 4 conflict kinds with descriptions/suggestions.
-- Response body capture — only for mocked responses (MV3 `webRequest` limitation).
+- Response body capture — real `fetch`/`XHR` JSON/text bodies are now captured at the page level (mock-bridge passthrough) and attached to the matching captured request, shown in the Network detail with an honest empty-state when unavailable (QAI-016). Document/image/cross-origin/streamed responses still expose no body (MV3 `webRequest` limitation).
 
 ### 🟦 Implemented as engines, NOT wired to runtime (value ready, wiring missing)
 
@@ -184,9 +186,9 @@ existing tokens and component classes; do not inline colors or re-introduce Reac
 
 ## 8. Known risks
 
-- **R1 (Critical):** ~~mocks/delay only intercept `fetch`~~ — **MOSTLY FIXED** (CAP-002): conditional + static
-  mocks + delay now also work on `XMLHttpRequest`. Residual: `rewrite-response`/`rewrite-request-body` remain
-  fetch-only; WebSocket frames are uncovered by design (see ADR-007 / CAP-003 — only in-page patching can
+- **R1 (Critical):** ~~mocks/delay only intercept `fetch`~~ — **FIXED** (CAP-002 + QAI-002): conditional + static
+  mocks, delay, and now `rewrite-response`/`rewrite-request-body` all work on `XMLHttpRequest` as well as `fetch`.
+  Residual: WebSocket frames are uncovered by design (see ADR-007 / CAP-003 — only in-page patching can
   read frames; tracked as future CAP-005).
 - **R2 (Critical):** the 6 unwired engines may be "recreated" by mistake by future sessions.
 - **R3 (Medium):** ~~divergent `matchesCondition`~~ — **FIXED** (INT-004): unified and case-insensitive.
@@ -198,9 +200,23 @@ existing tokens and component classes; do not inline colors or re-introduce Reac
 
 ## 9. Recommended next task
 
-**Reporting & Observability is complete.** Remaining backlog is mostly platform coverage
-(CAP-003 WebSocket, explicitly out of current scope). Performance/analytics (OBS-008, PERF-001..003)
-and the plain-TS UI test strategy (QA-TEST-001) are done. Pick by priority in `BACKLOG_CONSOLIDATED.md`.
+**MVP is complete; Reporting & Observability is complete.** A code-grounded market gap analysis
+(Requestly / Charles / Burp) on 2026-06-14 produced the **P-MARKET / QAI** opportunity queue in
+`BACKLOG_CONSOLIDATED.md`. **QAI-001 (method-only rule / CAP-004) is Done** (ADR-008: `toDynamicRule`
+mirrors the engine via `describeRuleCoverage`; UI warns; +12 engine tests). **QAI-005 (global
+traffic search) is Done** (pure `buildSearchHaystack`/`matchesSearchQuery` over URL + all captured
+fields; +8 extension tests). **QAI-002 (XHR rewrite parity) and QAI-008 (testable save-builders) are
+Done** (rewrite-response/request-body now work on XHR; pure `buildRuleFromEditorValues`/
+`buildMockFromEditorValues` + 16 tests). **QAI-003 (Insert Scripts) is Done** (ADR-009: `insert-script`
+rule type injected via `chrome.scripting` MAIN world; `scripting` permission added). **QAI-004 (Inject
+CSS), QAI-011 (pagination, Network + History), QAI-012/013/014 (UX fixes) are Done.** \*\*QAI-015
+(capture & reuse request headers — fixes 403 on Repeat/Edit-resend/Compose via `onSendHeaders`
+
+- `credentials: "include"`), QAI-016 (real fetch/XHR response bodies captured at page level and
+  shown in the Network detail), and QAI-017 (long URLs no longer break the Execution Timeline) are
+  Done.\*\* **Next task = QAI-006** (User-Agent preset) or QAI-007 (throttling). Out of scope (documented):
+  SSL/DNS/reverse-proxy/port-forward (desktop only), Scanner/Intruder/Collaborator/Decoder/Sequencer
+  (offensive security), Map Remote (= redirect).
 
 ---
 

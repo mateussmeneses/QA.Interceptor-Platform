@@ -79,6 +79,9 @@
           </button>
         </nav>
 
+        <button id="open-in-window-button" type="button" class="action-btn sidebar-action">
+          Open in window
+        </button>
         <p class="sidebar-hint">Actions tagged as Preview are not wired yet.</p>
       </aside>
 
@@ -126,6 +129,8 @@
                     <option value="delay">Delay</option>
                     <option value="mock-response">Mock Response</option>
                     <option value="mock-status">Mock Status</option>
+                    <option value="insert-script">Insert Script</option>
+                    <option value="inject-css">Inject CSS</option>
                   </select>
                 </label>
 
@@ -246,6 +251,8 @@
                       <option value="delay">delay</option>
                       <option value="mock-response">mock-response</option>
                       <option value="mock-status">mock-status</option>
+                      <option value="insert-script">insert-script</option>
+                      <option value="inject-css">inject-css</option>
                     </select>
                   </label>
 
@@ -440,6 +447,8 @@
                         <option value="delay">delay</option>
                         <option value="mock-response">mock-response</option>
                         <option value="mock-status">mock-status</option>
+                        <option value="insert-script">insert-script</option>
+                        <option value="inject-css">inject-css</option>
                       </select>
                     </label>
                   </div>
@@ -568,8 +577,12 @@
           <section class="network-inspector" aria-label="network inspector">
             <div class="network-toolbar" aria-label="network filters">
               <label class="field-inline" for="network-search">
-                <span>Search URL</span>
-                <input id="network-search" type="search" placeholder="/api/orders" />
+                <span>Search</span>
+                <input
+                  id="network-search"
+                  type="search"
+                  placeholder="URL, header, body, status, rule…"
+                />
               </label>
 
               <label class="field-inline" for="network-method-filter">
@@ -828,6 +841,11 @@
                 <ul id="network-request-list" class="network-request-list">
                   <li class="placeholder">No network requests yet.</li>
                 </ul>
+                <div id="network-pagination" class="list-pagination hidden">
+                  <button id="network-page-prev" type="button" class="action-btn">Prev</button>
+                  <span id="network-page-info" class="list-pagination-info">—</span>
+                  <button id="network-page-next" type="button" class="action-btn">Next</button>
+                </div>
               </section>
 
               <aside class="network-detail" aria-label="network detail drawer">
@@ -1339,6 +1357,11 @@
                   No sessions match current filters.
                 </div>
                 <ul id="history-session-list" class="history-session-list"></ul>
+                <div id="history-pagination" class="list-pagination hidden">
+                  <button id="history-page-prev" type="button" class="action-btn">Prev</button>
+                  <span id="history-page-info" class="list-pagination-info">—</span>
+                  <button id="history-page-next" type="button" class="action-btn">Next</button>
+                </div>
               </section>
 
               <aside class="history-detail" aria-label="evidence detail">

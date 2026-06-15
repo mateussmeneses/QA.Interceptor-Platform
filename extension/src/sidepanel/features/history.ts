@@ -37,7 +37,8 @@ import {
   getUniqueMatchedRulesCount,
   buildEvidenceJson,
   buildEvidenceMarkdown,
-  buildEvidenceHtml
+  buildEvidenceHtml,
+  paginate
 } from "../shared/utils";
 import { createModalController, type ModalController } from "../shared/modal-controller";
 
@@ -47,6 +48,10 @@ import { createModalController, type ModalController } from "../shared/modal-con
 
 let historySessionListEl: HTMLElement;
 let historyEmptyStateEl: HTMLElement;
+let historyPaginationEl: HTMLElement;
+let historyPagePrevEl: HTMLButtonElement;
+let historyPageNextEl: HTMLButtonElement;
+let historyPageInfoEl: HTMLElement;
 let historySearchEl: HTMLInputElement;
 let historyOutcomeFilterEl: HTMLSelectElement;
 let historySortEl: HTMLSelectElement;
@@ -107,6 +112,9 @@ let historySearchQuery = "";
 let historyOutcomeFilter: HistoryOutcomeFilter = "all";
 let historySortOrder: HistorySortOrder = "recent";
 let historyExportFormat: EvidenceExportFormat = "json";
+// QAI-011: pagination state for the session list.
+let historyPage = 1;
+const HISTORY_PAGE_SIZE = 25;
 // QP-007: Replay state
 let replayAbortController: AbortController | null = null;
 let currentReplayRows: StoredReplayArtifactRequest[] = [];
@@ -132,6 +140,10 @@ export function initHistory(): void {
 
   historySessionListEl = getEl("history-session-list");
   historyEmptyStateEl = getEl("history-empty-state");
+  historyPaginationEl = getEl("history-pagination");
+  historyPagePrevEl = getEl("history-page-prev") as HTMLButtonElement;
+  historyPageNextEl = getEl("history-page-next") as HTMLButtonElement;
+  historyPageInfoEl = getEl("history-page-info");
   historySearchEl = getEl("history-search") as HTMLInputElement;
   historyOutcomeFilterEl = getEl("history-outcome-filter") as HTMLSelectElement;
   historySortEl = getEl("history-sort") as HTMLSelectElement;
@@ -228,6 +240,7 @@ const renderHistoryEvidence = (rows: RequestRow[]): void => {
     historySessionListEl.innerHTML = "";
     historyEmptyStateEl.textContent = "No captured sessions yet.";
     historyEmptyStateEl.classList.remove("hidden");
+    historyPaginationEl.classList.add("hidden");
     renderHistoryDetail(null);
     return;
   }
@@ -236,12 +249,19 @@ const renderHistoryEvidence = (rows: RequestRow[]): void => {
     historySessionListEl.innerHTML = "";
     historyEmptyStateEl.textContent = "No sessions match current filters.";
     historyEmptyStateEl.classList.remove("hidden");
+    historyPaginationEl.classList.add("hidden");
     renderHistoryDetail(null);
     return;
   }
 
   historyEmptyStateEl.classList.add("hidden");
-  historySessionListEl.innerHTML = filteredSessions
+
+  // QAI-011: paginate so very long session histories stay responsive.
+  const pageResult = paginate(filteredSessions, historyPage, HISTORY_PAGE_SIZE);
+  historyPage = pageResult.page;
+  renderHistoryPagination(pageResult.startIndex, pageResult.endIndex, pageResult.totalItems);
+
+  historySessionListEl.innerHTML = pageResult.items
     .map((session) => {
       const activeClass = selectedHistorySessionId === session.id ? " active" : "";
       const requestCount = session.requests.length;
@@ -252,6 +272,19 @@ const renderHistoryEvidence = (rows: RequestRow[]): void => {
 
   const selectedSession = filteredSessions.find((s) => s.id === selectedHistorySessionId) ?? null;
   renderHistoryDetail(selectedSession);
+};
+
+// QAI-011: render the pager state and enable/disable the prev/next controls.
+const renderHistoryPagination = (start: number, end: number, total: number): void => {
+  if (total <= HISTORY_PAGE_SIZE) {
+    historyPaginationEl.classList.add("hidden");
+    return;
+  }
+
+  historyPaginationEl.classList.remove("hidden");
+  historyPageInfoEl.textContent = `${String(start)}–${String(end)} of ${String(total)}`;
+  historyPagePrevEl.disabled = start <= 1;
+  historyPageNextEl.disabled = end >= total;
 };
 
 const renderHistoryDetail = (session: HistorySession | null): void => {
@@ -334,17 +367,30 @@ const matchesHistoryOutcome = (session: HistorySession, filter: HistoryOutcomeFi
 const bindEvents = (): void => {
   historySearchEl.addEventListener("input", () => {
     historySearchQuery = historySearchEl.value.trim().toLowerCase();
+    historyPage = 1;
     renderHistoryEvidence(_state.requests);
   });
 
   historyOutcomeFilterEl.addEventListener("change", () => {
     const candidate = historyOutcomeFilterEl.value;
     historyOutcomeFilter = isHistoryOutcomeFilter(candidate) ? candidate : "all";
+    historyPage = 1;
     renderHistoryEvidence(_state.requests);
   });
 
   historySortEl.addEventListener("change", () => {
     historySortOrder = historySortEl.value === "oldest" ? "oldest" : "recent";
+    historyPage = 1;
+    renderHistoryEvidence(_state.requests);
+  });
+
+  historyPagePrevEl.addEventListener("click", () => {
+    historyPage = Math.max(1, historyPage - 1);
+    renderHistoryEvidence(_state.requests);
+  });
+
+  historyPageNextEl.addEventListener("click", () => {
+    historyPage += 1;
     renderHistoryEvidence(_state.requests);
   });
 

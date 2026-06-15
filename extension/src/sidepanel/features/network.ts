@@ -20,7 +20,9 @@ import {
   summarizeRuleAction,
   byteLength,
   formatBytes,
-  formatThroughput
+  formatThroughput,
+  matchesSearchQuery,
+  paginate
 } from "../shared/utils";
 import { createModalController, type ModalController } from "../shared/modal-controller";
 import { saveCapturedRequests } from "../../storage/index";
@@ -50,6 +52,10 @@ import {
 // ---------------------------------------------------------------------------
 
 let networkRequestListEl: HTMLElement;
+let networkPaginationEl: HTMLElement;
+let networkPagePrevEl: HTMLButtonElement;
+let networkPageNextEl: HTMLButtonElement;
+let networkPageInfoEl: HTMLElement;
 let bandwidthSummaryEl: HTMLElement;
 let bandwidthListEl: HTMLElement;
 let anomalySummaryEl: HTMLElement;
@@ -175,6 +181,9 @@ let selectedNetworkRequestId: string | null = null;
 let networkSearchQuery = "";
 let networkMethodFilter = "all";
 let networkStatusFilter: NetworkStatusFilter = "all";
+// QAI-011: pagination state for the request list.
+let networkPage = 1;
+const NETWORK_PAGE_SIZE = 50;
 // OBS-001: Pinned request for diff
 let pinnedRequestId: string | null = null;
 // PERF-001: bottleneck findings for the currently visible traffic, keyed by request id.
@@ -196,6 +205,10 @@ export function initNetwork(): void {
   };
 
   networkRequestListEl = getEl("network-request-list");
+  networkPaginationEl = getEl("network-pagination");
+  networkPagePrevEl = getEl("network-page-prev") as HTMLButtonElement;
+  networkPageNextEl = getEl("network-page-next") as HTMLButtonElement;
+  networkPageInfoEl = getEl("network-page-info");
   bandwidthSummaryEl = getEl("bandwidth-summary");
   bandwidthListEl = getEl("bandwidth-list");
   anomalySummaryEl = getEl("anomaly-summary");
@@ -435,7 +448,12 @@ const renderNetworkInspector = (rows: RequestRow[]): void => {
     ).findings.map((finding) => [finding.id, finding])
   );
 
-  networkRequestListEl.innerHTML = filteredRows
+  // QAI-011: paginate the list so very large captures stay responsive.
+  const pageResult = paginate(filteredRows, networkPage, NETWORK_PAGE_SIZE);
+  networkPage = pageResult.page;
+  renderNetworkPagination(pageResult.startIndex, pageResult.endIndex, pageResult.totalItems);
+
+  networkRequestListEl.innerHTML = pageResult.items
     .map((row) => {
       const isActive = selectedNetworkRequestId === row.id;
       const statusValue = row.response ? String(row.response.status) : "Pending";
@@ -461,6 +479,19 @@ const renderNetworkInspector = (rows: RequestRow[]): void => {
 
   const selectedRow = filteredRows.find((row) => row.id === selectedNetworkRequestId) ?? null;
   renderNetworkDetail(selectedRow);
+};
+
+// QAI-011: render the pager state and enable/disable the prev/next controls.
+const renderNetworkPagination = (start: number, end: number, total: number): void => {
+  if (total <= NETWORK_PAGE_SIZE) {
+    networkPaginationEl.classList.add("hidden");
+    return;
+  }
+
+  networkPaginationEl.classList.remove("hidden");
+  networkPageInfoEl.textContent = `${String(start)}–${String(end)} of ${String(total)}`;
+  networkPagePrevEl.disabled = start <= 1;
+  networkPageNextEl.disabled = end >= total;
 };
 
 const renderNetworkDetail = (row: RequestRow | null): void => {
@@ -520,12 +551,28 @@ const renderNetworkDetail = (row: RequestRow | null): void => {
 
   const body = row.response?.body;
 
+  // QAI-016: always reveal the body section once a response exists. Real network
+  // bodies are captured at the page level (fetch/XHR); when none is available we
+  // show an honest note instead of silently hiding the section.
   if (body) {
     networkDetailBodySectionEl.classList.remove("hidden");
     networkDetailBodyEl.textContent = body;
+    networkDetailBodyEl.classList.remove("muted");
+    if (networkInferSchemaButtonEl) {
+      networkInferSchemaButtonEl.classList.remove("hidden");
+    }
+  } else if (row.response) {
+    networkDetailBodySectionEl.classList.remove("hidden");
+    networkDetailBodyEl.textContent =
+      "Response body not captured for this request (e.g. document, image, cross-origin/no-cors, or a streamed response). JSON/text bodies from fetch and XHR are captured automatically.";
+    networkDetailBodyEl.classList.add("muted");
+    if (networkInferSchemaButtonEl) {
+      networkInferSchemaButtonEl.classList.add("hidden");
+    }
   } else {
     networkDetailBodySectionEl.classList.add("hidden");
     networkDetailBodyEl.textContent = "";
+    networkDetailBodyEl.classList.remove("muted");
   }
 
   // INT-006: reset any previously inferred schema when switching requests
@@ -733,9 +780,9 @@ const applyNetworkFilters = (rows: RequestRow[]): RequestRow[] =>
         return true;
       }
 
-      const rulesSummary = row.matchedRules.map((r) => r.ruleName).join(" ");
-      const haystack = `${row.method} ${row.url} ${rulesSummary}`.toLowerCase();
-      return haystack.includes(networkSearchQuery);
+      // QAI-005: global search across URL + all captured fields (headers, body,
+      // matched rules, response status/headers/body), AND semantics per term.
+      return matchesSearchQuery(row, networkSearchQuery);
     })
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
@@ -774,17 +821,30 @@ const matchesStatusFilter = (status: number | undefined, filter: NetworkStatusFi
 const bindEvents = (): void => {
   networkSearchEl.addEventListener("input", () => {
     networkSearchQuery = networkSearchEl.value.trim().toLowerCase();
+    networkPage = 1;
     renderNetworkInspector(_state.requests);
   });
 
   networkMethodFilterEl.addEventListener("change", () => {
     networkMethodFilter = networkMethodFilterEl.value;
+    networkPage = 1;
     renderNetworkInspector(_state.requests);
   });
 
   networkStatusFilterEl.addEventListener("change", () => {
     const candidate = networkStatusFilterEl.value;
     networkStatusFilter = isNetworkStatusFilter(candidate) ? candidate : "all";
+    networkPage = 1;
+    renderNetworkInspector(_state.requests);
+  });
+
+  networkPagePrevEl.addEventListener("click", () => {
+    networkPage = Math.max(1, networkPage - 1);
+    renderNetworkInspector(_state.requests);
+  });
+
+  networkPageNextEl.addEventListener("click", () => {
+    networkPage += 1;
     renderNetworkInspector(_state.requests);
   });
 

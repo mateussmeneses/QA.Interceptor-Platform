@@ -85,6 +85,14 @@ export const RULE_TYPE_CATALOG: Record<string, { label: string; action: string }
   redirect: {
     label: "Redirect",
     action: "Action: request redirected to configured destination."
+  },
+  "insert-script": {
+    label: "Insert Script",
+    action: "Action: custom JavaScript injected into matching pages (payload.code)."
+  },
+  "inject-css": {
+    label: "Inject CSS",
+    action: "Action: custom CSS injected into matching pages (payload.css)."
   }
 };
 
@@ -717,6 +725,102 @@ export const buildDiagnosticsReport = (
   };
 
   return JSON.stringify(report, null, 2);
+};
+
+// ---------------------------------------------------------------------------
+// Global traffic search (QAI-005)
+// ---------------------------------------------------------------------------
+
+/**
+ * Builds a lowercase searchable haystack for a captured request, covering the
+ * URL and all captured fields (method, headers, body, matched rules, and the
+ * response status/headers/body). Pure and testable; used by the Network search.
+ */
+export const buildSearchHaystack = (row: RequestRow): string => {
+  const parts: string[] = [row.method, row.url];
+
+  for (const [key, value] of Object.entries(row.headers ?? {})) {
+    parts.push(key, value);
+  }
+
+  if (row.body) {
+    parts.push(row.body);
+  }
+
+  for (const matched of row.matchedRules) {
+    parts.push(matched.ruleName, matched.type);
+  }
+
+  const response = row.response;
+  if (response) {
+    parts.push(String(response.status));
+
+    for (const [key, value] of Object.entries(response.headers ?? {})) {
+      parts.push(key, value);
+    }
+
+    if (response.body) {
+      parts.push(response.body);
+    }
+  }
+
+  return parts.join(" ").toLowerCase();
+};
+
+/**
+ * Returns true when every whitespace-separated term in the query is present in
+ * the row's haystack (AND semantics). An empty query matches everything.
+ */
+export const matchesSearchQuery = (row: RequestRow, query: string): boolean => {
+  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+
+  if (terms.length === 0) {
+    return true;
+  }
+
+  const haystack = buildSearchHaystack(row);
+  return terms.every((term) => haystack.includes(term));
+};
+
+// ---------------------------------------------------------------------------
+// Pagination (QAI-011)
+// ---------------------------------------------------------------------------
+
+export type PageResult<T> = {
+  /** Items for the clamped current page. */
+  items: T[];
+  /** Page actually used after clamping to [1, totalPages]. */
+  page: number;
+  totalPages: number;
+  totalItems: number;
+  pageSize: number;
+  /** 1-based index of the first item on this page (0 when empty). */
+  startIndex: number;
+  /** 1-based index of the last item on this page (0 when empty). */
+  endIndex: number;
+};
+
+/**
+ * Pure list pagination. Clamps `page` into range and slices `pageSize` items.
+ * Used to keep large request lists (Network, History) responsive (QAI-011).
+ */
+export const paginate = <T>(items: T[], page: number, pageSize: number): PageResult<T> => {
+  const size = Math.max(1, Math.floor(pageSize));
+  const totalItems = items.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / size));
+  const safePage = Math.min(Math.max(1, Math.floor(page) || 1), totalPages);
+  const offset = (safePage - 1) * size;
+  const pageItems = items.slice(offset, offset + size);
+
+  return {
+    items: pageItems,
+    page: safePage,
+    totalPages,
+    totalItems,
+    pageSize: size,
+    startIndex: totalItems === 0 ? 0 : offset + 1,
+    endIndex: offset + pageItems.length
+  };
 };
 
 const harEntryToRequestRow = (entry: unknown, index: number): RequestRow | null => {

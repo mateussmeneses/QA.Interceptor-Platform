@@ -1,4 +1,8 @@
-import { evaluateRules, type MatchedRule } from "../../../packages/rule-engine/src/index";
+import {
+  evaluateRules,
+  describeRuleCoverage,
+  type MatchedRule
+} from "../../../packages/rule-engine/src/index";
 import type { InterceptedRequest, Rule, RuleGroup } from "../../../packages/shared-types/src/index";
 
 const CAPTURED_REQUESTS_KEY = "capturedRequests";
@@ -68,6 +72,14 @@ type RepeatRequestPayload = {
   url: string;
   headers?: Record<string, string>;
   body?: string;
+};
+
+type ResponseBodyCapturedPayload = {
+  method: string;
+  url: string;
+  status: number;
+  body: string;
+  timestamp: string;
 };
 
 type RuleValidation = {
@@ -242,6 +254,16 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
 
+  if (normalized.type === "RESPONSE_BODY_CAPTURED") {
+    const payload = readResponseBodyCapturedPayload(normalized.payload);
+
+    if (payload) {
+      void attachResponseBody(payload);
+    }
+
+    return;
+  }
+
   if (normalized.type !== "MOCK_APPLIED") {
     return;
   }
@@ -293,6 +315,50 @@ chrome.webRequest.onBeforeRequest.addListener(
     })();
   },
   { urls: ["<all_urls>"] }
+);
+
+// QAI-015: capture the real outgoing request headers (Authorization, Cookie, etc.)
+// so Repeat / Edit-and-resend / Compose can reuse the original auth token instead
+// of replaying with an empty header set (which previously caused 403 responses).
+// `onBeforeRequest` cannot see headers, so we merge them in here once they are sent.
+chrome.webRequest.onSendHeaders.addListener(
+  (details) => {
+    void (async () => {
+      if (!isCapturableRequest(details)) {
+        return;
+      }
+
+      const requestHeaders = Object.fromEntries(
+        (details.requestHeaders ?? [])
+          .filter((header) => typeof header.value === "string")
+          .map((header) => [header.name, header.value as string])
+      );
+
+      if (Object.keys(requestHeaders).length === 0) {
+        return;
+      }
+
+      const stored = await chrome.storage.local.get(CAPTURED_REQUESTS_KEY);
+      const existing = readCapturedRequests(stored[CAPTURED_REQUESTS_KEY]);
+      let changed = false;
+      const updated = existing.map((request) => {
+        if (request.id !== details.requestId) {
+          return request;
+        }
+
+        changed = true;
+        return { ...request, headers: requestHeaders };
+      });
+
+      if (changed) {
+        await chrome.storage.local.set({
+          [CAPTURED_REQUESTS_KEY]: updated
+        });
+      }
+    })();
+  },
+  { urls: ["<all_urls>"] },
+  ["requestHeaders", "extraHeaders"]
 );
 
 chrome.webRequest.onResponseStarted.addListener(
@@ -364,7 +430,12 @@ chrome.webRequest.onCompleted.addListener(
             durationMs,
             timestamp: new Date(details.timeStamp).toISOString(),
             headers: responseHeaders,
-            ...timing
+            ...timing,
+            // QAI-016: attach a page-level body that arrived before onCompleted.
+            ...(() => {
+              const body = takePendingResponseBody(request.method, request.url);
+              return body !== undefined ? { body } : {};
+            })()
           }
         };
       });
@@ -389,6 +460,90 @@ chrome.action.onClicked.addListener((tab) => {
   });
 
   void chrome.sidePanel.open({ tabId: tab.id });
+});
+
+// QAI-003 / ADR-009: Insert Scripts. On navigation completion, inject the code
+// of every enabled `insert-script` rule whose condition matches the tab URL,
+// using chrome.scripting in the MAIN world (CSP-proof, browser-injected).
+const INSERT_SCRIPT_BLOCKED_PREFIXES = [
+  "chrome://",
+  "chrome-extension://",
+  "edge://",
+  "about:",
+  "https://chrome.google.com/webstore",
+  "https://chromewebstore.google.com"
+];
+
+const isInjectableUrl = (url: string): boolean =>
+  /^https?:\/\//.test(url) &&
+  !INSERT_SCRIPT_BLOCKED_PREFIXES.some((prefix) => url.startsWith(prefix));
+
+const readInsertScriptCode = (payload: Record<string, unknown>): string | null => {
+  const code = payload.code;
+  return typeof code === "string" && code.trim().length > 0 ? code : null;
+};
+
+const readInjectCssCode = (payload: Record<string, unknown>): string | null => {
+  const css = payload.css;
+  return typeof css === "string" && css.trim().length > 0 ? css : null;
+};
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status !== "complete" || !tab.url || !isInjectableUrl(tab.url)) {
+    return;
+  }
+
+  const tabUrl = tab.url;
+
+  void (async () => {
+    const rules = await loadRulesForRuntime();
+    const request: InterceptedRequest = {
+      id: `nav-${String(tabId)}-${String(Date.now())}`,
+      method: "GET",
+      url: tabUrl,
+      headers: {},
+      timestamp: new Date().toISOString()
+    };
+
+    const evaluation = evaluateRules(rules, request);
+    const scripts = evaluation.matchedRules
+      .filter((matched) => matched.type === "insert-script")
+      .map((matched) => readInsertScriptCode(matched.payload))
+      .filter((code): code is string => code !== null);
+
+    for (const code of scripts) {
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId },
+          world: "MAIN",
+          args: [code],
+          func: (userCode: string) => {
+            try {
+              new Function(userCode)();
+            } catch (error) {
+              console.error("[QA.Interceptor] insert-script error", error);
+            }
+          }
+        });
+      } catch (error) {
+        console.warn("[QA.Interceptor] insert-script injection failed", error);
+      }
+    }
+
+    // QAI-004: inject CSS for matching `inject-css` rules (reuses the same trail).
+    const styles = evaluation.matchedRules
+      .filter((matched) => matched.type === "inject-css")
+      .map((matched) => readInjectCssCode(matched.payload))
+      .filter((css): css is string => css !== null);
+
+    for (const css of styles) {
+      try {
+        await chrome.scripting.insertCSS({ target: { tabId }, css });
+      } catch (error) {
+        console.warn("[QA.Interceptor] inject-css injection failed", error);
+      }
+    }
+  })();
 });
 
 const isCapturableRequest = (details: { tabId: number; url: string }): boolean =>
@@ -586,6 +741,32 @@ const appendMockedRequest = async (payload: MockAppliedPayload) => {
   });
 };
 
+// QAI-015: headers the fetch() API forbids the page from setting (the browser
+// manages them itself). We drop them so the replay does not throw or send stale
+// values; cookies are re-sent via `credentials: "include"`.
+const FORBIDDEN_REPLAY_HEADERS = new Set([
+  "host",
+  "connection",
+  "content-length",
+  "cookie",
+  "keep-alive",
+  "transfer-encoding",
+  "upgrade",
+  "proxy-connection"
+]);
+
+const sanitizeReplayHeaders = (
+  headers: Record<string, string> | undefined
+): Record<string, string> => {
+  if (!headers) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(headers).filter(([name]) => !FORBIDDEN_REPLAY_HEADERS.has(name.toLowerCase()))
+  );
+};
+
 const repeatRequest = async (
   payload: RepeatRequestPayload
 ): Promise<{
@@ -616,9 +797,15 @@ const repeatRequest = async (
   const allowsBody = methodUpper !== "GET" && methodUpper !== "HEAD";
   const sendBody = allowsBody && payload.body !== undefined;
 
+  // QAI-015: strip headers the fetch() API forbids or that would corrupt the
+  // replay (the browser sets these itself). Cookies are re-sent automatically
+  // via `credentials: "include"`, so the original auth/session is reused.
+  const replayHeaders = sanitizeReplayHeaders(payload.headers);
+
   const response = await fetch(payload.url, {
     method: payload.method,
-    headers: payload.headers,
+    headers: replayHeaders,
+    credentials: "include",
     ...(sendBody ? { body: payload.body } : {})
   });
 
@@ -674,12 +861,20 @@ const buildDynamicRules = (rules: Rule[]): chrome.declarativeNetRequest.Rule[] =
 };
 
 const toDynamicRule = (rule: Rule): Omit<chrome.declarativeNetRequest.Rule, "id"> | null => {
-  if (!rule.condition.urlContains) {
+  const coverage = describeRuleCoverage(rule);
+
+  // QAI-001 / ADR-008: mirror the engine. A method-only rule (no urlContains)
+  // matches every URL, so emit a match-all regexFilter instead of dropping it.
+  // Exception: rewrite-url's `$1..$2` substitution needs the URL capture groups,
+  // so that type still requires an explicit urlContains.
+  if (coverage.matchesAllUrls && rule.type === "rewrite-url") {
     return null;
   }
 
   const commonCondition: chrome.declarativeNetRequest.RuleCondition = {
-    regexFilter: `^(.*)${escapeRegex(rule.condition.urlContains)}(.*)$`
+    regexFilter: coverage.matchesAllUrls
+      ? "^.*$"
+      : `^(.*)${escapeRegex(rule.condition.urlContains ?? "")}(.*)$`
   };
 
   if (rule.condition.method) {
@@ -951,6 +1146,90 @@ const readMockAppliedPayload = (value: unknown): MockAppliedPayload | null => {
     ...(typeof candidate.responseBody === "string" ? { responseBody: candidate.responseBody } : {}),
     matchedRules
   };
+};
+
+const readResponseBodyCapturedPayload = (value: unknown): ResponseBodyCapturedPayload | null => {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  if (
+    typeof candidate.method !== "string" ||
+    typeof candidate.url !== "string" ||
+    typeof candidate.status !== "number" ||
+    typeof candidate.body !== "string" ||
+    typeof candidate.timestamp !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    method: candidate.method,
+    url: candidate.url,
+    status: candidate.status,
+    body: candidate.body,
+    timestamp: candidate.timestamp
+  };
+};
+
+// QAI-016: page-level response bodies can arrive before OR after webRequest's
+// onCompleted finalizes the captured request. We attach to the newest matching
+// capture that still lacks a body; if none exists yet, we buffer the body so
+// onCompleted can pick it up when it stores the response.
+const PENDING_RESPONSE_BODY_LIMIT = 50;
+const pendingResponseBodies = new Map<string, string>();
+
+const responseBodyKey = (method: string, url: string): string => `${method.toUpperCase()} ${url}`;
+
+const takePendingResponseBody = (method: string, url: string): string | undefined => {
+  const key = responseBodyKey(method, url);
+  const body = pendingResponseBodies.get(key);
+
+  if (body !== undefined) {
+    pendingResponseBodies.delete(key);
+  }
+
+  return body;
+};
+
+const attachResponseBody = async (payload: ResponseBodyCapturedPayload): Promise<void> => {
+  const stored = await chrome.storage.local.get(CAPTURED_REQUESTS_KEY);
+  const existing = readCapturedRequests(stored[CAPTURED_REQUESTS_KEY]);
+
+  let attached = false;
+  const updated = existing.map((request) => {
+    if (
+      attached ||
+      request.method.toUpperCase() !== payload.method.toUpperCase() ||
+      request.url !== payload.url ||
+      !request.response ||
+      typeof request.response.body === "string"
+    ) {
+      return request;
+    }
+
+    attached = true;
+    return {
+      ...request,
+      response: { ...request.response, body: payload.body }
+    };
+  });
+
+  if (attached) {
+    await chrome.storage.local.set({ [CAPTURED_REQUESTS_KEY]: updated });
+    return;
+  }
+
+  // onCompleted has not stored the response yet — buffer the body for it.
+  if (pendingResponseBodies.size >= PENDING_RESPONSE_BODY_LIMIT) {
+    const oldestKey = pendingResponseBodies.keys().next().value;
+    if (oldestKey !== undefined) {
+      pendingResponseBodies.delete(oldestKey);
+    }
+  }
+  pendingResponseBodies.set(responseBodyKey(payload.method, payload.url), payload.body);
 };
 
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

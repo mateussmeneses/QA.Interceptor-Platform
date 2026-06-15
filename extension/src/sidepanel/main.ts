@@ -28,6 +28,33 @@ import {
 initTheme();
 
 // ---------------------------------------------------------------------------
+// QAI-014: open the panel as a standalone window. When already running as a
+// standalone window (?window=1), hide the button instead of re-opening.
+// ---------------------------------------------------------------------------
+
+const initOpenInWindow = (): void => {
+  const button = document.getElementById("open-in-window-button");
+
+  if (!button) {
+    return;
+  }
+
+  const isStandalone = new URLSearchParams(window.location.search).get("window") === "1";
+
+  if (isStandalone) {
+    button.classList.add("hidden");
+    return;
+  }
+
+  button.addEventListener("click", () => {
+    const url = chrome.runtime.getURL("dist/sidepanel.html?window=1");
+    void chrome.windows.create({ url, type: "popup", width: 1100, height: 800 });
+  });
+};
+
+initOpenInWindow();
+
+// ---------------------------------------------------------------------------
 // State loading
 // ---------------------------------------------------------------------------
 

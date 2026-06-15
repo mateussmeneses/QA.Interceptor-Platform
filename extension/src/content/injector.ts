@@ -100,13 +100,27 @@ window.addEventListener("message", (event: MessageEvent<unknown>) => {
     return;
   }
 
-  const payload = event.data as Partial<MockAppliedMessage>;
+  const payload = event.data as {
+    source?: string;
+    type?: string;
+    payload?: MockAppliedMessage["payload"];
+  };
 
-  if (
-    payload.source !== "qa-interceptor-page" ||
-    payload.type !== "MOCK_APPLIED" ||
-    !payload.payload
-  ) {
+  if (payload.source !== "qa-interceptor-page" || !payload.payload) {
+    return;
+  }
+
+  // QAI-016: forward captured real response bodies so the background can attach
+  // them to the matching captured request (webRequest cannot read them in MV3).
+  if (payload.type === "RESPONSE_BODY_CAPTURED") {
+    void chrome.runtime.sendMessage({
+      type: "RESPONSE_BODY_CAPTURED",
+      payload: payload.payload
+    });
+    return;
+  }
+
+  if (payload.type !== "MOCK_APPLIED") {
     return;
   }
 

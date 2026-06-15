@@ -14,7 +14,10 @@ import {
   buildHistorySessions,
   computeAverageDuration,
   getUniqueMatchedRulesCount,
-  buildDiagnosticsReport
+  buildDiagnosticsReport,
+  buildSearchHaystack,
+  matchesSearchQuery,
+  paginate
 } from "./utils";
 import type { RequestRow } from "./types";
 
@@ -266,5 +269,115 @@ describe("buildDiagnosticsReport", () => {
     );
     const recent = (JSON.parse(json) as { recentRequests: unknown[] }).recentRequests;
     expect(recent).toHaveLength(20);
+  });
+});
+
+describe("buildSearchHaystack / matchesSearchQuery (QAI-005)", () => {
+  const row = makeRow({
+    id: "a",
+    method: "POST",
+    url: "https://api.example.com/api/orders",
+    headers: { authorization: "Bearer secret-token" },
+    body: '{"item":"sku-42"}',
+    matchedRules: [{ ruleId: "r1", ruleName: "Block Orders", type: "block" }],
+    response: {
+      status: 503,
+      durationMs: 12,
+      timestamp: "",
+      headers: { "x-trace": "abc123" },
+      body: '{"error":"unavailable"}'
+    }
+  });
+
+  it("includes URL, method, headers, body, rules and response fields", () => {
+    const hay = buildSearchHaystack(row);
+    expect(hay).toContain("post");
+    expect(hay).toContain("/api/orders");
+    expect(hay).toContain("authorization");
+    expect(hay).toContain("bearer secret-token");
+    expect(hay).toContain("sku-42");
+    expect(hay).toContain("block orders");
+    expect(hay).toContain("503");
+    expect(hay).toContain("x-trace");
+    expect(hay).toContain("unavailable");
+  });
+
+  it("matches an empty query against any row", () => {
+    expect(matchesSearchQuery(row, "")).toBe(true);
+    expect(matchesSearchQuery(row, "   ")).toBe(true);
+  });
+
+  it("matches a substring in the request body", () => {
+    expect(matchesSearchQuery(row, "sku-42")).toBe(true);
+  });
+
+  it("matches a substring in the response body", () => {
+    expect(matchesSearchQuery(row, "unavailable")).toBe(true);
+  });
+
+  it("is case-insensitive", () => {
+    expect(matchesSearchQuery(row, "BEARER")).toBe(true);
+  });
+
+  it("requires ALL terms to be present (AND semantics)", () => {
+    expect(matchesSearchQuery(row, "orders 503")).toBe(true);
+    expect(matchesSearchQuery(row, "orders 200")).toBe(false);
+  });
+
+  it("returns false when no field contains the term", () => {
+    expect(matchesSearchQuery(row, "nonexistent-xyz")).toBe(false);
+  });
+
+  it("handles rows without a response", () => {
+    const pending = makeRow({ id: "b", url: "https://x.com/health" });
+    expect(matchesSearchQuery(pending, "health")).toBe(true);
+    expect(matchesSearchQuery(pending, "503")).toBe(false);
+  });
+});
+
+describe("paginate (QAI-011)", () => {
+  const items = Array.from({ length: 125 }, (_, i) => i + 1);
+
+  it("returns the first page with correct slice and metadata", () => {
+    const r = paginate(items, 1, 50);
+    expect(r.items).toHaveLength(50);
+    expect(r.items[0]).toBe(1);
+    expect(r.page).toBe(1);
+    expect(r.totalPages).toBe(3);
+    expect(r.totalItems).toBe(125);
+    expect(r.startIndex).toBe(1);
+    expect(r.endIndex).toBe(50);
+  });
+
+  it("returns a partial last page", () => {
+    const r = paginate(items, 3, 50);
+    expect(r.items).toHaveLength(25);
+    expect(r.items[0]).toBe(101);
+    expect(r.startIndex).toBe(101);
+    expect(r.endIndex).toBe(125);
+  });
+
+  it("clamps a page above the range to the last page", () => {
+    const r = paginate(items, 99, 50);
+    expect(r.page).toBe(3);
+  });
+
+  it("clamps a page below 1 to the first page", () => {
+    expect(paginate(items, 0, 50).page).toBe(1);
+    expect(paginate(items, -5, 50).page).toBe(1);
+  });
+
+  it("handles an empty list with zeroed indices and one page", () => {
+    const r = paginate([], 1, 50);
+    expect(r.items).toHaveLength(0);
+    expect(r.totalPages).toBe(1);
+    expect(r.startIndex).toBe(0);
+    expect(r.endIndex).toBe(0);
+  });
+
+  it("treats a non-positive page size as at least 1", () => {
+    const r = paginate(items, 1, 0);
+    expect(r.pageSize).toBe(1);
+    expect(r.items).toHaveLength(1);
   });
 });

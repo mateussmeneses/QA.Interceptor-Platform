@@ -52,6 +52,70 @@ let conditionalMocks: StoredConditionalMock[] = [];
 // In-page call-count state for conditional mocks. Resets on page reload.
 let conditionalMockState: MockState = createMockState();
 
+// QAI-016: MV3 webRequest cannot read real response bodies, so we capture them
+// here at the page level (fetch/XHR passthrough) and forward them to the
+// background, which attaches the body to the matching captured request.
+const MAX_CAPTURED_BODY_CHARS = 100_000;
+
+const postResponseBodyCapture = (
+  method: string,
+  url: string,
+  status: number,
+  body: string
+): void => {
+  if (!body) {
+    return;
+  }
+
+  const trimmed =
+    body.length > MAX_CAPTURED_BODY_CHARS
+      ? `${body.slice(0, MAX_CAPTURED_BODY_CHARS)}\n…[truncated]`
+      : body;
+
+  window.postMessage(
+    {
+      source: "qa-interceptor-page",
+      type: "RESPONSE_BODY_CAPTURED",
+      payload: {
+        method,
+        url,
+        status,
+        body: trimmed,
+        timestamp: new Date().toISOString()
+      }
+    },
+    "*"
+  );
+};
+
+const captureFetchResponseBody = (method: string, url: string, response: Response): void => {
+  // Opaque (no-cors) responses expose no readable body.
+  if (!response.body || response.type === "opaque" || response.type === "opaqueredirect") {
+    return;
+  }
+
+  response
+    .clone()
+    .text()
+    .then((text) => {
+      postResponseBodyCapture(method, url, response.status, text);
+    })
+    .catch(() => {
+      // Body already consumed or unreadable; nothing to capture.
+    });
+};
+
+const captureXhrResponseBody = (method: string, url: string, xhr: XMLHttpRequest): void => {
+  try {
+    // responseText is only available for "" and "text" response types.
+    if (xhr.responseType === "" || xhr.responseType === "text") {
+      postResponseBodyCapture(method, url, xhr.status, xhr.responseText);
+    }
+  } catch {
+    // responseText not accessible for this responseType; ignore.
+  }
+};
+
 if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
   window.__QA_INTERCEPTOR_MOCK_BRIDGE__ = true;
   const originalFetch = window.fetch.bind(window);
@@ -154,7 +218,10 @@ if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
       const rewriteResponse = findRewriteResponseRule(requestUrl, requestMethod);
 
       if (!rewriteResponse) {
-        return originalFetch(input, effectiveInit);
+        const realResponse = await originalFetch(input, effectiveInit);
+        // QAI-016: capture the real response body for the Network inspector.
+        captureFetchResponseBody(requestMethod, requestUrl, realResponse);
+        return realResponse;
       }
 
       const realResponse = await originalFetch(input, effectiveInit);
@@ -258,16 +325,95 @@ if (!window.__QA_INTERCEPTOR_MOCK_BRIDGE__) {
     }
 
     const delayMs = resolveDelayMs(meta.url, meta.method);
+
+    // QAI-002: rewrite the outgoing request body on XHR (parity with fetch).
+    const requestBodyRewrite = findRequestBodyRewrite(meta.url, meta.method);
+    let effectiveBody = body;
+
+    if (requestBodyRewrite) {
+      effectiveBody = requestBodyRewrite.body;
+      try {
+        this.setRequestHeader("content-type", requestBodyRewrite.contentType ?? "application/json");
+      } catch {
+        // Header already finalized; the body rewrite still applies.
+      }
+    }
+
+    const sendReal = (): void => {
+      // QAI-016: capture the real XHR response body once the request completes.
+      this.addEventListener("load", () => {
+        captureXhrResponseBody(meta.method, meta.url, this);
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (originalSend as any).apply(this, [effectiveBody]);
+    };
+
     const outcome = resolveMockOutcome(meta.url, meta.method);
 
     if (!outcome) {
-      if (delayMs > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        window.setTimeout(() => (originalSend as any).apply(this, [body]), delayMs);
+      // QAI-002: rewrite-response on XHR — fetch the real response (this replaces
+      // the XHR network call, it is not a duplicate), then deliver a synthetic
+      // response with the rewritten body and the real status.
+      const rewriteResponse = findRewriteResponseRule(meta.url, meta.method);
+
+      if (rewriteResponse) {
+        const runRewrite = (): void => {
+          void (async () => {
+            try {
+              const real = await originalFetch(meta.url, {
+                method: meta.method,
+                ...(effectiveBody != null ? { body: effectiveBody as BodyInit } : {})
+              });
+              const rewrittenBody = applyDynamicVariables(rewriteResponse.body, {
+                method: meta.method,
+                url: meta.url,
+                envVars: resolveScopedEnvVars(meta.url)
+              });
+              const rewriteOutcome: MockOutcome = {
+                status: real.status,
+                body: rewrittenBody,
+                contentType: rewriteResponse.contentType ?? "application/json",
+                matchedRules: rewriteResponse.matchedRules
+              };
+              deliverMockedXhr(this, meta.url, rewriteOutcome);
+              window.postMessage(
+                {
+                  source: "qa-interceptor-page",
+                  type: "MOCK_APPLIED",
+                  payload: {
+                    requestId: crypto.randomUUID(),
+                    method: meta.method,
+                    url: meta.url,
+                    timestamp: new Date().toISOString(),
+                    status: real.status,
+                    durationMs: delayMs,
+                    responseBody: rewrittenBody,
+                    matchedRules: rewriteResponse.matchedRules
+                  }
+                },
+                "*"
+              );
+            } catch {
+              // Network or body-type issue: fall back to the untouched request.
+              sendReal();
+            }
+          })();
+        };
+
+        if (delayMs > 0) {
+          window.setTimeout(runRewrite, delayMs);
+        } else {
+          runRewrite();
+        }
         return;
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (originalSend as any).apply(this, [body]);
+
+      if (delayMs > 0) {
+        window.setTimeout(sendReal, delayMs);
+        return;
+      }
+      sendReal();
+      return;
     }
 
     const deliver = (): void => {

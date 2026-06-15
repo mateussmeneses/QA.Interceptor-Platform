@@ -10,7 +10,9 @@ export type RuleType =
   | "mock-status"
   | "redirect"
   | "block"
-  | "delay";
+  | "delay"
+  | "insert-script"
+  | "inject-css";
 
 export type Rule = {
   id: string;

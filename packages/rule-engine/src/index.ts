@@ -57,6 +57,32 @@ export const matchesCondition = (rule: Rule, request: InterceptedRequest): boole
   return true;
 };
 
+export type RuleCoverage = {
+  /** True when the condition has no URL constraint, so it matches every URL. */
+  matchesAllUrls: boolean;
+  /** True when the condition is restricted to a specific HTTP method. */
+  methodScoped: boolean;
+};
+
+/**
+ * Single source of truth for a rule's match coverage (QAI-001 / ADR-008).
+ *
+ * A condition without `urlContains` matches any URL — this is a domain fact, so
+ * both the DNR adapter (background) and the UI consume it from here instead of
+ * re-deriving it from regex/string literals. Adapters MUST mirror this: a rule
+ * the engine considers matchable must never be silently dropped.
+ */
+export const describeRuleCoverage = (rule: Rule): RuleCoverage => {
+  const condition = rule.condition;
+  const hasUrl = typeof condition.urlContains === "string" && condition.urlContains.length > 0;
+  const hasMethod = typeof condition.method === "string" && condition.method.length > 0;
+
+  return {
+    matchesAllUrls: !hasUrl,
+    methodScoped: hasMethod
+  };
+};
+
 export {
   evaluateAssertions,
   type AssertionInput,

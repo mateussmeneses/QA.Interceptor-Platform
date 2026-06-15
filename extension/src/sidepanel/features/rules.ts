@@ -25,6 +25,8 @@ import {
 } from "../shared/utils";
 import { createModalController, type ModalController } from "../shared/modal-controller";
 import { saveRules, saveRuleGroups } from "../../storage/index";
+import { describeRuleCoverage } from "../../../../packages/rule-engine/src/index";
+import { buildRuleFromEditorValues } from "../shared/rule-builders";
 
 // ---------------------------------------------------------------------------
 // DOM element references
@@ -362,6 +364,48 @@ const populateEditor = (rule: RuleRow | null): void => {
   editorPayloadEl.value = JSON.stringify(rule.payload, null, 2);
 
   setEditorSaveStatus("Rule loaded. You can edit and save.", "neutral");
+  updateCoverageHint();
+};
+
+// QAI-001 / ADR-008: non-blocking hint when the editor condition covers all
+// traffic (no urlContains). Coverage is read from the engine, never re-derived.
+const updateCoverageHint = (): void => {
+  const coverage = describeRuleCoverage({
+    id: "",
+    name: "",
+    type: "block",
+    enabled: false,
+    priority: 0,
+    createdAt: "",
+    condition: {
+      ...(editorMethodEl.value.trim() ? { method: editorMethodEl.value.trim() as HttpMethod } : {}),
+      ...(editorUrlEl.value.trim() ? { urlContains: editorUrlEl.value.trim() } : {})
+    },
+    payload: {}
+  });
+
+  if (coverage.matchesAllUrls) {
+    const scope = coverage.methodScoped
+      ? `every ${editorMethodEl.value.trim().toUpperCase()} request`
+      : "ALL traffic";
+    setEditorSaveStatus(`Heads up: this rule matches ${scope} (no URL filter).`, "neutral");
+  }
+
+  // QAI-003: guidance + safety note for the insert-script rule type.
+  if (editorTypeEl.value === "insert-script") {
+    setEditorSaveStatus(
+      'Insert Script runs your JavaScript on matching pages. Payload format: {"code": "…"}. Keep it disabled until ready.',
+      "neutral"
+    );
+  }
+
+  // QAI-004: guidance for the inject-css rule type.
+  if (editorTypeEl.value === "inject-css") {
+    setEditorSaveStatus(
+      'Inject CSS applies your styles to matching pages. Payload format: {"css": "…"}.',
+      "neutral"
+    );
+  }
 };
 
 const setEditorFieldsDisabled = (disabled: boolean): void => {
@@ -738,6 +782,12 @@ const bindEvents = (): void => {
     });
   }
 
+  // QAI-001: refresh the coverage hint as the condition fields change.
+  editorUrlEl.addEventListener("input", updateCoverageHint);
+  editorMethodEl.addEventListener("change", updateCoverageHint);
+  // QAI-003: refresh the type-specific hint (e.g. insert-script guidance).
+  editorTypeEl.addEventListener("change", updateCoverageHint);
+
   ruleEditorFormEl.addEventListener("submit", (event) => {
     event.preventDefault();
 
@@ -753,48 +803,24 @@ const bindEvents = (): void => {
       return;
     }
 
-    let parsedPayload: Record<string, unknown>;
+    // QAI-008: assembly is a pure, tested builder so no field is ever dropped.
+    const built = buildRuleFromEditorValues(currentRule, {
+      name: editorNameEl.value,
+      type: editorTypeEl.value,
+      enabled: editorEnabledEl.value,
+      priority: editorPriorityEl.value,
+      method: editorMethodEl.value,
+      groupId: editorGroupEl.value,
+      urlContains: editorUrlEl.value,
+      payloadJson: editorPayloadEl.value
+    });
 
-    try {
-      const parsed = JSON.parse(editorPayloadEl.value || "{}");
-
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-        setEditorSaveStatus("Payload must be a JSON object.", "error");
-        return;
-      }
-
-      parsedPayload = parsed as Record<string, unknown>;
-    } catch {
-      setEditorSaveStatus("Payload JSON is invalid. Fix it before saving.", "error");
+    if (!built.ok) {
+      setEditorSaveStatus(built.error, "error");
       return;
     }
 
-    const nextPriority = Number.parseInt(editorPriorityEl.value, 10);
-    const normalizedPriority = Number.isFinite(nextPriority) && nextPriority > 0 ? nextPriority : 1;
-    const methodValue = editorMethodEl.value.trim().toUpperCase() as HttpMethod | "";
-    const groupValue = editorGroupEl.value.trim();
-    const urlContainsValue = editorUrlEl.value.trim();
-    const typeValue = isRuleType(editorTypeEl.value) ? editorTypeEl.value : currentRule.type;
-
-    const nextRules = _state.rules.map((rule) => {
-      if (rule.id !== selectedRuleId) {
-        return rule;
-      }
-
-      return {
-        ...rule,
-        name: editorNameEl.value.trim() || rule.name,
-        type: typeValue,
-        enabled: editorEnabledEl.value === "true",
-        priority: normalizedPriority,
-        ...(groupValue ? { groupId: groupValue } : { groupId: undefined }),
-        condition: {
-          ...(methodValue ? { method: methodValue as HttpMethod } : {}),
-          ...(urlContainsValue ? { urlContains: urlContainsValue } : {})
-        },
-        payload: parsedPayload
-      };
-    });
+    const nextRules = _state.rules.map((rule) => (rule.id === selectedRuleId ? built.rule : rule));
 
     void saveRules(nextRules);
     setEditorSaveStatus("Rule changes saved to local storage.", "ok");

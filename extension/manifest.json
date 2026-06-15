@@ -3,14 +3,21 @@
   "name": "QA.Interceptor Platform",
   "version": "0.1.0",
   "description": "QA-focused traffic interception and rule testing extension.",
-  "permissions": ["declarativeNetRequest", "storage", "sidePanel", "tabs", "webRequest"],
+  "permissions": [
+    "declarativeNetRequest",
+    "storage",
+    "sidePanel",
+    "tabs",
+    "webRequest",
+    "scripting"
+  ],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "dist/background.js",
     "type": "module"
   },
   "action": {
-    "default_title": "QA.Interceptor"
+    "default_title": "QA.Interceptor Platform"
   },
   "content_scripts": [
     {

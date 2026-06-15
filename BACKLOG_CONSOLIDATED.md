@@ -23,16 +23,16 @@
 
 ## P0 — Immediate (stabilization and runtime truth)
 
-| ID           | Title                                                                             | Status   | Why now                                                                      |
-| ------------ | --------------------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------- |
-| INT-004      | Unify `matchesCondition` (fix case-sensitive vs insensitive)                      | **Done** | Engine unified + case-insensitive; new test (579 tests)                      |
-| FIX-001      | Resolve phantom `validate-schema` (implement via schema-validator OR remove type) | **Done** | Phantom type removed from `RuleType`; to be reintroduced in INT-001          |
-| FIX-002      | Guard empty `condition.urlContains` in `buildDynamicRules`                        | **Done** | Already protected by early-return; no path to invalid regex                  |
-| ARCH-DEC-001 | Runtime UI decision (plain TS vs React)                                           | **Done** | Decided: plain TS. React removed on 2026-06-13                               |
-| QA-ARCH-001  | Remove orphan React subtree                                                       | **Done** | ~3,300 lines removed; full `tsc` now passes                                  |
-| QA-BUILD-001 | Full extension typecheck must pass                                                | **Done** | `tsc -p tsconfig.json` green after removal                                   |
-| QA-DOC-001   | Consolidate/archive obsolete status docs                                          | **Done** | Legacy analysis/planning/backlogs moved to `docs/_archive/`; INDEX rewritten |
-| CAP-004      | Method-only rule (no urlContains) is ignored by DNR                               | Todo     | Limitation found during FIX-002; needs a semantics decision                  |
+| ID           | Title                                                                             | Status   | Why now                                                                                                                                                       |
+| ------------ | --------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| INT-004      | Unify `matchesCondition` (fix case-sensitive vs insensitive)                      | **Done** | Engine unified + case-insensitive; new test (579 tests)                                                                                                       |
+| FIX-001      | Resolve phantom `validate-schema` (implement via schema-validator OR remove type) | **Done** | Phantom type removed from `RuleType`; to be reintroduced in INT-001                                                                                           |
+| FIX-002      | Guard empty `condition.urlContains` in `buildDynamicRules`                        | **Done** | Already protected by early-return; no path to invalid regex                                                                                                   |
+| ARCH-DEC-001 | Runtime UI decision (plain TS vs React)                                           | **Done** | Decided: plain TS. React removed on 2026-06-13                                                                                                                |
+| QA-ARCH-001  | Remove orphan React subtree                                                       | **Done** | ~3,300 lines removed; full `tsc` now passes                                                                                                                   |
+| QA-BUILD-001 | Full extension typecheck must pass                                                | **Done** | `tsc -p tsconfig.json` green after removal                                                                                                                    |
+| QA-DOC-001   | Consolidate/archive obsolete status docs                                          | **Done** | Legacy analysis/planning/backlogs moved to `docs/_archive/`; INDEX rewritten                                                                                  |
+| CAP-004      | Method-only rule (no urlContains) is ignored by DNR                               | **Done** | Resolved via QAI-001 / ADR-008: `toDynamicRule` emits a match-all regex for method-only rules; `describeRuleCoverage` is the single coverage source; UI warns |
 
 ## P1 — Wiring ready engines (high value, low cost)
 
@@ -92,6 +92,57 @@
 | TD-014        | Decide `storage/adapter.ts` (adopt for Phase 4 or remove)  | **Done** | Removed orphan injectable adapter (YAGNI); ADR-002 amended. Reintroduce with consumers in Phase 4                                                                                                                                                                                                                                             |
 | TD-006        | Remove phantom preview-only controls from functional views | **Done** | Removed dead `(Preview)` buttons + misleading pills from Rules/Mocks/History + header; real theme selector (light/dark/system) wired via `theme-manager`; Settings panel pill removed; Danger Zone "Reset Workspace" wired (`resetWorkspace` + two-step confirm); Runtime Diagnostics "Download Logs" wired (`buildDiagnosticsReport` export) |
 | TD-017        | Plain-TS UI had no component stylesheet (UI looked broken) | **Done** | Authored `styles/components.css` (shell/nav/cards/forms/buttons/chips/lists/feature layouts) on tokens; fixed dark-mode bug (`--surface`→`--surface-bg`, `--accent`→`--info`); removed duplicate per-view headers; coverage 109→3 unstyled. Verified via browser                                                                              |
+
+---
+
+## P-MARKET — Gap analysis opportunities (QAI)
+
+> Derived from a code-grounded market comparison (Requestly / Charles / Burp) on 2026-06-14.
+> These are the **next prioritized opportunities** for the active queue. Out-of-scope items
+> (SSL proxying, DNS spoofing, reverse proxy, port forwarding, Scanner/Intruder/Collaborator/
+> Decoder/Sequencer, Map Remote) are intentionally excluded — see the strategic analysis.
+
+| ID      | Name                                 | Description                                                                            | Benefit                                                         | Complexity | Priority | Dependencies                                              | Acceptance criteria                                                                         | Status      |
+| ------- | ------------------------------------ | -------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ---------- | -------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ----------- |
+| QAI-001 | Method-only rule support (CAP-004)   | A rule with `method` but no `urlContains` is silently dropped by DNR; fix or warn.     | Removes a correctness footgun; rules behave as the UI implies   | Low        | **P0**   | [ADR-008](docs/adr/ADR-008-method-only-rule-semantics.md) | Method-only rule either matches via `<all_urls>` regex OR the UI blocks/warns before saving | **Done**    |
+| QAI-002 | Response/request-body rewrite on XHR | `rewrite-response` + `rewrite-request-body` currently work only on `fetch`; cover XHR. | Parity with Requestly; the rule types stop half-working         | Medium     | **P1**   | —                                                         | XHR responses/bodies are rewritten like fetch; tests cover both transports                  | **Done**    |
+| QAI-003 | Insert Scripts (browser injection)   | New rule type to inject JS into the page (main world), matched by URL.                 | High QA/dev value (feature flags, UI stubs); core Requestly gap | High       | **P1**   | [ADR-009](docs/adr/ADR-009-insert-scripts-injection.md)   | A script rule injects code on matching pages; toggle/enable; documented security boundary   | **Done**    |
+| QAI-004 | Inject CSS                           | New rule type to inject CSS into matching pages.                                       | Visual QA; reuses QAI-003 injection infra at low extra cost     | Medium     | **P2**   | QAI-003                                                   | A CSS rule applies styles on matching pages; enable/disable; survives SPA navigation        | **Done**    |
+| QAI-005 | Global traffic search                | Free-text search across captured requests (URL/headers/body).                          | Inspector usability (Burp Logger/Search parity)                 | Low        | **P1**   | —                                                         | Search box filters the Network list by substring across URL + captured fields               | **Done**    |
+| QAI-006 | User-Agent override preset           | One-field UA override implemented as a `rewrite-header` preset.                        | Convenience for device/bot testing                              | Low        | **P2**   | —                                                         | Setting a UA produces a working `user-agent` header rewrite rule                            | Not started |
+| QAI-007 | Global throttling profile            | A session-wide "slow network" profile beyond per-rule delay.                           | Repro of slow-network conditions without one rule per URL       | Medium     | **P2**   | —                                                         | Enabling a profile delays matching traffic globally; configurable ms; off by default        | Not started |
+| QAI-008 | Testable save-builders (regression)  | Extract editor→Rule assembly into pure functions and unit-test them.                   | Prevents the TD-018 bug class (save dropping a field)           | Low        | **P2**   | —                                                         | `buildRuleFromEditor` / `buildMockFromEditor` pure + tested; handlers delegate to them      | **Done**    |
+| QAI-009 | Breakpoints (pause + edit live)      | Pause a matching fetch/XHR and let the user edit before continuing.                    | Charles/Burp intercept parity (fetch/XHR only in MV3)           | High       | **P3**   | —                                                         | A matching request can be paused, edited, and resumed; documented fetch/XHR-only limitation | Not started |
+| QAI-010 | Map Local (real file)                | Serve a picked local file as the full mocked response.                                 | Convenience over manual body paste                              | Medium     | **P3**   | —                                                         | A file picker fills a mock-response rule body + content-type                                | Not started |
+
+---
+
+## P-UX — Usability & performance fixes (QAI)
+
+> Raised from real usage on 2026-06-14: large lists are slow, long URLs break the layout,
+> components feel cramped, and the side panel needs a windowed mode.
+
+| ID      | Name                         | Description                                                                      | Benefit                                                  | Complexity | Priority | Dependencies | Acceptance criteria                                                                     | Status                                                |
+| ------- | ---------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------- | ---------- | -------- | ------------ | --------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| QAI-011 | Paginate request lists       | Add pagination to lists that render many requests (Network, History, others).    | Lists stay responsive with hundreds/thousands of entries | Medium     | **P1**   | —            | Network + History lists page results; page controls; render cost bounded per page       | **Done** (Network + History; pure `paginate` + tests) |
+| QAI-012 | Fix long-URL layout breakage | Long URLs overflow and break row/detail layout when a request is opened.         | Layout stays intact regardless of URL length             | Low        | **P0**   | —            | Long URLs truncate/wrap with ellipsis + title; no horizontal overflow in rows or detail | **Done**                                              |
+| QAI-013 | Layout spacing review        | Components are visually glued together (insufficient gaps/padding) across views. | Cleaner, more readable, professional layout              | Low        | **P1**   | —            | Consistent spacing between cards/sections/rows; verified visually in light + dark       | **Done**                                              |
+| QAI-014 | Open in a separate window    | Button to open the panel as a standalone window/tab, not only the side panel.    | More screen space; side-by-side with the app under test  | Low        | **P2**   | —            | A button opens the same UI in its own window/tab; works independently of the side panel | **Done**                                              |
+
+---
+
+## P-REPLAY — Replay fidelity & response inspection (QAI)
+
+> Raised from real usage on 2026-06-14: Repeat / Edit-and-resend / Compose frequently return
+> 403 because the original auth token (request headers/cookies) is not captured or reused; the
+> Network detail shows only the HTTP status code, never the response message/body; and long URLs
+> still break the Execution Timeline layout.
+
+| ID      | Name                               | Description                                                                                                                               | Benefit                                                 | Complexity | Priority | Dependencies | Acceptance criteria                                                                                                            | Status   |
+| ------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ---------- | -------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| QAI-015 | Capture & reuse request headers    | `onBeforeRequest` stores `headers: {}`; capture real request headers via `onSendHeaders` and replay with cookies so auth token is reused. | Repeat / Edit-and-resend / Compose stop returning 403   | Medium     | **P0**   | —            | Captured requests store real request headers; Repeat/Edit-resend/Compose reuse Authorization + cookies; replay no longer 403s  | **Done** |
+| QAI-016 | Show response body/message         | Network detail shows only the status code; capture real response bodies at page level (fetch/XHR) and surface them in the detail view.    | QA sees the actual API response, not just the HTTP code | Medium     | **P1**   | —            | fetch/XHR response bodies captured via content script and shown in Network detail; honest empty-state when body is unavailable | **Done** |
+| QAI-017 | Long URLs break Execution Timeline | Long URLs without spaces overflow and break the Execution Timeline layout inside the Network detail.                                      | Timeline stays intact regardless of URL length          | Low        | **P0**   | —            | Long URLs wrap/break inside `.exec-body`; no horizontal overflow in the Execution Timeline                                     | **Done** |
 
 ---
 
