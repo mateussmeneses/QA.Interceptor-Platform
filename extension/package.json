@@ -10,7 +10,7 @@
     "watch": "node scripts/build.mjs --watch"
   },
   "devDependencies": {
-    "@types/chrome": "^0.1.29",
+    "@types/chrome": "^0.2.0",
     "esbuild": "^0.25.5",
     "typescript": "^5.8.3",
     "vitest": "^4.1.8"
