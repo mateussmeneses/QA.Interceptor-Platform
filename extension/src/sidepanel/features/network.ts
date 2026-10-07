@@ -22,7 +22,8 @@ import {
   formatBytes,
   formatThroughput,
   matchesSearchQuery,
-  paginate
+  paginate,
+  formatJson
 } from "../shared/utils";
 import { createModalController, type ModalController } from "../shared/modal-controller";
 import { saveCapturedRequests } from "../../storage/index";
@@ -556,7 +557,7 @@ const renderNetworkDetail = (row: RequestRow | null): void => {
   // show an honest note instead of silently hiding the section.
   if (body) {
     networkDetailBodySectionEl.classList.remove("hidden");
-    networkDetailBodyEl.textContent = body;
+    networkDetailBodyEl.textContent = formatJson(body);
     networkDetailBodyEl.classList.remove("muted");
     if (networkInferSchemaButtonEl) {
       networkInferSchemaButtonEl.classList.remove("hidden");

@@ -1,5 +1,5 @@
 import { build, context } from "esbuild";
-import { copyFile, cp, mkdir } from "node:fs/promises";
+import { copyFile, cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const isWatch = process.argv.includes("--watch");
@@ -42,6 +42,15 @@ await cp(path.join(rootDir, "src", "sidepanel", "styles"), path.join(distDir, "s
   recursive: true,
   force: true
 });
+
+// Copy the manifest into dist/ so dist/ is a complete, loadable extension.
+// The source manifest references files as "dist/<file>" (relative to the
+// extension/ folder); inside dist/ those files sit at the root, so strip the
+// "dist/" prefix as we write the copy. This lets you load extension/dist/
+// directly in chrome://extensions without any extra steps.
+const manifestSource = await readFile(path.join(rootDir, "manifest.json"), "utf8");
+const manifestForDist = manifestSource.replace(/"dist\//g, '"');
+await writeFile(path.join(distDir, "manifest.json"), manifestForDist);
 
 if (isWatch) {
   for (const task of tasks) {

@@ -8,9 +8,11 @@
   ],
   "scripts": {
     "prepare": "husky",
-    "build": "npm run build -w @qa-interceptor/extension && npm run build -w @qa-interceptor/shared-types && npm run build -w @qa-interceptor/rule-engine",
+    "check:links:workspace": "node scripts/check-workspace-links.mjs",
+    "prebuild": "node scripts/check-workspace-links.mjs",
+    "build": "npm run build -w @qa-interceptor/shared-types && npm run build -w @qa-interceptor/rule-engine && npm run build -w @qa-interceptor/extension",
     "typecheck": "npm run typecheck:runtime",
-    "typecheck:runtime": "npm run typecheck:runtime -w @qa-interceptor/extension && npm run build -w @qa-interceptor/shared-types && npm run build -w @qa-interceptor/rule-engine",
+    "typecheck:runtime": "npm run build -w @qa-interceptor/shared-types && npm run build -w @qa-interceptor/rule-engine && npm run typecheck:runtime -w @qa-interceptor/extension",
     "test": "npm run test -w @qa-interceptor/rule-engine && npm run test -w @qa-interceptor/extension",
     "lint": "eslint . --ext .ts,.js,.mjs --max-warnings=0",
     "check:links": "node scripts/check-md-links.mjs",

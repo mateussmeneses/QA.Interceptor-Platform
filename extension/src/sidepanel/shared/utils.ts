@@ -48,6 +48,19 @@ export const formatDateSlug = (): string => {
 export const formatRuleType = (type: string): string => RULE_TYPE_CATALOG[type]?.label ?? type;
 
 /**
+ * Attempts to parse and pretty-print a JSON string.
+ * If the input is not valid JSON, returns the original string unchanged.
+ */
+export const formatJson = (value: string): string => {
+  try {
+    const parsed = JSON.parse(value);
+    return JSON.stringify(parsed, null, 2);
+  } catch {
+    return value;
+  }
+};
+
+/**
  * Single source of rule-type presentation (D-10): short label + runtime action
  * summary. Add new rule types here only.
  */

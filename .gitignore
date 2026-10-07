@@ -4,6 +4,11 @@ node_modules/
 extension/dist/
 packages/*/dist/
 
+# Stray compiled output accidentally emitted next to TS sources
+# (happens when `tsc` runs without `-p tsconfig.json`; the real output is dist/)
+packages/*/src/**/*.js
+packages/*/src/**/*.d.ts
+
 # TypeScript incremental cache
 *.tsbuildinfo
 

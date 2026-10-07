@@ -195,6 +195,7 @@ existing tokens and component classes; do not inline colors or re-introduce Reac
 - **R4 (Medium):** ~~phantom `validate-schema`~~ — **FIXED** (FIX-001): type removed until real implementation (INT-001).
 - **R5 (Medium):** ~~`buildDynamicRules` missing guard~~ — **ALREADY PROTECTED** (FIX-002): early-return prevents invalid regex. Residual limitation: method-only rules are ignored by DNR (CAP-004).
 - **R6 (Low):** ~~component CSS partially orphaned~~ — **FIXED** (QA-CSS-001): removed 20 orphan files; only `diff-viewer.css` + `modal.css` remain.
+- **R7 (Medium):** ~~build breaks after moving/cloning the repo~~ — **FIXED** (BUILD-002). Root cause: `@qa-interceptor/*` are npm-workspace packages resolved by name through symlinks under `node_modules/@qa-interceptor/*`; those symlinks are created by `npm install` and encode an absolute path. Moving/renaming/cloning the repo without reinstalling left them pointing at the old path, so `rule-engine`'s `tsc` build failed with a cryptic `TS2307: Cannot find module '@qa-interceptor/shared-types'` while tests (vitest) still passed — the "green tests but broken build" trap. Mitigation: a `prebuild` guard (`scripts/check-workspace-links.mjs`) validates the links and tells you to run `npm install`; build order is now `shared-types → rule-engine → extension`. **If the build ever fails right after reopening the project, run `npm install` first.**
 
 ---
 

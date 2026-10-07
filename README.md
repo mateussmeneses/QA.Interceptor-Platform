@@ -4,7 +4,28 @@ Open-source traffic interception platform focused on QA workflows.
 
 ## Current Status
 
-This repository is in planning-first stage. Core documents are defined and aligned for MVP execution.
+Functional MVP (Manifest V3 browser extension). See [PROJECT_STATE.md](PROJECT_STATE.md) for the verified state.
+
+## Build & load in Chrome
+
+```bash
+npm install        # required after cloning or moving the repo (recreates workspace links)
+npm run build      # outputs a complete, loadable extension into extension/dist/
+```
+
+Then in Chrome:
+
+1. Open `chrome://extensions`.
+2. Enable **Developer mode** (top-right).
+3. Click **Load unpacked**.
+4. Select the **`extension/dist`** folder (not `extension/`, and not the repo root).
+
+`extension/dist/` is self-contained: the build copies `manifest.json` into it and
+rewrites the asset paths, so it loads directly. After changing source, re-run
+`npm run build` and click the reload icon on the extension card.
+
+> If `npm run build` fails right after reopening the project, run `npm install` first —
+> the build guard will tell you when the workspace links are stale.
 
 ## Product Goal
 
