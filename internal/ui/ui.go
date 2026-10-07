@@ -20,11 +20,12 @@ import (
 //go:embed static/*
 var staticFiles embed.FS
 
-// RecordSource is the read side of the capture store the UI needs. The concrete
+// RecordSource is the capture store surface the UI needs. The concrete
 // *capture.Store satisfies it.
 type RecordSource interface {
 	List() []capture.Record
 	Get(id int64) (capture.Record, bool)
+	Clear()
 }
 
 // requestDTO is the summary JSON shape for the list. It is a view model, kept
@@ -68,6 +69,7 @@ func New(source RecordSource) *Server {
 func (s *Server) routes() {
 	s.mux.HandleFunc("/api/requests", s.handleRequests)
 	s.mux.HandleFunc("/api/requests/{id}", s.handleRequestDetail)
+	s.mux.HandleFunc("POST /api/clear", s.handleClear)
 	s.mux.Handle("/", http.FileServer(http.FS(staticFiles)))
 	// The embedded files live under static/, so "/" would 404 the index.
 	// Serve index.html explicitly at the root.
@@ -98,6 +100,11 @@ func (s *Server) handleRequests(w http.ResponseWriter, _ *http.Request) {
 	if err := json.NewEncoder(w).Encode(dtos); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func (s *Server) handleClear(w http.ResponseWriter, _ *http.Request) {
+	s.source.Clear()
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *Server) handleRequestDetail(w http.ResponseWriter, r *http.Request) {

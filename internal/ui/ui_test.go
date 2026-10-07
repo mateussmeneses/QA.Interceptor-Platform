@@ -14,9 +14,9 @@ import (
 // stubSource is a fixed RecordSource for deterministic tests.
 type stubSource struct{ records []capture.Record }
 
-func (s stubSource) List() []capture.Record { return s.records }
+func (s *stubSource) List() []capture.Record { return s.records }
 
-func (s stubSource) Get(id int64) (capture.Record, bool) {
+func (s *stubSource) Get(id int64) (capture.Record, bool) {
 	for _, r := range s.records {
 		if r.ID == id {
 			return r, true
@@ -25,8 +25,10 @@ func (s stubSource) Get(id int64) (capture.Record, bool) {
 	return capture.Record{}, false
 }
 
+func (s *stubSource) Clear() { s.records = nil }
+
 func TestAPIRequestsReturnsRecordsNewestFirst(t *testing.T) {
-	src := stubSource{records: []capture.Record{
+	src := &stubSource{records: []capture.Record{
 		{ID: 1, Method: "GET", URL: "http://a/", StatusCode: 200, Duration: 10 * time.Millisecond, CapturedAt: time.Now()},
 		{ID: 2, Method: "POST", URL: "http://b/", StatusCode: 500, Duration: 20 * time.Millisecond, CapturedAt: time.Now()},
 	}}
@@ -61,7 +63,7 @@ func TestAPIRequestsReturnsRecordsNewestFirst(t *testing.T) {
 func TestAPIRequestsEmpty(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/api/requests", nil)
-	New(stubSource{}).mux.ServeHTTP(rec, req)
+	New(&stubSource{}).mux.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status: got %d, want 200", rec.Code)
@@ -73,7 +75,7 @@ func TestAPIRequestsEmpty(t *testing.T) {
 }
 
 func TestAPIRequestDetail(t *testing.T) {
-	src := stubSource{records: []capture.Record{
+	src := &stubSource{records: []capture.Record{
 		{
 			ID: 7, Method: "POST", URL: "http://a/", StatusCode: 201,
 			ReqHeaders:  http.Header{"Content-Type": {"application/json"}},
@@ -101,17 +103,44 @@ func TestAPIRequestDetail(t *testing.T) {
 func TestAPIRequestDetailNotFound(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/api/requests/999", nil)
-	New(stubSource{}).mux.ServeHTTP(rec, req)
+	New(&stubSource{}).mux.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusNotFound {
 		t.Errorf("status: got %d, want 404", rec.Code)
 	}
 }
 
+func TestClearEmptiesStore(t *testing.T) {
+	src := &stubSource{records: []capture.Record{
+		{ID: 1, Method: "GET", URL: "http://a/", CapturedAt: time.Now()},
+	}}
+	srv := New(src)
+
+	rec := httptest.NewRecorder()
+	srv.mux.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/api/clear", nil))
+
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("clear status: got %d, want 204", rec.Code)
+	}
+	if len(src.List()) != 0 {
+		t.Errorf("store not cleared: still has %d records", len(src.List()))
+	}
+}
+
+func TestClearRejectsGet(t *testing.T) {
+	rec := httptest.NewRecorder()
+	New(&stubSource{}).mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/clear", nil))
+
+	// Only POST is registered for /api/clear, so GET must not succeed.
+	if rec.Code == http.StatusNoContent {
+		t.Error("GET /api/clear should not clear the store")
+	}
+}
+
 func TestIndexServesHTML(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	New(stubSource{}).mux.ServeHTTP(rec, req)
+	New(&stubSource{}).mux.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status: got %d, want 200", rec.Code)

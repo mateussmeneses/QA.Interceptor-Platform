@@ -79,7 +79,14 @@ Goal: see the captured traffic in something better than stdout.
 | ----- | ----------------------------------------- | --------------------------------------------------------------------------------------------- | ------ | ----- |
 | P2-01 | Local web UI server (`internal/ui`)       | Opening a localhost URL lists captured requests, live-updating as traffic flows               | **Done** | P0-02 |
 | P2-02 | Request/response detail view              | Clicking a request shows headers + body for request and response                              | **Done** | P2-01 |
-| P2-03 | Clear / filter / search captured list     | The list can be cleared and filtered by substring across URL/method/status                    | Todo   | P2-01 |
+| P2-03 | Clear / filter / search captured list     | The list can be cleared and filtered by substring across URL/method/status                    | **Done** | P2-01 |
+
+> **P2-03 evidence (2026-10-07):** `POST /api/clear` calls `store.Clear()` (returns 204); the
+> `RecordSource` interface gained `Clear()`. The page has a Clear button and a search box that
+> filters rendered rows by substring across method/URL/status/error (client-side over polled
+> data, re-rendered on input and on each poll). Verified running: with 2 captured requests,
+> `POST /api/clear` → 204, and `/api/requests` then returned `[]`. Tests cover clear (204 +
+> emptied) and that GET does not clear. **Phase 2 complete.**
 
 > **P2-02 evidence (2026-10-07):** `proxy.Exchange` + `capture.Record` now carry request/response
 > headers and bodies, captured in `serveRelayed` (request body read+restored via
