@@ -74,11 +74,16 @@ type CertProvider interface {
 	TLSConfigForHost(host string) *tls.Config
 }
 
-// RuleEngine decides which modification rule applies to a request. It is
+// RuleEngine decides which modification rules apply to a request. It is
 // satisfied by *rules.Set. Keeping it an interface preserves a clean seam and
 // lets the proxy run with no rules (a nil engine).
+//
+// FirstMatch picks the single short-circuiting action (block/redirect/mock).
+// Match returns ALL matching rules, for actions that modify a real relay
+// (header rewrite, body rewrite) and can stack.
 type RuleEngine interface {
 	FirstMatch(req rules.Request, wanted ...rules.ActionType) (rules.Rule, bool)
+	Match(req rules.Request) []rules.Rule
 }
 
 // Proxy is a forward HTTP(S) proxy. Construct it with New.
@@ -162,6 +167,16 @@ func (p *Proxy) serveRelayed(w http.ResponseWriter, r *http.Request, urlOverride
 		return
 	}
 
+	// Collect modifying rules (header/body rewrite) that match this request.
+	var matched []rules.Rule
+	if p.engine != nil {
+		matched = p.engine.Match(rules.Request{Method: r.Method, URL: loggedURL})
+	}
+
+	// Request-header rewrites apply before relaying to the origin.
+	applyHeaderRewrites(r.Header, matched, false)
+	exchange.ReqHeaders = r.Header.Clone() // reflect the mutated headers in capture
+
 	resp, err := p.relay(r)
 	if err != nil {
 		exchange.Err = err
@@ -174,6 +189,10 @@ func (p *Proxy) serveRelayed(w http.ResponseWriter, r *http.Request, urlOverride
 
 	// Read the whole response body so we can both capture it and forward it.
 	respBody, _ := io.ReadAll(resp.Body)
+
+	// Response-header rewrites apply after relay, before writing to the client.
+	applyHeaderRewrites(resp.Header, matched, true)
+
 	exchange.RespHeaders = resp.Header.Clone()
 	exchange.RespBody, exchange.RespBodyTruncated = clampBody(respBody)
 
@@ -184,6 +203,27 @@ func (p *Proxy) serveRelayed(w http.ResponseWriter, r *http.Request, urlOverride
 	exchange.StatusCode = resp.StatusCode
 	exchange.Duration = time.Since(start)
 	p.notify(exchange)
+}
+
+// applyHeaderRewrites mutates h in place with the header ops from every
+// rewrite-header rule in matched whose ops target the given side (onResp:
+// false = request headers, true = response headers).
+func applyHeaderRewrites(h http.Header, matched []rules.Rule, onResp bool) {
+	for _, rule := range matched {
+		if rule.Action != rules.ActionRewriteHeader {
+			continue
+		}
+		for _, op := range rule.Headers {
+			if op.OnResp != onResp {
+				continue
+			}
+			if op.Remove {
+				h.Del(op.Name)
+			} else {
+				h.Set(op.Name, op.Value)
+			}
+		}
+	}
 }
 
 // applyShortCircuit checks for a matching rule whose action replaces the origin

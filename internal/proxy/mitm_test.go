@@ -92,6 +92,52 @@ func certPool(ts *httptest.Server) *x509.CertPool {
 	return pool
 }
 
+// TestHeaderRewrite is the P3-04 acceptance test: a request header is added
+// before relay (origin sees it) and a response header is added after relay
+// (client sees it), both from matching rewrite-header rules.
+func TestHeaderRewrite(t *testing.T) {
+	var sawReqHeader string
+	origin := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sawReqHeader = r.Header.Get("X-Injected")
+		w.Header().Set("X-Origin-Keep", "1")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer origin.Close()
+
+	set := rules.NewSet([]rules.Rule{
+		{
+			Name: "rewrite", Enabled: true, Action: rules.ActionRewriteHeader,
+			Headers: []rules.HeaderOp{
+				{Name: "X-Injected", Value: "from-proxy"},          // request header (OnResp=false)
+				{Name: "X-Added-Resp", Value: "yes", OnResp: true}, // response header
+			},
+		},
+	})
+
+	p := New(nil).WithRules(set)
+	proxyServer := httptest.NewServer(p)
+	defer proxyServer.Close()
+
+	proxyURL, _ := url.Parse(proxyServer.URL)
+	client := &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)}}
+
+	resp, err := client.Get(origin.URL)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	resp.Body.Close()
+
+	if sawReqHeader != "from-proxy" {
+		t.Errorf("origin did not see injected request header: got %q", sawReqHeader)
+	}
+	if got := resp.Header.Get("X-Added-Resp"); got != "yes" {
+		t.Errorf("client did not see added response header: got %q", got)
+	}
+	if got := resp.Header.Get("X-Origin-Keep"); got != "1" {
+		t.Errorf("origin response header was lost: got %q", got)
+	}
+}
+
 // TestRedirectRuleShortCircuits is the P3-03 acceptance test: a request matching
 // a redirect rule gets a 302 to the target and the origin is NEVER contacted.
 func TestRedirectRuleShortCircuits(t *testing.T) {

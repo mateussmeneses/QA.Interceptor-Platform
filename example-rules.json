@@ -6,10 +6,20 @@
     "condition": { "urlContains": "example.org" }
   },
   {
-    "name": "redirect old to new",
+    "name": "redirect neverssl to example",
     "enabled": true,
     "action": "redirect",
     "condition": { "urlContains": "neverssl.com" },
     "redirectTo": "http://example.com/"
+  },
+  {
+    "name": "add headers for example.com",
+    "enabled": true,
+    "action": "rewrite-header",
+    "condition": { "urlContains": "example.com" },
+    "headers": [
+      { "name": "X-QA-Interceptor", "value": "hello-from-proxy" },
+      { "name": "X-Added-By-Proxy", "value": "yes", "onResponse": true }
+    ]
   }
 ]

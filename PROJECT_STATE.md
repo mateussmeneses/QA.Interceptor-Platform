@@ -51,9 +51,11 @@ Decision record: [`docs/adr/0001-why-proxy-and-go.md`](docs/adr/0001-why-proxy-a
 - ✅ **P3-01 DONE (unit-tested):** `internal/rules` — pure rule model + matcher.
 - ✅ **P3-02 DONE (verified running):** block rule. `--rules <file.json>` loads rules;
   `Proxy.WithRules` + `applyShortCircuit` in `serveRelayed` short-circuit a block with 403.
-- ✅ **P3-03 DONE (verified running):** redirect rule. `applyShortCircuit` also handles redirect →
-  302 with `Location`. Verified: `neverssl.com → 302 → example.com`, `example.org → 403` coexist.
-- ⬜ **P3-04 (header rewrite) — next**, then P3-05 (mock), P3-06 (body rewrite).
+- ✅ **P3-03 DONE (verified running):** redirect rule → 302 with `Location`.
+- ✅ **P3-04 DONE (verified running):** header rewrite. `RuleEngine.Match` returns all matches;
+  `applyHeaderRewrites` mutates request headers before relay and response headers after. Verified:
+  client got the added response header; capture showed the injected request header.
+- ⬜ **P3-05 (mock response) — next**, then P3-06 (body rewrite). Phase 3 nearly done.
 
 > **Known limitation:** Windows `curl` (schannel) needs `--ssl-no-revoke` because our leaf has no
 > CRL/OCSP endpoint; browsers with the CA installed are fine. Documented in README; optional
@@ -150,22 +152,24 @@ P3-02 (block) and P3-03 (redirect) are DONE — both short-circuit via `applySho
 (they don't short-circuit), so they need a different hook and ALL matching rules, not just the
 first.
 
+Pattern now covers two kinds: short-circuit actions in `applyShortCircuit` (block, redirect — add
+mock here), and relay-modifying actions applied inline in `serveRelayed` using `engine.Match`
+(header rewrite done; body rewrite next). `example-rules.json` has working samples of block,
+redirect, and header rewrite.
+
 Remaining slices (one at a time, each runtime-verified + unit-tested):
 
-1. **P3-04 — header rewrite.** `rule.Headers []HeaderOp` (`Name`, `Value`, `Remove`, `OnResp`).
-   This matches AND relays, so you need all matching rewrite-header rules — **extend the
-   `RuleEngine` interface with `Match(req) []rules.Rule`** (`*rules.Set` already has it). In
-   `serveRelayed`: apply request-header ops (`OnResp==false`) to `r.Header` BEFORE `relay`; apply
-   response-header ops (`OnResp==true`) to `resp.Header`/`w.Header()` AFTER relay, before writing.
-   **Verify:** the capture detail (`/api/requests/{id}`) shows the added header / missing removed
-   header. Add a unit test asserting header mutation on both sides.
-2. **P3-05 — mock response.** Short-circuit (add `ActionMockResponse` to `applyShortCircuit`'s
-   `FirstMatch` + a case): write `rule.MockStatus` + `rule.MockBody`, skip origin. **Verify:**
-   mocked body returned, origin not hit.
-3. **P3-06 — response-body rewrite.** After reading the response body in `serveRelayed`, if a
-   matching `ActionRewriteResponseBody` rule exists, `strings.ReplaceAll(body, rule.BodySearch,
-   rule.BodyReplace)` before writing to the client AND before capturing. **Verify:** client
-   receives the modified body; capture shows the modified body.
+1. **P3-05 — mock response.** Add `rules.ActionMockResponse` to `applyShortCircuit`'s `FirstMatch`
+   call and a `case rules.ActionMockResponse`: write `rule.MockStatus` (default 200 if 0) and
+   `rule.MockBody`, record the exchange, skip origin entirely. **Verify:** curl through the proxy
+   to a mocked URL returns the mock status+body and the origin is never contacted.
+2. **P3-06 — response-body rewrite.** After reading `respBody` in `serveRelayed`, if any matched
+   rule has `Action == ActionRewriteResponseBody`, apply
+   `respBody = []byte(strings.ReplaceAll(string(respBody), rule.BodySearch, rule.BodyReplace))`
+   for each such rule, BEFORE capturing and BEFORE writing to the client. Note: this breaks
+   `Content-Length` if length changes — set `w.Header().Set("Content-Length", ...)` from the final
+   body (the current code copies origin headers then writes; update the length). **Verify:** the
+   client receives the modified body.
 
 After P3-06, Phase 3 is complete and the tool does real QA modification. Then Phase 4 (replay,
 persistence, polish). A C compiler is NOT installed, so `go test -race` cannot run here.
