@@ -18,7 +18,7 @@ yet. This is the "capture works" milestone on the new stack.
 | ID    | Deliverable                                  | Acceptance (runtime-verifiable)                                                                                    | Status   | Deps  |
 | ----- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | -------- | ----- |
 | P0-01 | HTTP forward proxy, `cmd/proxy`              | `go run ./cmd/proxy` starts on a port; a client configured to use it loads an **http://** site successfully        | **Done** | —     |
-| P0-02 | In-memory capture store (`internal/capture`) | Each proxied request/response is recorded (method, URL, status, timing); unit-tested; printed to stdout on the fly  | Todo     | P0-01 |
+| P0-02 | In-memory capture store (`internal/capture`) | Each proxied request/response is recorded (method, URL, status, timing); unit-tested; printed to stdout on the fly  | **Done** | P0-01 |
 | P0-03 | Graceful start/stop + config (port flag)     | `--port` flag works; Ctrl-C shuts down cleanly without dropping in-flight connections                              | **Done** | P0-01 |
 
 > **P0-01 evidence (2026-10-07):** `go run ./cmd/proxy --port 8080` started; a real request to
@@ -28,9 +28,14 @@ yet. This is the "capture works" milestone on the new stack.
 > until P1. **P0-03 evidence:** `--port` flag honored; `main.go` installs a SIGINT/SIGTERM
 > handler and calls `srv.Shutdown` with a 5s timeout.
 >
-> **P0-02 is the current `internal/proxy` has an `Observer` seam already** (`StdoutLogger` is
-> one implementation) — the capture store should be a second `Observer` so no proxy code
-> changes. See "Next step for the AI" in `PROJECT_STATE.md`.
+> **P0-02 evidence (2026-10-07):** `internal/capture.Store` implements `proxy.Observer` (added
+> as a *second* observer via new `proxy.MultiObserver`; proxy core unchanged). It is
+> mutex-guarded, bounded (`DefaultMaxItems=1000`, oldest dropped first), assigns monotonic IDs +
+> capture time. Verified running: 3 real requests through `go run ./cmd/proxy --port 8081` were
+> all captured, including an error exchange (`neverssl.com -> context canceled`). Unit tests
+> cover recording, error path, ordering, cap eviction, clear, and 5000 concurrent writes (unique
+> IDs, no loss). **Known limitation:** `go test -race` could not run here (no C compiler / cgo
+> on this machine); the concurrency test ran without the race detector.
 
 ## Phase 1 — HTTPS interception (the hard, defining capability)
 

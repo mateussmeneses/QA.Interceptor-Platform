@@ -35,6 +35,18 @@ type ObserverFunc func(Exchange)
 // Observe calls the wrapped function.
 func (f ObserverFunc) Observe(e Exchange) { f(e) }
 
+// MultiObserver fans one exchange out to several observers in order. It lets a
+// single proxy both log and capture, for example.
+func MultiObserver(observers ...Observer) Observer {
+	return ObserverFunc(func(e Exchange) {
+		for _, o := range observers {
+			if o != nil {
+				o.Observe(e)
+			}
+		}
+	})
+}
+
 // Proxy is a forward HTTP proxy. Construct it with New.
 type Proxy struct {
 	transport http.RoundTripper

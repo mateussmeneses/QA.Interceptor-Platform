@@ -27,17 +27,23 @@ Decision record: [`docs/adr/0001-why-proxy-and-go.md`](docs/adr/0001-why-proxy-a
   entry point `cmd/proxy/main.go`. A real request to `http://example.com` through
   `go run ./cmd/proxy` returned 200 and was logged. Tests green (`internal/proxy/proxy_test.go`).
 - ✅ **P0-03 DONE:** `--port` flag + graceful SIGINT/SIGTERM shutdown in `main.go`.
-- ⬜ **P0-02 TODO:** in-memory capture store (`internal/capture`). This is the next task.
-- ⬜ HTTPS MITM (Phase 1), UI (Phase 2), rules/mocks (Phase 3) not started.
+- ✅ **P0-02 DONE (verified running):** `internal/capture.Store` — thread-safe, bounded
+  in-memory store implementing `proxy.Observer`. 3 real requests captured through the running
+  proxy (incl. an error exchange). Tests green incl. a 5000-write concurrency test.
+- ✅ **Phase 0 complete.** The walking skeleton proxy captures traffic end to end.
+- ⬜ HTTPS MITM (Phase 1 — next), UI (Phase 2), rules/mocks (Phase 3) not started.
 
 ### What exists in code
 
-- `internal/proxy/proxy.go` — `Proxy` (an `http.Handler`), `ListenAndServe`, and an **`Observer`
-  seam**: the proxy reports each `Exchange` (method, URL, status, duration, err) to an `Observer`.
-  `StdoutLogger()` is the only implementation so far. CONNECT (HTTPS) is cleanly refused with 501
-  until Phase 1.
-- `cmd/proxy/main.go` — wires `StdoutLogger`, `--port`, graceful shutdown.
-- `internal/proxy/proxy_test.go` — full relay+observe test and a CONNECT-refused test.
+- `internal/proxy/proxy.go` — `Proxy` (an `http.Handler`), `ListenAndServe`, the **`Observer`
+  seam** (each `Exchange` = method, URL, status, duration, err), `StdoutLogger()`, and
+  `MultiObserver(...)` to fan one exchange out to several observers. CONNECT (HTTPS) is cleanly
+  refused with 501 until Phase 1.
+- `internal/capture/capture.go` — `Store` implementing `proxy.Observer`: thread-safe, bounded,
+  monotonic IDs, `List()`/`Len()`/`Clear()`. This is what the Phase 2 UI will read.
+- `cmd/proxy/main.go` — wires `MultiObserver(StdoutLogger, store)`, `--port`, graceful shutdown,
+  prints the capture count on exit.
+- Tests: `internal/proxy/proxy_test.go`, `internal/capture/capture_test.go`.
 
 ## 3. Architecture (target)
 
@@ -76,29 +82,41 @@ import or edit it.** Use it only to understand prior logic when porting a featur
 
 ## 6. Next step for the AI (read this if you are a new session)
 
-**Task: implement P0-02 — in-memory capture store (`internal/capture`).**
+**Task: start Phase 1 — HTTPS interception (MITM). Begin with P1-01, then P1-02.** This is the
+hardest and most defining capability. Do it in the small ordered slices below; verify each at
+runtime before moving on (golden rule).
 
-Context so you don't get lost:
+Current relevant state:
 
-- The proxy already emits every exchange through the `proxy.Observer` interface
-  (`internal/proxy/proxy.go`). `StdoutLogger()` is one observer. **Do not change the proxy to add
-  capture** — instead build the store as a *second* observer.
-- Create package `internal/capture` with a `Store` that implements `proxy.Observer` (i.e. has an
-  `Observe(proxy.Exchange)` method), keeps records in memory (thread-safe — the proxy serves
-  concurrently, so guard with a mutex), assigns each an ID + timestamp, and exposes a `List()`
-  (or similar) read method. Add a bound/cap so memory can't grow forever.
-- Wire it in `cmd/proxy/main.go`: construct the store, pass it (alongside or instead of the
-  stdout logger) to `ListenAndServe`. If you want both logging and capture, add a small
-  multi-observer helper, or have `main` fan out — keep it simple.
-- **Acceptance (golden rule):** unit-test the store (concurrent writes, ordering, cap). Then run
-  the proxy, send a couple of requests through it, and confirm they are captured (e.g. a temporary
-  stdout dump of `Store.List()` on shutdown, or a tiny debug print). Record the evidence in this
-  file and flip P0-02 to Done in `BACKLOG.md`.
+- The proxy (`internal/proxy/proxy.go`) is a plain-HTTP forward proxy. A `CONNECT` request (how
+  clients ask to tunnel HTTPS) is currently **refused with 501** — that refusal is the exact spot
+  Phase 1 replaces.
+- Captured exchanges already flow through the `Observer` seam into `internal/capture.Store`. HTTPS
+  exchanges must land there too, in the same `Exchange` shape, so the UI (Phase 2) sees both.
 
-Validate with: `go build ./...` · `go test ./...` · `go vet ./...` · `gofmt -l .` · run it.
+Suggested slices (map to BACKLOG P1-01 → P1-04):
 
-After P0-02, the next milestone is **Phase 1 (HTTPS MITM, P1-01 → P1-04)** — the defining
-capability. Capture (P0-02) is a prerequisite for the UI (Phase 2).
+1. **P1-01 — local root CA.** New package `internal/mitm` (or `internal/ca`). On first run,
+   generate an RSA/ECDSA root CA cert+key and persist under `.certs/` (already gitignored — the
+   key must NEVER be committed). Reuse it if present. Unit-test that generation is deterministic
+   in shape and that reload works.
+2. **P1-02 — TLS MITM on CONNECT.** Replace the 501: on `CONNECT host:443`, hijack the client
+   connection, send `200 Connection Established`, then TLS-handshake with the client using a leaf
+   certificate signed on the fly by the root CA for that host (cache leaves per host). Then read
+   the real HTTPS request over that TLS conn, relay it to the origin over TLS, copy the response
+   back, and report an `Exchange` to the observer — same as the HTTP path. **Verify:** trust the
+   CA locally, `curl -x http://127.0.0.1:8080 https://example.com` returns 200 and the exchange is
+   captured. (Factor the HTTP relay logic so both paths share it; do not duplicate.)
+3. **P1-03 — pass-through tunneling** for hosts you choose not to MITM: plain TCP splice between
+   client and origin, no decryption. **Verify:** such a host still loads.
+4. **P1-04 — CA export + trust instructions** documented and verified on at least one browser/OS.
+
+Watch out for: a C compiler is NOT installed, so `go test -race` cannot run here — rely on
+non-race concurrency tests. Keep `internal/capture` free of `net/http` server types; it only
+depends on `internal/proxy`'s `Exchange`.
+
+Validate every slice with: `go build ./...` · `go test ./...` · `go vet ./...` · `gofmt -l .` ·
+then run it and confirm the behavior. Update this file + `BACKLOG.md` with evidence; commit.
 
 ## 7. How to run what exists today
 

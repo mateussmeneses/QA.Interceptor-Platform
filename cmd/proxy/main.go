@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/qa-interceptor/platform/internal/capture"
 	"github.com/qa-interceptor/platform/internal/proxy"
 )
 
@@ -23,7 +24,12 @@ func main() {
 
 	addr := "127.0.0.1:" + strconv.Itoa(*port)
 
-	srv, err := proxy.ListenAndServe(addr, proxy.StdoutLogger())
+	// The proxy fans each exchange out to the stdout logger (live view) and the
+	// in-memory capture store (inspectable; surfaced by the UI in Phase 2).
+	store := capture.NewStore(0)
+	observer := proxy.MultiObserver(proxy.StdoutLogger(), store)
+
+	srv, err := proxy.ListenAndServe(addr, observer)
 	if err != nil {
 		log.Fatalf("failed to start proxy: %v", err)
 	}
@@ -41,5 +47,6 @@ func main() {
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Printf("graceful shutdown failed: %v", err)
 	}
+	log.Printf("captured %d request(s) this session.", store.Len())
 	log.Printf("stopped.")
 }
