@@ -1,0 +1,43 @@
+# Go build output
+/bin/
+/dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test / coverage
+*.test
+*.out
+coverage.*
+/coverage/
+
+# Go workspace file (machine-local)
+go.work
+go.work.sum
+
+# Local MITM certificate authority (generated per machine, never committed)
+/.certs/
+*.pem
+*.key
+*.crt
+
+# Environment / local config
+.env
+.env.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+*.iml
+.vscode/settings.json
+
+# Logs
+*.log
+
+# Legacy archived project keeps its own ignored artifacts out
+legacy/**/node_modules/
+legacy/**/dist/

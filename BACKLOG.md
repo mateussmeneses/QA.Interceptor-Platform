@@ -1,0 +1,79 @@
+# BACKLOG — QA.Interceptor Platform
+
+> **The one and only official backlog.** Do not create another. Pick the top unblocked task.
+> Every item has a runtime-verifiable acceptance criterion. A task is **Done** only when it is
+> verified running (see the golden rule in `AGENTS.md`), then recorded in `PROJECT_STATE.md`.
+
+**Status values:** `Todo` · `In Progress` · `Needs verification` · `Done` · `Blocked`
+
+Each item: an ID, what it delivers, how you prove it works (acceptance), and dependencies.
+
+---
+
+## Phase 0 — Walking skeleton (prove the platform)
+
+Goal: the smallest proxy that actually intercepts and captures traffic. No HTTPS, no UI, no rules
+yet. This is the "capture works" milestone on the new stack.
+
+| ID    | Deliverable                                        | Acceptance (runtime-verifiable)                                                                                   | Status | Deps  |
+| ----- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------ | ----- |
+| P0-01 | HTTP forward proxy, `cmd/proxy`                    | `go run ./cmd/proxy` starts on a port; a client configured to use it loads an **http://** site successfully       | Todo   | —     |
+| P0-02 | In-memory capture store (`internal/capture`)       | Each proxied request/response is recorded (method, URL, status, timing); unit-tested; printed to stdout on the fly | Todo   | P0-01 |
+| P0-03 | Graceful start/stop + config (port flag)           | `--port` flag works; Ctrl-C shuts down cleanly without dropping in-flight connections                             | Todo   | P0-01 |
+
+## Phase 1 — HTTPS interception (the hard, defining capability)
+
+Goal: real MITM so we can see and later modify HTTPS traffic. This is what makes it a true
+Charles/Burp alternative.
+
+| ID    | Deliverable                                       | Acceptance (runtime-verifiable)                                                                            | Status | Deps  |
+| ----- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------ | ----- |
+| P1-01 | Generate a local root CA on first run             | A CA cert+key is created under `.certs/` (gitignored); regenerated only if missing                         | Todo   | P0-01 |
+| P1-02 | Per-host leaf cert signing + TLS MITM             | With the CA trusted, an **https://** site loads through the proxy and its request/response is captured      | Todo   | P1-01 |
+| P1-03 | `CONNECT` tunneling for untrusted/pass-through    | Hosts not being intercepted tunnel through transparently (no MITM, no breakage)                            | Todo   | P1-02 |
+| P1-04 | CA export + install instructions                  | A documented way to export the CA and trust it on at least one OS/browser; verified by a successful https capture | Todo   | P1-01 |
+
+## Phase 2 — Inspection UI
+
+Goal: see the captured traffic in something better than stdout.
+
+| ID    | Deliverable                               | Acceptance (runtime-verifiable)                                                              | Status | Deps  |
+| ----- | ----------------------------------------- | --------------------------------------------------------------------------------------------- | ------ | ----- |
+| P2-01 | Local web UI server (`internal/ui`)       | Opening a localhost URL lists captured requests, live-updating as traffic flows               | Todo   | P0-02 |
+| P2-02 | Request/response detail view              | Clicking a request shows headers + body for request and response                              | Todo   | P2-01 |
+| P2-03 | Clear / filter / search captured list     | The list can be cleared and filtered by substring across URL/method/status                    | Todo   | P2-01 |
+
+## Phase 3 — Modify & mock (the QA value)
+
+Goal: change traffic in flight — the core QA feature set, conceptually ported from the legacy
+rule engine (do not import it; re-implement in Go).
+
+| ID    | Deliverable                                 | Acceptance (runtime-verifiable)                                                        | Status | Deps        |
+| ----- | ------------------------------------------- | --------------------------------------------------------------------------------------- | ------ | ----------- |
+| P3-01 | Rule model + matching (`internal/rules`)    | Pure, unit-tested matching of a request against rule conditions (URL/method)            | Todo   | P0-02       |
+| P3-02 | Block rule                                  | A matching request is blocked; verified in the client (request fails as configured)     | Todo   | P3-01       |
+| P3-03 | Redirect rule                               | A matching request is redirected to a new URL; verified in the client                   | Todo   | P3-01       |
+| P3-04 | Header rewrite (request + response)         | A matching request/response has headers added/removed; verified in capture              | Todo   | P3-01       |
+| P3-05 | Mock response (status + body)               | A matching request returns a synthetic response without hitting the origin              | Todo   | P3-01       |
+| P3-06 | Response body rewrite                       | A matching response body is modified before reaching the client                         | Todo   | P1-02,P3-01 |
+
+## Phase 4 — Replay, persistence, polish
+
+| ID    | Deliverable                       | Acceptance (runtime-verifiable)                                              | Status | Deps  |
+| ----- | --------------------------------- | ----------------------------------------------------------------------------- | ------ | ----- |
+| P4-01 | Replay / resend a captured request| A captured request can be re-sent (optionally edited) and the result captured | Todo   | P0-02 |
+| P4-02 | Persist rules/config to disk      | Rules survive a restart (stored in a local config file)                       | Todo   | P3-01 |
+| P4-03 | Import/export (HAR, rules JSON)   | Captured traffic exports to HAR; rules export/import round-trips              | Todo   | P2-01 |
+
+---
+
+## Explicitly out of scope (see ADR-0001)
+
+Reverse proxy / load balancing, DNS spoofing, port forwarding, offensive-security tooling
+(scanner / intruder / fuzzer). WebSocket frame inspection is a possible future phase, not a
+Phase 0–4 goal.
+
+## Ideas parking lot (not scheduled)
+
+Mobile-device setup helper · global throttling profile · breakpoints (pause/edit/resume) ·
+desktop GUI wrapper. Promote into a phase with an acceptance criterion before starting.
