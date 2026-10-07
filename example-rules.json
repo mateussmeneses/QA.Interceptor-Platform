@@ -4,5 +4,12 @@
     "enabled": true,
     "action": "block",
     "condition": { "urlContains": "example.org" }
+  },
+  {
+    "name": "redirect old to new",
+    "enabled": true,
+    "action": "redirect",
+    "condition": { "urlContains": "neverssl.com" },
+    "redirectTo": "http://example.com/"
   }
 ]

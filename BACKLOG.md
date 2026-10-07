@@ -116,10 +116,16 @@ rule engine (do not import it; re-implement in Go).
 | ----- | ------------------------------------------- | --------------------------------------------------------------------------------------- | ------ | ----------- |
 | P3-01 | Rule model + matching (`internal/rules`)    | Pure, unit-tested matching of a request against rule conditions (URL/method)            | **Done** | P0-02       |
 | P3-02 | Block rule                                  | A matching request is blocked; verified in the client (request fails as configured)     | **Done** | P3-01       |
-| P3-03 | Redirect rule                               | A matching request is redirected to a new URL; verified in the client                   | Todo   | P3-01       |
+| P3-03 | Redirect rule                               | A matching request is redirected to a new URL; verified in the client                   | **Done** | P3-01       |
 | P3-04 | Header rewrite (request + response)         | A matching request/response has headers added/removed; verified in capture              | Todo   | P3-01       |
 | P3-05 | Mock response (status + body)               | A matching request returns a synthetic response without hitting the origin              | Todo   | P3-01       |
 | P3-06 | Response body rewrite                       | A matching response body is modified before reaching the client                         | Todo   | P1-02,P3-01 |
+
+> **P3-03 evidence (2026-10-07):** `applyBlock` generalized to `applyShortCircuit`, which handles
+> both block and redirect (shared match→write→stop shape). A `redirect` rule returns 302 with a
+> `Location: rule.RedirectTo` header and does NOT contact origin. Verified running (two rules in
+> `example-rules.json`): `neverssl.com → 302 → http://example.com/` and `example.org → 403`
+> coexist. Unit test `TestRedirectRuleShortCircuits` asserts 302 + Location + origin-not-hit.
 
 > **P3-02 evidence (2026-10-07):** rules are loaded via `--rules <file.json>` (`loadRules` in
 > `main.go` → `rules.NewSet`); `Proxy.WithRules(engine)` adds a `RuleEngine` seam, and

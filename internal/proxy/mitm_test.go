@@ -92,6 +92,52 @@ func certPool(ts *httptest.Server) *x509.CertPool {
 	return pool
 }
 
+// TestRedirectRuleShortCircuits is the P3-03 acceptance test: a request matching
+// a redirect rule gets a 302 to the target and the origin is NEVER contacted.
+func TestRedirectRuleShortCircuits(t *testing.T) {
+	originHit := false
+	origin := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		originHit = true
+	}))
+	defer origin.Close()
+
+	set := rules.NewSet([]rules.Rule{
+		{Name: "redir", Enabled: true, Action: rules.ActionRedirect,
+			Condition: rules.Condition{URLContains: "/old"}, RedirectTo: "http://example.com/new"},
+	})
+
+	var observed []Exchange
+	p := New(ObserverFunc(func(e Exchange) { observed = append(observed, e) })).WithRules(set)
+	proxyServer := httptest.NewServer(p)
+	defer proxyServer.Close()
+
+	proxyURL, _ := url.Parse(proxyServer.URL)
+	// Do NOT follow redirects, so we can inspect the 302 itself.
+	client := &http.Client{
+		Transport:     &http.Transport{Proxy: http.ProxyURL(proxyURL)},
+		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
+	}
+
+	resp, err := client.Get(origin.URL + "/old/path")
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != http.StatusFound {
+		t.Errorf("redirect status: got %d, want 302", resp.StatusCode)
+	}
+	if loc := resp.Header.Get("Location"); loc != "http://example.com/new" {
+		t.Errorf("Location: got %q, want %q", loc, "http://example.com/new")
+	}
+	if originHit {
+		t.Error("origin was contacted for a redirected request; it must be short-circuited")
+	}
+	if len(observed) != 1 || observed[0].StatusCode != http.StatusFound {
+		t.Errorf("redirect exchange not recorded correctly: %+v", observed)
+	}
+}
+
 // TestBlockRuleShortCircuits is the P3-02 acceptance test: a request matching a
 // block rule returns the block status and the origin is NEVER contacted.
 func TestBlockRuleShortCircuits(t *testing.T) {

@@ -50,9 +50,10 @@ Decision record: [`docs/adr/0001-why-proxy-and-go.md`](docs/adr/0001-why-proxy-a
 - ✅ **Phase 2 complete.** Live inspection UI: list, detail (headers+bodies), clear, filter.
 - ✅ **P3-01 DONE (unit-tested):** `internal/rules` — pure rule model + matcher.
 - ✅ **P3-02 DONE (verified running):** block rule. `--rules <file.json>` loads rules;
-  `Proxy.WithRules` + `applyBlock` in `serveRelayed` short-circuit a matching request with 403
-  without contacting origin. Verified: `example.org → 403` (blocked), `example.com → 200` (passes).
-- ⬜ **P3-03 (redirect) — next**, then P3-04 (header rewrite), P3-05 (mock), P3-06 (body rewrite).
+  `Proxy.WithRules` + `applyShortCircuit` in `serveRelayed` short-circuit a block with 403.
+- ✅ **P3-03 DONE (verified running):** redirect rule. `applyShortCircuit` also handles redirect →
+  302 with `Location`. Verified: `neverssl.com → 302 → example.com`, `example.org → 403` coexist.
+- ⬜ **P3-04 (header rewrite) — next**, then P3-05 (mock), P3-06 (body rewrite).
 
 > **Known limitation:** Windows `curl` (schannel) needs `--ssl-no-revoke` because our leaf has no
 > CRL/OCSP endpoint; browsers with the CA installed are fine. Documented in README; optional
@@ -144,26 +145,30 @@ Established pattern:
   there before `relay` and short-circuits with 403 on a block match.
 - `example-rules.json` at the repo root is a working sample (currently a block rule).
 
+P3-02 (block) and P3-03 (redirect) are DONE — both short-circuit via `applyShortCircuit`
+(add `ActionMockResponse` there for P3-05, same shape). The remaining actions modify a REAL relay
+(they don't short-circuit), so they need a different hook and ALL matching rules, not just the
+first.
+
 Remaining slices (one at a time, each runtime-verified + unit-tested):
 
-1. **P3-03 — redirect.** Before `relay`, check `engine.FirstMatch(req, ActionRedirect)`. On match,
-   send an HTTP redirect to `rule.RedirectTo` (302) OR re-point the outbound request — simplest is
-   to return a 302 to the client. Record the exchange. **Verify:** curl -v shows the redirect.
-2. **P3-04 — header rewrite.** `rule.Headers []HeaderOp` with `OnResp` flag. For request headers:
-   mutate `r.Header` before `relay`. For response headers: mutate `resp.Header`/`w.Header()` after
-   relay, before writing. A rule can match AND relay (not short-circuit), so collect ALL matching
-   rewrite-header rules (`engine` may need a `Match` method, or add one to the interface).
-   **Verify:** capture detail shows the added/removed header.
-3. **P3-05 — mock response.** On `ActionMockResponse` match (short-circuit like block): write
-   `rule.MockStatus` + `rule.MockBody`, skip origin. **Verify:** mocked body returned, origin not
-   hit.
-4. **P3-06 — response-body rewrite.** On `ActionRewriteResponseBody` match, after reading the
-   response body, do a literal `strings.ReplaceAll(body, rule.BodySearch, rule.BodyReplace)` before
-   writing to the client (and before capturing). **Verify:** client receives the modified body.
+1. **P3-04 — header rewrite.** `rule.Headers []HeaderOp` (`Name`, `Value`, `Remove`, `OnResp`).
+   This matches AND relays, so you need all matching rewrite-header rules — **extend the
+   `RuleEngine` interface with `Match(req) []rules.Rule`** (`*rules.Set` already has it). In
+   `serveRelayed`: apply request-header ops (`OnResp==false`) to `r.Header` BEFORE `relay`; apply
+   response-header ops (`OnResp==true`) to `resp.Header`/`w.Header()` AFTER relay, before writing.
+   **Verify:** the capture detail (`/api/requests/{id}`) shows the added header / missing removed
+   header. Add a unit test asserting header mutation on both sides.
+2. **P3-05 — mock response.** Short-circuit (add `ActionMockResponse` to `applyShortCircuit`'s
+   `FirstMatch` + a case): write `rule.MockStatus` + `rule.MockBody`, skip origin. **Verify:**
+   mocked body returned, origin not hit.
+3. **P3-06 — response-body rewrite.** After reading the response body in `serveRelayed`, if a
+   matching `ActionRewriteResponseBody` rule exists, `strings.ReplaceAll(body, rule.BodySearch,
+   rule.BodyReplace)` before writing to the client AND before capturing. **Verify:** client
+   receives the modified body; capture shows the modified body.
 
-Note: block/redirect/mock are short-circuiting (use `FirstMatch`); header/body rewrite modify a
-real relay (need all matches). You may extend the `RuleEngine` interface with a `Match` method.
-A C compiler is NOT installed, so `go test -race` cannot run here.
+After P3-06, Phase 3 is complete and the tool does real QA modification. Then Phase 4 (replay,
+persistence, polish). A C compiler is NOT installed, so `go test -race` cannot run here.
 
 Validate every slice with: `go build ./...` · `go test ./...` · `go vet ./...` · `gofmt -l .` ·
 then run it and confirm the behavior. Update this file + `BACKLOG.md` with evidence; commit.

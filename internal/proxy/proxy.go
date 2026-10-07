@@ -157,8 +157,8 @@ func (p *Proxy) serveRelayed(w http.ResponseWriter, r *http.Request, urlOverride
 		exchange.ReqBody, exchange.ReqBodyTruncated = clampBody(full)
 	}
 
-	// Apply short-circuiting rules (block) before contacting the origin.
-	if p.applyBlock(w, r, loggedURL, &exchange, start) {
+	// Apply short-circuiting rules (block, redirect) before contacting origin.
+	if p.applyShortCircuit(w, r, loggedURL, &exchange, start) {
 		return
 	}
 
@@ -186,28 +186,42 @@ func (p *Proxy) serveRelayed(w http.ResponseWriter, r *http.Request, urlOverride
 	p.notify(exchange)
 }
 
-// applyBlock checks for a matching block rule and, if found, writes the block
-// response, records the exchange, and returns true (the caller must stop). It
-// returns false when no block rule matches (relay should proceed).
-func (p *Proxy) applyBlock(w http.ResponseWriter, r *http.Request, loggedURL string, exchange *Exchange, start time.Time) bool {
+// applyShortCircuit checks for a matching rule whose action replaces the origin
+// relay entirely (block, redirect). If one matches, it writes the response,
+// records the exchange, and returns true (the caller must stop). Returns false
+// when nothing short-circuits (relay should proceed).
+func (p *Proxy) applyShortCircuit(w http.ResponseWriter, r *http.Request, loggedURL string, exchange *Exchange, start time.Time) bool {
 	if p.engine == nil {
 		return false
 	}
-	rule, ok := p.engine.FirstMatch(rules.Request{Method: r.Method, URL: loggedURL}, rules.ActionBlock)
+	rule, ok := p.engine.FirstMatch(
+		rules.Request{Method: r.Method, URL: loggedURL},
+		rules.ActionBlock, rules.ActionRedirect,
+	)
 	if !ok {
 		return false
 	}
 
-	const blockStatus = http.StatusForbidden
-	body := "blocked by rule: " + rule.Name
+	switch rule.Action {
+	case rules.ActionBlock:
+		body := "blocked by rule: " + rule.Name
+		exchange.StatusCode = http.StatusForbidden
+		exchange.RespBody = []byte(body)
+		exchange.Duration = time.Since(start)
+		p.notify(*exchange)
+		http.Error(w, body, http.StatusForbidden)
+		return true
 
-	exchange.StatusCode = blockStatus
-	exchange.RespBody = []byte(body)
-	exchange.Duration = time.Since(start)
-	p.notify(*exchange)
+	case rules.ActionRedirect:
+		exchange.StatusCode = http.StatusFound
+		exchange.Duration = time.Since(start)
+		exchange.RespHeaders = http.Header{"Location": {rule.RedirectTo}}
+		p.notify(*exchange)
+		http.Redirect(w, r, rule.RedirectTo, http.StatusFound)
+		return true
+	}
 
-	http.Error(w, body, blockStatus)
-	return true
+	return false
 }
 
 // clampBody returns at most maxCapturedBody bytes of b (copied so it does not
