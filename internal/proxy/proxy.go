@@ -6,6 +6,7 @@
 package proxy
 
 import (
+	"bytes"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -21,14 +22,28 @@ type Observer interface {
 	Observe(Exchange)
 }
 
-// Exchange is a single request/response pair the proxy relayed.
+// Exchange is a single request/response pair the proxy relayed. Bodies are
+// captured up to maxCapturedBody bytes; BodyTruncated flags when more existed.
 type Exchange struct {
 	Method     string
 	URL        string
 	StatusCode int
 	Duration   time.Duration
 	Err        error
+
+	ReqHeaders  http.Header
+	ReqBody     []byte
+	RespHeaders http.Header
+	RespBody    []byte
+
+	ReqBodyTruncated  bool
+	RespBodyTruncated bool
 }
+
+// maxCapturedBody bounds how many bytes of each body we retain in memory, so a
+// large download or upload cannot exhaust memory. The relay still streams the
+// full body to the client/origin; only the captured copy is truncated.
+const maxCapturedBody = 256 * 1024
 
 // ObserverFunc adapts a plain function to the Observer interface.
 type ObserverFunc func(Exchange)
@@ -113,7 +128,16 @@ func (p *Proxy) serveRelayed(w http.ResponseWriter, r *http.Request, urlOverride
 	if urlOverride != "" {
 		loggedURL = urlOverride
 	}
-	exchange := Exchange{Method: r.Method, URL: loggedURL}
+	exchange := Exchange{Method: r.Method, URL: loggedURL, ReqHeaders: r.Header.Clone()}
+
+	// Capture the request body, then restore it so the relay still sends it.
+	if r.Body != nil {
+		full, _ := io.ReadAll(r.Body)
+		_ = r.Body.Close()
+		r.Body = io.NopCloser(bytes.NewReader(full))
+		r.ContentLength = int64(len(full))
+		exchange.ReqBody, exchange.ReqBodyTruncated = clampBody(full)
+	}
 
 	resp, err := p.relay(r)
 	if err != nil {
@@ -125,13 +149,31 @@ func (p *Proxy) serveRelayed(w http.ResponseWriter, r *http.Request, urlOverride
 	}
 	defer resp.Body.Close()
 
+	// Read the whole response body so we can both capture it and forward it.
+	respBody, _ := io.ReadAll(resp.Body)
+	exchange.RespHeaders = resp.Header.Clone()
+	exchange.RespBody, exchange.RespBodyTruncated = clampBody(respBody)
+
 	copyHeaders(w.Header(), resp.Header)
 	w.WriteHeader(resp.StatusCode)
-	_, _ = io.Copy(w, resp.Body)
+	_, _ = w.Write(respBody)
 
 	exchange.StatusCode = resp.StatusCode
 	exchange.Duration = time.Since(start)
 	p.notify(exchange)
+}
+
+// clampBody returns at most maxCapturedBody bytes of b (copied so it does not
+// alias the caller's slice) and whether truncation occurred.
+func clampBody(b []byte) (captured []byte, truncated bool) {
+	if len(b) <= maxCapturedBody {
+		out := make([]byte, len(b))
+		copy(out, b)
+		return out, false
+	}
+	out := make([]byte, maxCapturedBody)
+	copy(out, b[:maxCapturedBody])
+	return out, true
 }
 
 // handleConnect handles an HTTPS CONNECT. It either decrypts the tunnel (MITM)

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/qa-interceptor/platform/internal/capture"
@@ -23,9 +24,10 @@ var staticFiles embed.FS
 // *capture.Store satisfies it.
 type RecordSource interface {
 	List() []capture.Record
+	Get(id int64) (capture.Record, bool)
 }
 
-// requestDTO is the JSON shape sent to the browser. It is a view model, kept
+// requestDTO is the summary JSON shape for the list. It is a view model, kept
 // separate from capture.Record so the wire format is explicit and stable.
 type requestDTO struct {
 	ID         int64  `json:"id"`
@@ -35,6 +37,19 @@ type requestDTO struct {
 	DurationMs int64  `json:"durationMs"`
 	Err        string `json:"error,omitempty"`
 	CapturedAt string `json:"capturedAt"`
+}
+
+// detailDTO is the full JSON shape for one request's detail view. Bodies are
+// surfaced as UTF-8 text (captured traffic may be binary; the browser shows it
+// best-effort).
+type detailDTO struct {
+	requestDTO
+	ReqHeaders        map[string][]string `json:"reqHeaders"`
+	ReqBody           string              `json:"reqBody"`
+	ReqBodyTruncated  bool                `json:"reqBodyTruncated"`
+	RespHeaders       map[string][]string `json:"respHeaders"`
+	RespBody          string              `json:"respBody"`
+	RespBodyTruncated bool                `json:"respBodyTruncated"`
 }
 
 // Server is the UI HTTP server. Construct it with New.
@@ -52,6 +67,7 @@ func New(source RecordSource) *Server {
 
 func (s *Server) routes() {
 	s.mux.HandleFunc("/api/requests", s.handleRequests)
+	s.mux.HandleFunc("/api/requests/{id}", s.handleRequestDetail)
 	s.mux.Handle("/", http.FileServer(http.FS(staticFiles)))
 	// The embedded files live under static/, so "/" would 404 the index.
 	// Serve index.html explicitly at the root.
@@ -80,6 +96,35 @@ func (s *Server) handleRequests(w http.ResponseWriter, _ *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(dtos); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (s *Server) handleRequestDetail(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	rec, ok := s.source.Get(id)
+	if !ok {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+
+	detail := detailDTO{
+		requestDTO:        toDTO(rec),
+		ReqHeaders:        rec.ReqHeaders,
+		ReqBody:           string(rec.ReqBody),
+		ReqBodyTruncated:  rec.ReqBodyTruncated,
+		RespHeaders:       rec.RespHeaders,
+		RespBody:          string(rec.RespBody),
+		RespBodyTruncated: rec.RespBodyTruncated,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(detail); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

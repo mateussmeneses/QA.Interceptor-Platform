@@ -105,6 +105,71 @@
         text-align: center;
         color: var(--muted);
       }
+      tbody tr {
+        cursor: pointer;
+      }
+      tbody tr.selected {
+        background: color-mix(in srgb, var(--accent) 15%, transparent);
+      }
+      /* Detail drawer */
+      #detail {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: min(640px, 92vw);
+        height: 100vh;
+        background: var(--bg);
+        border-left: 1px solid var(--border);
+        box-shadow: -4px 0 16px rgba(0, 0, 0, 0.15);
+        overflow-y: auto;
+        transform: translateX(100%);
+        transition: transform 0.15s ease-out;
+        padding: 16px;
+      }
+      #detail.open {
+        transform: translateX(0);
+      }
+      #detail .close {
+        float: right;
+        cursor: pointer;
+        border: none;
+        background: none;
+        font-size: 20px;
+        color: var(--muted);
+      }
+      #detail h2 {
+        font-size: 15px;
+        margin: 0 0 4px;
+      }
+      #detail .durl {
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+        color: var(--muted);
+        word-break: break-all;
+        margin-bottom: 16px;
+      }
+      #detail h3 {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--muted);
+        margin: 18px 0 6px;
+      }
+      #detail pre {
+        background: var(--row-hover);
+        padding: 10px;
+        border-radius: 6px;
+        overflow-x: auto;
+        font-size: 12px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        margin: 0;
+      }
+      #detail .trunc {
+        color: #ca8a04;
+        font-size: 11px;
+        margin-top: 4px;
+      }
     </style>
   </head>
   <body>
@@ -127,6 +192,26 @@
     </table>
     <div class="empty" id="empty">No requests captured yet. Send traffic through the proxy.</div>
 
+    <aside id="detail">
+      <button class="close" id="detail-close" title="Close">&times;</button>
+      <h2 id="detail-title"></h2>
+      <div class="durl" id="detail-url"></div>
+      <h3>Request headers</h3>
+      <pre id="detail-req-headers"></pre>
+      <h3>Request body</h3>
+      <pre id="detail-req-body"></pre>
+      <div class="trunc" id="detail-req-trunc" style="display: none">
+        (request body truncated at 256 KB)
+      </div>
+      <h3>Response headers</h3>
+      <pre id="detail-resp-headers"></pre>
+      <h3>Response body</h3>
+      <pre id="detail-resp-body"></pre>
+      <div class="trunc" id="detail-resp-trunc" style="display: none">
+        (response body truncated at 256 KB)
+      </div>
+    </aside>
+
     <script>
       const rowsEl = document.getElementById("rows");
       const countEl = document.getElementById("count");
@@ -141,6 +226,8 @@
         return "";
       }
 
+      let selectedId = null;
+
       function render(list) {
         countEl.textContent = list.length + (list.length === 1 ? " request" : " requests");
         emptyEl.style.display = list.length ? "none" : "block";
@@ -148,6 +235,8 @@
         rowsEl.replaceChildren(
           ...list.map((r) => {
             const tr = document.createElement("tr");
+            tr.dataset.id = r.id;
+            if (r.id === selectedId) tr.classList.add("selected");
             const statusCell = r.error
               ? `<span class="err">ERR</span>`
               : `<span class="${statusClass(r.status)}">${r.status || ""}</span>`;
@@ -159,10 +248,52 @@
               `<td>${r.durationMs} ms</td>`;
             // Set URL via textContent to avoid HTML injection from captured data.
             tr.querySelector(".url").textContent = r.error ? r.url + " — " + r.error : r.url;
+            tr.addEventListener("click", () => openDetail(r.id));
             return tr;
           })
         );
       }
+
+      function fmtHeaders(h) {
+        if (!h) return "(none)";
+        const lines = [];
+        for (const k of Object.keys(h).sort()) {
+          for (const v of h[k]) lines.push(k + ": " + v);
+        }
+        return lines.length ? lines.join("\n") : "(none)";
+      }
+
+      const detailEl = document.getElementById("detail");
+
+      async function openDetail(id) {
+        try {
+          const res = await fetch("/api/requests/" + id);
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const d = await res.json();
+          selectedId = id;
+
+          document.getElementById("detail-title").textContent = d.method + " · " + (d.status || "ERR");
+          document.getElementById("detail-url").textContent = d.url;
+          document.getElementById("detail-req-headers").textContent = fmtHeaders(d.reqHeaders);
+          document.getElementById("detail-req-body").textContent = d.reqBody || "(empty)";
+          document.getElementById("detail-resp-headers").textContent = fmtHeaders(d.respHeaders);
+          document.getElementById("detail-resp-body").textContent = d.respBody || "(empty)";
+          document.getElementById("detail-req-trunc").style.display = d.reqBodyTruncated ? "block" : "none";
+          document.getElementById("detail-resp-trunc").style.display = d.respBodyTruncated ? "block" : "none";
+
+          detailEl.classList.add("open");
+          document.querySelectorAll("tbody tr").forEach((tr) => {
+            tr.classList.toggle("selected", Number(tr.dataset.id) === id);
+          });
+        } catch (e) {
+          /* request may have aged out of the capped store; ignore */
+        }
+      }
+
+      document.getElementById("detail-close").addEventListener("click", () => {
+        detailEl.classList.remove("open");
+        selectedId = null;
+      });
 
       async function poll() {
         try {

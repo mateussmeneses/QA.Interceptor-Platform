@@ -42,9 +42,11 @@ Decision record: [`docs/adr/0001-why-proxy-and-go.md`](docs/adr/0001-why-proxy-a
   steps for Windows/macOS/Linux/Firefox.
 - ✅ **Phase 1 complete.** HTTP + HTTPS interception, pass-through, and CA trust all work.
 - ✅ **P2-01 DONE (verified running):** `internal/ui` serves a live localhost web UI
-  (`--ui-port`, default 9090) listing captured requests via a polled JSON API. After one HTTP +
-  one HTTPS request, `/api/requests` returned both newest-first and the page rendered.
-- ⬜ **P2-02 (detail view) + P2-03 (clear/filter/search) — next.**
+  (`--ui-port`, default 9090) listing captured requests via a polled JSON API.
+- ✅ **P2-02 DONE (verified running):** request/response headers + bodies captured (bounded 256 KB)
+  and shown in a detail drawer via `GET /api/requests/{id}`. Verified with a real HTTPS POST:
+  the detail returned both sides' headers, the request body, and the full response body.
+- ⬜ **P2-03 (clear/filter/search) — next.**
 - ⬜ Rules/mocks (Phase 3) not started.
 
 > **Known limitation:** Windows `curl` (schannel) needs `--ssl-no-revoke` because our leaf has no
@@ -65,8 +67,9 @@ Decision record: [`docs/adr/0001-why-proxy-and-go.md`](docs/adr/0001-why-proxy-a
 - `internal/proxy/connwriter.go` — `connResponseWriter` so the MITM path reuses the same relay
   code as plain HTTP (writes a response back over the raw TLS conn).
 - `internal/ui/ui.go` + `internal/ui/static/index.html` — the inspection UI: a `RecordSource`
-  interface (satisfied by `*capture.Store`), a JSON `/api/requests` endpoint, and an embedded
-  static page that polls it. `ListenAndServe(uiAddr, store)`.
+  interface (`List()` + `Get(id)`, satisfied by `*capture.Store`), JSON endpoints
+  `/api/requests` (list) and `/api/requests/{id}` (full detail with headers + bodies), and an
+  embedded static page that polls the list and opens a detail drawer on click.
 - `cmd/proxy/main.go` — wires the CA + leaf cache + `MultiObserver(StdoutLogger, store)` + the UI
   server, flags `--port`, `--ui-port`, `--cert-dir`, `--export-ca`, `--no-mitm-hosts`, graceful
   shutdown of both servers.
@@ -110,39 +113,35 @@ import or edit it.** Use it only to understand prior logic when porting a featur
 
 ## 6. Next step for the AI (read this if you are a new session)
 
-**Task: continue Phase 2 — P2-02 (detail view) then P2-03 (clear/filter/search).** The live list
-UI (P2-01) works. Now make each request inspectable, then manageable.
+**Task: finish Phase 2 — P2-03 (clear + filter + search).** The live list (P2-01) and detail
+drawer (P2-02) work. This slice makes the list manageable.
 
 Current relevant state:
 
-- `internal/ui/ui.go` serves `/api/requests` (JSON, newest first) and an embedded page
-  (`static/index.html`) that polls it every 1s. Data comes from `RecordSource.List()`.
-- `capture.Record` and `proxy.Exchange` currently carry only method/URL/status/duration/err —
-  **no headers or bodies.** Adding those is the main work for P2-02.
+- `internal/ui/ui.go` serves `/api/requests` (list) and `/api/requests/{id}` (detail). The page
+  (`static/index.html`) polls the list every 1s and opens a detail drawer on row click.
+- `capture.Store` already has `Clear()`. The UI's `RecordSource` interface currently exposes
+  `List()` + `Get(id)` only.
 
 Slices:
 
-1. **P2-02 — detail view (the real work is plumbing headers/bodies through).**
-   a. Extend `proxy.Exchange` with request headers, request body, response headers, response body.
-      In `serveRelayed`, read the request body before relaying and restore it via
-      `io.NopCloser(bytes.NewReader(...))` so the relay still sends it; read the response body
-      after, then re-wrap it so it is still written to the client. **Bound stored body size**
-      (e.g. first 256 KB) so memory stays sane. Mirror these fields onto `capture.Record`.
-   b. Add `GET /api/requests/{id}` returning the full detail for one record (store needs a
-      `Get(id)` or the UI can find it in `List()`).
-   c. Make a row clickable to show a detail panel with req/resp headers + body.
-   **Verify:** click a captured request in the browser; see headers and body for both sides.
-2. **P2-03 — clear + filter + search.** Add `POST /api/clear` calling `store.Clear()` (extend the
-   UI's source interface with `Clear()` or type-assert). Add a clear button and a search box that
-   filters the rendered list by substring across URL/method/status (client-side over polled data
-   is fine to start). **Verify:** clear empties the list; typing in search narrows it.
+1. **P2-03 — clear + filter + search.**
+   a. Add `POST /api/clear` that calls `store.Clear()`. Extend the UI's source interface with
+      `Clear()` (the concrete `*capture.Store` already has it).
+   b. In the page: a "Clear" button (POST to `/api/clear`), and a search box that filters the
+      rendered rows by substring across method/URL/status. Client-side filtering over the polled
+      data is fine to start; keep the live poll working while a filter is active.
+   **Verify:** clear empties the list in the browser; typing in search narrows the visible rows.
 
 Design notes: keep server/transport code in `internal/ui` (may import `internal/capture`); do NOT
-make `internal/capture` depend on `net/http`. Bound body capture for streamed/large responses. A
-C compiler is NOT installed, so `go test -race` cannot run here.
+make `internal/capture` depend on `net/http`. A C compiler is NOT installed, so `go test -race`
+cannot run here.
 
-After Phase 2, the next milestone is **Phase 3 — modify & mock (P3-01…)**: the QA value. The
-legacy TS rule engine in `legacy/abandoned/` is a conceptual reference only; re-implement in Go.
+After P2-03, Phase 2 is complete. The next milestone is **Phase 3 — modify & mock (P3-01…)**: the
+QA value (block, redirect, header rewrite, mock response, response-body rewrite). Start with
+`internal/rules` — a pure, tested rule model + matching (P3-01), then wire actions into the proxy
+one at a time. The legacy TS rule engine in `legacy/abandoned/packages/rule-engine` is a
+conceptual reference only; re-implement in Go, do not import it.
 
 Validate every slice with: `go build ./...` · `go test ./...` · `go vet ./...` · `gofmt -l .` ·
 then run it and confirm the behavior in a browser. Update this file + `BACKLOG.md` with evidence;

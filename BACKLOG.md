@@ -78,8 +78,18 @@ Goal: see the captured traffic in something better than stdout.
 | ID    | Deliverable                               | Acceptance (runtime-verifiable)                                                              | Status | Deps  |
 | ----- | ----------------------------------------- | --------------------------------------------------------------------------------------------- | ------ | ----- |
 | P2-01 | Local web UI server (`internal/ui`)       | Opening a localhost URL lists captured requests, live-updating as traffic flows               | **Done** | P0-02 |
-| P2-02 | Request/response detail view              | Clicking a request shows headers + body for request and response                              | Todo   | P2-01 |
+| P2-02 | Request/response detail view              | Clicking a request shows headers + body for request and response                              | **Done** | P2-01 |
 | P2-03 | Clear / filter / search captured list     | The list can be cleared and filtered by substring across URL/method/status                    | Todo   | P2-01 |
+
+> **P2-02 evidence (2026-10-07):** `proxy.Exchange` + `capture.Record` now carry request/response
+> headers and bodies, captured in `serveRelayed` (request body read+restored via
+> `io.NopCloser(bytes.NewReader(...))`; response body read, captured, then written to the client)
+> and bounded at 256 KB (`clampBody`, with truncation flags). New `capture.Store.Get(id)` and UI
+> endpoint `GET /api/requests/{id}` return a full `detailDTO`; the page shows a clickable
+> detail drawer. Verified running: a real HTTPS `POST https://httpbin.org/post` with body
+> `{"ping":"pong"}` — the detail endpoint returned both sides' headers, the request body, and the
+> full response body (httpbin's echo confirmed the body was also forwarded intact). Tests cover
+> the detail endpoint and 404.
 
 > **P2-01 evidence (2026-10-07):** `internal/ui` serves a localhost page (`--ui-port`, default
 > 9090) that polls `/api/requests` (JSON, newest first) every 1s and renders a live table; static

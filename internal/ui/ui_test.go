@@ -16,6 +16,15 @@ type stubSource struct{ records []capture.Record }
 
 func (s stubSource) List() []capture.Record { return s.records }
 
+func (s stubSource) Get(id int64) (capture.Record, bool) {
+	for _, r := range s.records {
+		if r.ID == id {
+			return r, true
+		}
+	}
+	return capture.Record{}, false
+}
+
 func TestAPIRequestsReturnsRecordsNewestFirst(t *testing.T) {
 	src := stubSource{records: []capture.Record{
 		{ID: 1, Method: "GET", URL: "http://a/", StatusCode: 200, Duration: 10 * time.Millisecond, CapturedAt: time.Now()},
@@ -60,6 +69,42 @@ func TestAPIRequestsEmpty(t *testing.T) {
 	// Must be an empty JSON array, not null.
 	if body := strings.TrimSpace(rec.Body.String()); body != "[]" {
 		t.Errorf("empty body: got %q, want []", body)
+	}
+}
+
+func TestAPIRequestDetail(t *testing.T) {
+	src := stubSource{records: []capture.Record{
+		{
+			ID: 7, Method: "POST", URL: "http://a/", StatusCode: 201,
+			ReqHeaders:  http.Header{"Content-Type": {"application/json"}},
+			ReqBody:     []byte(`{"hello":"world"}`),
+			RespHeaders: http.Header{"X-Server": {"test"}},
+			RespBody:    []byte("created"), CapturedAt: time.Now(),
+		},
+	}}
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/api/requests/7", nil)
+	New(src).mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status: got %d, want 200", rec.Code)
+	}
+	body := rec.Body.String()
+	for _, want := range []string{`"id":7`, `hello`, `created`, `application/json`, `X-Server`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("detail body missing %q; got: %s", want, body)
+		}
+	}
+}
+
+func TestAPIRequestDetailNotFound(t *testing.T) {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/api/requests/999", nil)
+	New(stubSource{}).mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("status: got %d, want 404", rec.Code)
 	}
 }
 

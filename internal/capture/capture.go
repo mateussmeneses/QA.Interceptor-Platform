@@ -7,6 +7,7 @@
 package capture
 
 import (
+	"net/http"
 	"sync"
 	"time"
 
@@ -22,6 +23,14 @@ type Record struct {
 	Duration   time.Duration
 	Err        string // empty when the exchange succeeded
 	CapturedAt time.Time
+
+	ReqHeaders  http.Header
+	ReqBody     []byte
+	RespHeaders http.Header
+	RespBody    []byte
+
+	ReqBodyTruncated  bool
+	RespBodyTruncated bool
 }
 
 // Store keeps the most recent captured exchanges in memory, newest last.
@@ -61,13 +70,19 @@ func (s *Store) Observe(e proxy.Exchange) {
 	}
 
 	s.records = append(s.records, Record{
-		ID:         s.nextID,
-		Method:     e.Method,
-		URL:        e.URL,
-		StatusCode: e.StatusCode,
-		Duration:   e.Duration,
-		Err:        errText,
-		CapturedAt: s.now(),
+		ID:                s.nextID,
+		Method:            e.Method,
+		URL:               e.URL,
+		StatusCode:        e.StatusCode,
+		Duration:          e.Duration,
+		Err:               errText,
+		CapturedAt:        s.now(),
+		ReqHeaders:        e.ReqHeaders,
+		ReqBody:           e.ReqBody,
+		RespHeaders:       e.RespHeaders,
+		RespBody:          e.RespBody,
+		ReqBodyTruncated:  e.ReqBodyTruncated,
+		RespBodyTruncated: e.RespBodyTruncated,
 	})
 
 	// Enforce the cap by dropping the oldest records.
@@ -85,6 +100,20 @@ func (s *Store) List() []Record {
 	out := make([]Record, len(s.records))
 	copy(out, s.records)
 	return out
+}
+
+// Get returns the record with the given ID and true, or a zero record and
+// false if no such record is currently held.
+func (s *Store) Get(id int64) (Record, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, r := range s.records {
+		if r.ID == id {
+			return r, true
+		}
+	}
+	return Record{}, false
 }
 
 // Len returns how many records are currently held.
