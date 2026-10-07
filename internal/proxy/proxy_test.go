@@ -72,14 +72,17 @@ func TestProxyRelaysAndObserves(t *testing.T) {
 }
 
 // TestConnectRejectedInPhase0 confirms HTTPS tunneling is cleanly refused for
-// now (it is implemented in Phase 1), rather than silently mishandled.
-func TestConnectRejectedInPhase0(t *testing.T) {
+// CONNECT handling requires a hijackable connection. httptest.NewRecorder does
+// not implement http.Hijacker, so the proxy reports 500 — this verifies the
+// guard. (Real CONNECT behavior — MITM or raw tunnel — is covered by the tests
+// in mitm_test.go, which use real hijackable connections.)
+func TestConnectRequiresHijackableConn(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodConnect, "example.com:443", nil)
 
 	New(nil).ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusNotImplemented {
-		t.Errorf("CONNECT status: got %d, want %d", rec.Code, http.StatusNotImplemented)
+	if rec.Code != http.StatusInternalServerError {
+		t.Errorf("CONNECT without hijacker: got %d, want %d", rec.Code, http.StatusInternalServerError)
 	}
 }

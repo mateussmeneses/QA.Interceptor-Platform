@@ -46,8 +46,8 @@ Charles/Burp alternative.
 | ----- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------ | ----- |
 | P1-01 | Generate a local root CA on first run             | A CA cert+key is created under `.certs/` (gitignored); regenerated only if missing                         | **Done** | P0-01 |
 | P1-02 | Per-host leaf cert signing + TLS MITM             | With the CA trusted, an **https://** site loads through the proxy and its request/response is captured      | **Done** | P1-01 |
-| P1-03 | `CONNECT` tunneling for untrusted/pass-through    | Hosts not being intercepted tunnel through transparently (no MITM, no breakage)                            | Todo   | P1-02 |
-| P1-04 | CA export + install instructions                  | A documented way to export the CA and trust it on at least one OS/browser; verified by a successful https capture | Todo   | P1-01 |
+| P1-03 | `CONNECT` tunneling for untrusted/pass-through    | Hosts not being intercepted tunnel through transparently (no MITM, no breakage)                            | **Done** | P1-02 |
+| P1-04 | CA export + install instructions                  | A documented way to export the CA and trust it on at least one OS/browser; verified by a successful https capture | **Done** | P1-01 |
 
 > **P1-01/P1-02 evidence (2026-10-07):** `internal/mitm` generates an ECDSA P-256 root CA
 > (`LoadOrCreateCA`, persisted to `.certs/`, key mode 0600, reused on restart) and signs per-host
@@ -58,10 +58,18 @@ Charles/Burp alternative.
 > **200** and the proxy logged `GET https://example.com:443/ -> 200`. Unit test
 > `TestMITMInterceptsHTTPS` covers the full decrypt+relay+observe path against a TLS origin.
 >
-> **Known limitation (P1-04 follow-up):** Windows `curl` uses schannel, which rejects the leaf
-> with "revocation status is unknown" unless `--ssl-no-revoke` is passed (our locally-signed leaf
-> has no CRL/OCSP endpoint). Browsers with the CA installed are unaffected. Adding a CRL
-> Distribution Point / nocheck extension to leaves is a refinement to consider during P1-04.
+> **P1-03/P1-04 evidence (2026-10-07):** P1-03 — `Proxy.WithTunnelDecider` + `rawTunnel` splice
+> bytes without decryption for hosts on `--no-mitm-hosts`. Verified running with
+> `--no-mitm-hosts example.com`: `example.com` loaded (200) WITHOUT our CA and did NOT appear in
+> the capture log (raw tunnel), while `example.org` loaded AND was captured
+> (`GET https://example.org:443/ -> 200`) — MITM still active for non-excluded hosts. Test
+> `TestTunnelDeciderPassesThrough` asserts the pass-through path captures nothing. P1-04 —
+> `--export-ca <path>` writes the public CA cert (`CA.ExportCert`); verified it emits a valid PEM
+> and exits. README documents trust steps for Windows/macOS/Linux/Firefox.
+>
+> **Known limitation (unchanged):** Windows schannel (`curl.exe`) still needs `--ssl-no-revoke`
+> because the leaf has no CRL/OCSP endpoint; browsers with the CA trusted are fine. A CRL/OCSP
+> or nocheck extension remains a candidate refinement (not blocking — documented in README).
 
 ## Phase 2 — Inspection UI
 

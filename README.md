@@ -39,8 +39,45 @@ Requires **Go 1.27+**.
 ```bash
 go build ./...        # compile everything
 go test ./...         # run all tests
-go run ./cmd/proxy    # start the proxy (once the proxy entry point exists)
+go run ./cmd/proxy    # start the proxy on 127.0.0.1:8080
 ```
+
+Flags:
+
+- `--port <n>` — listen port (default 8080)
+- `--cert-dir <dir>` — where the local CA lives (default `.certs`)
+- `--export-ca <path>` — write the CA certificate to a file and exit
+- `--no-mitm-hosts a.com,b.com` — tunnel these hosts without decryption (for
+  certificate-pinned apps that break under interception)
+
+Point your browser or system HTTP/HTTPS proxy at `127.0.0.1:8080`, then browse.
+Plain HTTP is captured immediately.
+
+## Intercepting HTTPS (trust the local CA)
+
+HTTPS interception needs your client to trust the proxy's locally-generated
+certificate authority. The CA private key never leaves your machine and is never
+committed (it lives under `.certs/`, which is git-ignored).
+
+1. Start the proxy once so the CA is generated, or export it directly:
+   ```bash
+   go run ./cmd/proxy --export-ca qa-interceptor-ca.pem
+   ```
+2. Trust `qa-interceptor-ca.pem` (= `.certs/ca-cert.pem`):
+   - **Windows:** `certutil -addstore -user Root qa-interceptor-ca.pem` (or import
+     it into *Trusted Root Certification Authorities* via `certmgr.msc`).
+   - **macOS:** add it to the login keychain and set it to *Always Trust*.
+   - **Linux:** copy to `/usr/local/share/ca-certificates/` and run
+     `update-ca-certificates`.
+   - **Firefox:** import under Settings → Privacy & Security → Certificates →
+     *View Certificates* → Authorities (Firefox uses its own store).
+3. Browse `https://` sites through the proxy; they are now decrypted and captured.
+
+> **Note (Windows native clients):** some Windows TLS stacks (schannel, used by
+> `curl.exe`) refuse the leaf cert with "revocation status unknown" because the
+> locally-signed cert has no CRL/OCSP endpoint. Browsers with the CA trusted work
+> fine; for `curl.exe` pass `--ssl-no-revoke`. Removing this wrinkle entirely is a
+> tracked refinement (see `BACKLOG.md`, P1-04 note).
 
 ## Working on this project (humans and AI)
 

@@ -36,18 +36,24 @@ Decision record: [`docs/adr/0001-why-proxy-and-go.md`](docs/adr/0001-why-proxy-a
 - ✅ **P1-02 DONE (verified running):** TLS MITM on CONNECT. `curl --cacert .certs/ca-cert.pem`
   loaded `https://example.com` through the proxy (HTTP 200) and it was captured as
   `GET https://example.com:443/ -> 200`. Per-host leaf signing with SNI + CONNECT-host fallback.
-- ⬜ **P1-03 (pass-through tunneling) + P1-04 (CA export/trust docs) — next.**
-- ⬜ UI (Phase 2), rules/mocks (Phase 3) not started.
+- ✅ **P1-03 DONE (verified):** pass-through tunneling. With `--no-mitm-hosts example.com`,
+  `example.com` loaded without decryption (not captured) while `example.org` was still MITM'd.
+- ✅ **P1-04 DONE (verified):** `--export-ca <path>` exports the CA cert; README documents trust
+  steps for Windows/macOS/Linux/Firefox.
+- ✅ **Phase 1 complete.** HTTP + HTTPS interception, pass-through, and CA trust all work.
+- ⬜ UI (Phase 2 — next), rules/mocks (Phase 3) not started.
 
 > **Known limitation:** Windows `curl` (schannel) needs `--ssl-no-revoke` because our leaf has no
-> CRL/OCSP endpoint; browsers with the CA installed are fine. Candidate refinement in P1-04.
+> CRL/OCSP endpoint; browsers with the CA installed are fine. Documented in README; optional
+> refinement later.
 
 ### What exists in code
 
 - `internal/proxy/proxy.go` — `Proxy` (an `http.Handler`), `ListenAndServe`, the **`Observer`
-  seam** (each `Exchange` = method, URL, status, duration, err), `StdoutLogger()`, and
-  `MultiObserver(...)` to fan one exchange out to several observers. CONNECT (HTTPS) is cleanly
-  refused with 501 until Phase 1.
+  seam** (each `Exchange` = method, URL, status, duration, err), `StdoutLogger()`,
+  `MultiObserver(...)`. CONNECT is MITM-intercepted via `WithMITM(certProvider)`; hosts rejected
+  by `WithTunnelDecider(...)` are spliced raw by `rawTunnel`. The decrypted path reuses the plain
+  relay (`serveRelayed`) — no duplication.
 - `internal/capture/capture.go` — `Store` implementing `proxy.Observer`: thread-safe, bounded,
   monotonic IDs, `List()`/`Len()`/`Clear()`. This is what the Phase 2 UI will read.
 - `internal/mitm/ca.go` — root CA generate/load/persist (`LoadOrCreateCA`, `CA.CertPEM`).
@@ -96,41 +102,40 @@ import or edit it.** Use it only to understand prior logic when porting a featur
 
 ## 6. Next step for the AI (read this if you are a new session)
 
-**Task: finish Phase 1 — P1-03 (pass-through tunneling) and P1-04 (CA export + trust docs).**
-HTTPS MITM already works (P1-02). Verify each slice at runtime before moving on (golden rule).
+**Task: start Phase 2 — the inspection UI. Begin with P2-01, then P2-02, P2-03.** Phases 0 and 1
+are complete: the proxy captures HTTP and HTTPS into `capture.Store`. The UI makes that visible.
 
 Current relevant state:
 
-- `internal/proxy/proxy.go`: `handleConnect` MITM-intercepts every CONNECT when a `CertProvider`
-  is set. `serveDecrypted` reads decrypted requests and reuses `serveRelayed` (shared with the
-  plain-HTTP path — do not duplicate relay logic).
-- `internal/mitm`: `LoadOrCreateCA` + `LeafCache.TLSConfigForHost`.
+- `internal/capture.Store.List()` returns `[]Record` (ID, Method, URL, StatusCode, Duration, Err,
+  CapturedAt), oldest first, as a copy — safe to read while the proxy keeps capturing. This is the
+  data source for the UI. The store is already wired in `cmd/proxy/main.go`.
+- `Record` today does NOT include request/response headers or bodies. P2-02 (detail view) will
+  need them — plan to extend `proxy.Exchange` + `capture.Record` to carry headers/body when you
+  get there. Do that as its own small step so P2-01 (the list) ships first.
 
-Slices:
+Slices (map to BACKLOG P2-01 → P2-03):
 
-1. **P1-03 — pass-through (no MITM) for selected hosts.** Not every host should be decrypted
-   (e.g. a user allow/deny list, or hosts whose pinning breaks under MITM). Add a decision hook so
-   `handleConnect` can choose: MITM (current behavior) OR raw tunnel. For raw tunnel: `net.Dial`
-   the origin `host:port`, send `200 Connection Established`, then `io.Copy` both directions
-   (client↔origin) until close — no TLS, no decryption, nothing captured. Start with a simple
-   predicate (e.g. a `--no-mitm-hosts` comma list, or a `TunnelDecider` func on the Proxy).
-   **Verify:** a host on the no-MITM list still loads through the proxy; a host not on it is still
-   decrypted and captured.
-2. **P1-04 — CA export + trust instructions.** Add a way to get the CA cert to the user (it is
-   already at `.certs/ca-cert.pem`; consider a `--export-ca <path>` flag or just document the
-   path) and write OS/browser trust steps in the README. **Verify:** after trusting the CA in a
-   real browser, an https page loads and is captured. Consider addressing the schannel revocation
-   limitation here (add a CRL Distribution Point or an OCSP-nocheck extension to leaves) so
-   Windows curl/native clients work without `--ssl-no-revoke`.
+1. **P2-01 — local web UI server (`internal/ui`).** Add an HTTP server (separate port, e.g.
+   `--ui-port 9090`) that serves a page listing captured requests from `store.List()`, refreshing
+   live (simplest: a small HTML page that polls a JSON endpoint like `/api/requests` every second;
+   avoid heavy frontend deps — plain HTML+JS served from Go, or `embed` a static file). Wire it in
+   `main.go` alongside the proxy. **Verify:** start the proxy, browse some traffic, open the UI
+   URL, and see the list grow.
+2. **P2-02 — detail view.** Extend capture to store headers + bodies (see note above), and show
+   them when a request is clicked. **Verify:** click a captured request, see its req/resp headers
+   and body.
+3. **P2-03 — clear / filter / search.** A clear button (calls `store.Clear()` via an endpoint) and
+   substring filtering across URL/method/status. **Verify:** clear empties the list; filtering
+   narrows it.
 
-Watch out for: a C compiler is NOT installed, so `go test -race` cannot run here. Keep
-`internal/capture` free of `net/http` server types.
-
-After Phase 1, the next milestone is **Phase 2 — the inspection UI (P2-01)**: a localhost web UI
-that lists `capture.Store` records live. The store already exposes `List()` for exactly this.
+Design notes: keep UI/transport code in `internal/ui`; it may import `internal/capture`. Do NOT
+make `internal/capture` depend on `net/http` server types. A C compiler is NOT installed, so
+`go test -race` cannot run here.
 
 Validate every slice with: `go build ./...` · `go test ./...` · `go vet ./...` · `gofmt -l .` ·
-then run it and confirm the behavior. Update this file + `BACKLOG.md` with evidence; commit.
+then run it and confirm the behavior in a browser. Update this file + `BACKLOG.md` with evidence;
+commit.
 
 ## 7. How to run what exists today
 

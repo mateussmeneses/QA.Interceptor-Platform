@@ -75,6 +75,15 @@ func (c *CA) CertPEM() []byte {
 	return out
 }
 
+// ExportCert writes the CA certificate (public, safe to share) to path. The
+// private key is never exported.
+func (c *CA) ExportCert(path string) error {
+	if err := os.WriteFile(path, c.certPEM, 0o644); err != nil {
+		return fmt.Errorf("export CA cert: %w", err)
+	}
+	return nil
+}
+
 func generateCA() (*CA, error) {
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {

@@ -59,9 +59,10 @@ type CertProvider interface {
 
 // Proxy is a forward HTTP(S) proxy. Construct it with New.
 type Proxy struct {
-	transport http.RoundTripper
-	observer  Observer
-	certs     CertProvider // nil => HTTPS tunneling is refused (Phase 0 behavior)
+	transport  http.RoundTripper
+	observer   Observer
+	certs      CertProvider           // nil => HTTPS CONNECT is tunneled raw, never decrypted
+	shouldMITM func(host string) bool // nil => MITM every host (when certs is set)
 }
 
 // New creates a Proxy that relays plain HTTP only. A nil observer is allowed
@@ -74,11 +75,21 @@ func New(observer Observer) *Proxy {
 }
 
 // WithMITM returns a copy of the proxy that intercepts HTTPS CONNECT requests
-// using certs. Passing a non-nil provider turns the 501 CONNECT refusal into
-// real TLS interception.
+// using certs. Passing a non-nil provider turns raw CONNECT tunneling into real
+// TLS interception for hosts the tunnel decider allows.
 func (p *Proxy) WithMITM(certs CertProvider) *Proxy {
 	clone := *p
 	clone.certs = certs
+	return &clone
+}
+
+// WithTunnelDecider returns a copy of the proxy that consults shouldMITM for
+// each HTTPS CONNECT host: true decrypts (MITM), false tunnels transparently
+// without decryption or capture. Only consulted when a CertProvider is set; a
+// nil decider means "MITM every host" (P1-03).
+func (p *Proxy) WithTunnelDecider(shouldMITM func(host string) bool) *Proxy {
+	clone := *p
+	clone.shouldMITM = shouldMITM
 	return &clone
 }
 
@@ -123,15 +134,10 @@ func (p *Proxy) serveRelayed(w http.ResponseWriter, r *http.Request, urlOverride
 	p.notify(exchange)
 }
 
-// handleConnect intercepts an HTTPS tunnel. Without a CertProvider it refuses
-// cleanly (Phase 0). With one, it hijacks the client connection, completes a
-// TLS handshake using a per-host leaf cert, and serves the decrypted requests.
+// handleConnect handles an HTTPS CONNECT. It either decrypts the tunnel (MITM)
+// or splices it through raw, depending on whether a CA is configured and what
+// the tunnel decider says for this host.
 func (p *Proxy) handleConnect(w http.ResponseWriter, r *http.Request) {
-	if p.certs == nil {
-		http.Error(w, "HTTPS interception not enabled (no CA configured)", http.StatusNotImplemented)
-		return
-	}
-
 	hijacker, ok := w.(http.Hijacker)
 	if !ok {
 		http.Error(w, "connection hijacking unsupported", http.StatusInternalServerError)
@@ -145,14 +151,36 @@ func (p *Proxy) handleConnect(w http.ResponseWriter, r *http.Request) {
 	}
 	defer clientConn.Close()
 
+	authority := r.Host         // "example.com:443" — used to dial the origin
+	host := hostOnly(authority) // "example.com"     — used to select the cert
+
 	// Tell the client the tunnel is open; from here the bytes are TLS.
 	if _, err := io.WriteString(clientConn, "HTTP/1.1 200 Connection Established\r\n\r\n"); err != nil {
 		return
 	}
 
-	authority := r.Host         // "example.com:443" — used to dial the origin
-	host := hostOnly(authority) // "example.com"     — used to select the cert
+	if p.mitmHost(host) {
+		p.mitmTunnel(clientConn, authority, host)
+		return
+	}
+	rawTunnel(clientConn, authority)
+}
 
+// mitmHost reports whether this host should be decrypted. Requires a CA; a nil
+// decider means decrypt everything.
+func (p *Proxy) mitmHost(host string) bool {
+	if p.certs == nil {
+		return false
+	}
+	if p.shouldMITM == nil {
+		return true
+	}
+	return p.shouldMITM(host)
+}
+
+// mitmTunnel completes a TLS handshake with the client using a per-host leaf
+// cert, then serves the decrypted requests, capturing each.
+func (p *Proxy) mitmTunnel(clientConn net.Conn, authority, host string) {
 	tlsConn := tls.Server(clientConn, p.certs.TLSConfigForHost(host))
 	if err := tlsConn.Handshake(); err != nil {
 		// Common when the client has not trusted our CA, or closes early.
@@ -161,6 +189,22 @@ func (p *Proxy) handleConnect(w http.ResponseWriter, r *http.Request) {
 	defer tlsConn.Close()
 
 	p.serveDecrypted(tlsConn, authority)
+}
+
+// rawTunnel splices bytes between the client and the origin without decrypting.
+// Nothing is captured — this is the pass-through path (P1-03) for hosts we do
+// not MITM (e.g. certificate-pinned apps).
+func rawTunnel(clientConn net.Conn, authority string) {
+	originConn, err := net.DialTimeout("tcp", authority, 30*time.Second)
+	if err != nil {
+		return
+	}
+	defer originConn.Close()
+
+	done := make(chan struct{}, 2)
+	go func() { _, _ = io.Copy(originConn, clientConn); done <- struct{}{} }()
+	go func() { _, _ = io.Copy(clientConn, originConn); done <- struct{}{} }()
+	<-done // return as soon as either direction closes
 }
 
 // serveDecrypted reads HTTP requests off an established TLS connection and
