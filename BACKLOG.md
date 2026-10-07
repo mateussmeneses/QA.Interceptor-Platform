@@ -44,10 +44,24 @@ Charles/Burp alternative.
 
 | ID    | Deliverable                                       | Acceptance (runtime-verifiable)                                                                            | Status | Deps  |
 | ----- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------ | ----- |
-| P1-01 | Generate a local root CA on first run             | A CA cert+key is created under `.certs/` (gitignored); regenerated only if missing                         | Todo   | P0-01 |
-| P1-02 | Per-host leaf cert signing + TLS MITM             | With the CA trusted, an **https://** site loads through the proxy and its request/response is captured      | Todo   | P1-01 |
+| P1-01 | Generate a local root CA on first run             | A CA cert+key is created under `.certs/` (gitignored); regenerated only if missing                         | **Done** | P0-01 |
+| P1-02 | Per-host leaf cert signing + TLS MITM             | With the CA trusted, an **https://** site loads through the proxy and its request/response is captured      | **Done** | P1-01 |
 | P1-03 | `CONNECT` tunneling for untrusted/pass-through    | Hosts not being intercepted tunnel through transparently (no MITM, no breakage)                            | Todo   | P1-02 |
 | P1-04 | CA export + install instructions                  | A documented way to export the CA and trust it on at least one OS/browser; verified by a successful https capture | Todo   | P1-01 |
+
+> **P1-01/P1-02 evidence (2026-10-07):** `internal/mitm` generates an ECDSA P-256 root CA
+> (`LoadOrCreateCA`, persisted to `.certs/`, key mode 0600, reused on restart) and signs per-host
+> leaf certs on demand (`LeafCache`, SNI with CONNECT-host fallback). The proxy
+> (`proxy.New(...).WithMITM(leaves)`) hijacks CONNECT, handshakes with the client, and relays the
+> decrypted request over the shared relay path (no duplication). Verified running:
+> `curl --proxy http://127.0.0.1:8082 --cacert .certs/ca-cert.pem https://example.com` returned
+> **200** and the proxy logged `GET https://example.com:443/ -> 200`. Unit test
+> `TestMITMInterceptsHTTPS` covers the full decrypt+relay+observe path against a TLS origin.
+>
+> **Known limitation (P1-04 follow-up):** Windows `curl` uses schannel, which rejects the leaf
+> with "revocation status is unknown" unless `--ssl-no-revoke` is passed (our locally-signed leaf
+> has no CRL/OCSP endpoint). Browsers with the CA installed are unaffected. Adding a CRL
+> Distribution Point / nocheck extension to leaves is a refinement to consider during P1-04.
 
 ## Phase 2 — Inspection UI
 

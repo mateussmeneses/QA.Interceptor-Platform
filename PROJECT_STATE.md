@@ -31,7 +31,16 @@ Decision record: [`docs/adr/0001-why-proxy-and-go.md`](docs/adr/0001-why-proxy-a
   in-memory store implementing `proxy.Observer`. 3 real requests captured through the running
   proxy (incl. an error exchange). Tests green incl. a 5000-write concurrency test.
 - ✅ **Phase 0 complete.** The walking skeleton proxy captures traffic end to end.
-- ⬜ HTTPS MITM (Phase 1 — next), UI (Phase 2), rules/mocks (Phase 3) not started.
+- ✅ **P1-01 DONE (verified):** local ECDSA root CA in `internal/mitm` (`LoadOrCreateCA`),
+  persisted to `.certs/` (gitignored, key 0600), reused on restart.
+- ✅ **P1-02 DONE (verified running):** TLS MITM on CONNECT. `curl --cacert .certs/ca-cert.pem`
+  loaded `https://example.com` through the proxy (HTTP 200) and it was captured as
+  `GET https://example.com:443/ -> 200`. Per-host leaf signing with SNI + CONNECT-host fallback.
+- ⬜ **P1-03 (pass-through tunneling) + P1-04 (CA export/trust docs) — next.**
+- ⬜ UI (Phase 2), rules/mocks (Phase 3) not started.
+
+> **Known limitation:** Windows `curl` (schannel) needs `--ssl-no-revoke` because our leaf has no
+> CRL/OCSP endpoint; browsers with the CA installed are fine. Candidate refinement in P1-04.
 
 ### What exists in code
 
@@ -41,9 +50,14 @@ Decision record: [`docs/adr/0001-why-proxy-and-go.md`](docs/adr/0001-why-proxy-a
   refused with 501 until Phase 1.
 - `internal/capture/capture.go` — `Store` implementing `proxy.Observer`: thread-safe, bounded,
   monotonic IDs, `List()`/`Len()`/`Clear()`. This is what the Phase 2 UI will read.
-- `cmd/proxy/main.go` — wires `MultiObserver(StdoutLogger, store)`, `--port`, graceful shutdown,
-  prints the capture count on exit.
-- Tests: `internal/proxy/proxy_test.go`, `internal/capture/capture_test.go`.
+- `internal/mitm/ca.go` — root CA generate/load/persist (`LoadOrCreateCA`, `CA.CertPEM`).
+- `internal/mitm/leaf.go` — `LeafCache`: per-host leaf signing + `TLSConfigForHost(fallback)`.
+- `internal/proxy/connwriter.go` — `connResponseWriter` so the MITM path reuses the same relay
+  code as plain HTTP (writes a response back over the raw TLS conn).
+- `cmd/proxy/main.go` — wires the CA + leaf cache + `MultiObserver(StdoutLogger, store)`, flags
+  `--port` and `--cert-dir`, graceful shutdown, prints the capture count on exit.
+- Tests: `internal/proxy/proxy_test.go`, `internal/proxy/mitm_test.go`,
+  `internal/capture/capture_test.go`, `internal/mitm/ca_test.go`.
 
 ## 3. Architecture (target)
 
@@ -82,38 +96,38 @@ import or edit it.** Use it only to understand prior logic when porting a featur
 
 ## 6. Next step for the AI (read this if you are a new session)
 
-**Task: start Phase 1 — HTTPS interception (MITM). Begin with P1-01, then P1-02.** This is the
-hardest and most defining capability. Do it in the small ordered slices below; verify each at
-runtime before moving on (golden rule).
+**Task: finish Phase 1 — P1-03 (pass-through tunneling) and P1-04 (CA export + trust docs).**
+HTTPS MITM already works (P1-02). Verify each slice at runtime before moving on (golden rule).
 
 Current relevant state:
 
-- The proxy (`internal/proxy/proxy.go`) is a plain-HTTP forward proxy. A `CONNECT` request (how
-  clients ask to tunnel HTTPS) is currently **refused with 501** — that refusal is the exact spot
-  Phase 1 replaces.
-- Captured exchanges already flow through the `Observer` seam into `internal/capture.Store`. HTTPS
-  exchanges must land there too, in the same `Exchange` shape, so the UI (Phase 2) sees both.
+- `internal/proxy/proxy.go`: `handleConnect` MITM-intercepts every CONNECT when a `CertProvider`
+  is set. `serveDecrypted` reads decrypted requests and reuses `serveRelayed` (shared with the
+  plain-HTTP path — do not duplicate relay logic).
+- `internal/mitm`: `LoadOrCreateCA` + `LeafCache.TLSConfigForHost`.
 
-Suggested slices (map to BACKLOG P1-01 → P1-04):
+Slices:
 
-1. **P1-01 — local root CA.** New package `internal/mitm` (or `internal/ca`). On first run,
-   generate an RSA/ECDSA root CA cert+key and persist under `.certs/` (already gitignored — the
-   key must NEVER be committed). Reuse it if present. Unit-test that generation is deterministic
-   in shape and that reload works.
-2. **P1-02 — TLS MITM on CONNECT.** Replace the 501: on `CONNECT host:443`, hijack the client
-   connection, send `200 Connection Established`, then TLS-handshake with the client using a leaf
-   certificate signed on the fly by the root CA for that host (cache leaves per host). Then read
-   the real HTTPS request over that TLS conn, relay it to the origin over TLS, copy the response
-   back, and report an `Exchange` to the observer — same as the HTTP path. **Verify:** trust the
-   CA locally, `curl -x http://127.0.0.1:8080 https://example.com` returns 200 and the exchange is
-   captured. (Factor the HTTP relay logic so both paths share it; do not duplicate.)
-3. **P1-03 — pass-through tunneling** for hosts you choose not to MITM: plain TCP splice between
-   client and origin, no decryption. **Verify:** such a host still loads.
-4. **P1-04 — CA export + trust instructions** documented and verified on at least one browser/OS.
+1. **P1-03 — pass-through (no MITM) for selected hosts.** Not every host should be decrypted
+   (e.g. a user allow/deny list, or hosts whose pinning breaks under MITM). Add a decision hook so
+   `handleConnect` can choose: MITM (current behavior) OR raw tunnel. For raw tunnel: `net.Dial`
+   the origin `host:port`, send `200 Connection Established`, then `io.Copy` both directions
+   (client↔origin) until close — no TLS, no decryption, nothing captured. Start with a simple
+   predicate (e.g. a `--no-mitm-hosts` comma list, or a `TunnelDecider` func on the Proxy).
+   **Verify:** a host on the no-MITM list still loads through the proxy; a host not on it is still
+   decrypted and captured.
+2. **P1-04 — CA export + trust instructions.** Add a way to get the CA cert to the user (it is
+   already at `.certs/ca-cert.pem`; consider a `--export-ca <path>` flag or just document the
+   path) and write OS/browser trust steps in the README. **Verify:** after trusting the CA in a
+   real browser, an https page loads and is captured. Consider addressing the schannel revocation
+   limitation here (add a CRL Distribution Point or an OCSP-nocheck extension to leaves) so
+   Windows curl/native clients work without `--ssl-no-revoke`.
 
-Watch out for: a C compiler is NOT installed, so `go test -race` cannot run here — rely on
-non-race concurrency tests. Keep `internal/capture` free of `net/http` server types; it only
-depends on `internal/proxy`'s `Exchange`.
+Watch out for: a C compiler is NOT installed, so `go test -race` cannot run here. Keep
+`internal/capture` free of `net/http` server types.
+
+After Phase 1, the next milestone is **Phase 2 — the inspection UI (P2-01)**: a localhost web UI
+that lists `capture.Store` records live. The store already exposes `List()` for exactly this.
 
 Validate every slice with: `go build ./...` · `go test ./...` · `go vet ./...` · `gofmt -l .` ·
 then run it and confirm the behavior. Update this file + `BACKLOG.md` with evidence; commit.

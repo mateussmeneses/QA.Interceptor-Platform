@@ -1,7 +1,8 @@
-// Command proxy starts the QA.Interceptor local forward proxy.
+// Command proxy starts the QA.Interceptor local intercepting proxy.
 //
-// Phase 0: relays plain HTTP and logs each exchange to stdout. Point an HTTP
-// client at it, e.g. set the browser/system HTTP proxy to 127.0.0.1:<port>.
+// It relays plain HTTP and, with the generated local CA trusted by the client,
+// intercepts HTTPS via TLS MITM. Each exchange is logged and captured. Point an
+// HTTP client at it, e.g. set the browser/system proxy to 127.0.0.1:<port>.
 package main
 
 import (
@@ -15,25 +16,36 @@ import (
 	"time"
 
 	"github.com/qa-interceptor/platform/internal/capture"
+	"github.com/qa-interceptor/platform/internal/mitm"
 	"github.com/qa-interceptor/platform/internal/proxy"
 )
 
 func main() {
 	port := flag.Int("port", 8080, "port to listen on (127.0.0.1)")
+	certDir := flag.String("cert-dir", ".certs", "directory for the local MITM root CA")
 	flag.Parse()
 
 	addr := "127.0.0.1:" + strconv.Itoa(*port)
+
+	// Load or create the local root CA, and build a per-host leaf cache for MITM.
+	ca, err := mitm.LoadOrCreateCA(*certDir)
+	if err != nil {
+		log.Fatalf("failed to prepare local CA: %v", err)
+	}
+	leaves := mitm.NewLeafCache(ca)
 
 	// The proxy fans each exchange out to the stdout logger (live view) and the
 	// in-memory capture store (inspectable; surfaced by the UI in Phase 2).
 	store := capture.NewStore(0)
 	observer := proxy.MultiObserver(proxy.StdoutLogger(), store)
+	handler := proxy.New(observer).WithMITM(leaves)
 
-	srv, err := proxy.ListenAndServe(addr, observer)
+	srv, err := proxy.ListenAndServe(addr, handler)
 	if err != nil {
 		log.Fatalf("failed to start proxy: %v", err)
 	}
 	log.Printf("QA.Interceptor proxy listening on http://%s", addr)
+	log.Printf("Local CA at %s/ca-cert.pem — trust it to intercept HTTPS.", *certDir)
 	log.Printf("Point your HTTP client at this address. Press Ctrl-C to stop.")
 
 	// Block until an interrupt signal arrives, then shut down gracefully.
