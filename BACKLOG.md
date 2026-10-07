@@ -115,11 +115,18 @@ rule engine (do not import it; re-implement in Go).
 | ID    | Deliverable                                 | Acceptance (runtime-verifiable)                                                        | Status | Deps        |
 | ----- | ------------------------------------------- | --------------------------------------------------------------------------------------- | ------ | ----------- |
 | P3-01 | Rule model + matching (`internal/rules`)    | Pure, unit-tested matching of a request against rule conditions (URL/method)            | **Done** | P0-02       |
-| P3-02 | Block rule                                  | A matching request is blocked; verified in the client (request fails as configured)     | Todo   | P3-01       |
+| P3-02 | Block rule                                  | A matching request is blocked; verified in the client (request fails as configured)     | **Done** | P3-01       |
 | P3-03 | Redirect rule                               | A matching request is redirected to a new URL; verified in the client                   | Todo   | P3-01       |
 | P3-04 | Header rewrite (request + response)         | A matching request/response has headers added/removed; verified in capture              | Todo   | P3-01       |
 | P3-05 | Mock response (status + body)               | A matching request returns a synthetic response without hitting the origin              | Todo   | P3-01       |
 | P3-06 | Response body rewrite                       | A matching response body is modified before reaching the client                         | Todo   | P1-02,P3-01 |
+
+> **P3-02 evidence (2026-10-07):** rules are loaded via `--rules <file.json>` (`loadRules` in
+> `main.go` → `rules.NewSet`); `Proxy.WithRules(engine)` adds a `RuleEngine` seam, and
+> `serveRelayed` calls `applyBlock` before relaying. A matching `block` rule returns 403 and does
+> NOT contact origin. Verified running with `example-rules.json` (block `example.org`):
+> `example.org → 403 (0s)` (never dialed), `example.com → 200` (relayed). Unit test
+> `TestBlockRuleShortCircuits` asserts 403 + origin-not-hit + non-matching passes through.
 
 > **P3-01 evidence (2026-10-07):** `internal/rules` — a pure, net/http-free rule model
 > (`Rule`, `Condition`, `ActionType`, `HeaderOp`) and matcher. `Rule.Matches(Request)` handles

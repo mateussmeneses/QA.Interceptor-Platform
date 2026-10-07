@@ -48,10 +48,11 @@ Decision record: [`docs/adr/0001-why-proxy-and-go.md`](docs/adr/0001-why-proxy-a
 - ✅ **P2-03 DONE (verified running):** `POST /api/clear` (204) empties the store; page has a Clear
   button + substring search box. Verified: 2 captures → clear → `/api/requests` returned `[]`.
 - ✅ **Phase 2 complete.** Live inspection UI: list, detail (headers+bodies), clear, filter.
-- ✅ **P3-01 DONE (unit-tested):** `internal/rules` — pure rule model + matcher (method/URL
-  conditions, wildcards, disabled rules, ordered match, first-short-circuit-action). No proxy
-  wiring yet.
-- ⬜ **P3-02 (block) — next**, then P3-03…P3-06 (redirect, header rewrite, mock, body rewrite).
+- ✅ **P3-01 DONE (unit-tested):** `internal/rules` — pure rule model + matcher.
+- ✅ **P3-02 DONE (verified running):** block rule. `--rules <file.json>` loads rules;
+  `Proxy.WithRules` + `applyBlock` in `serveRelayed` short-circuit a matching request with 403
+  without contacting origin. Verified: `example.org → 403` (blocked), `example.com → 200` (passes).
+- ⬜ **P3-03 (redirect) — next**, then P3-04 (header rewrite), P3-05 (mock), P3-06 (body rewrite).
 
 > **Known limitation:** Windows `curl` (schannel) needs `--ssl-no-revoke` because our leaf has no
 > CRL/OCSP endpoint; browsers with the CA installed are fine. Documented in README; optional
@@ -132,29 +133,37 @@ Current relevant state:
 - The legacy TS rule engine lives in `legacy/abandoned/packages/rule-engine` — **conceptual
   reference only; re-implement in Go, do not import it.**
 
-P3-01 is DONE: `internal/rules` has the pure model + matcher. Remaining slices wire actions into
-the proxy. **The main new work for P3-02 is: load rules + give the proxy a rule set + apply the
-first short-circuit action in `serveRelayed`.**
+P3-01 (model/matcher) and P3-02 (block) are DONE. The wiring pattern is now established and the
+remaining actions follow it. **Study `serveRelayed` + `applyBlock` in `internal/proxy/proxy.go`
+first — the new actions hook into the same `serveRelayed` method.**
 
-1. **P3-02 — block (first proxy wiring).**
-   a. Add a way to load rules. Simplest: a `--rules <file.json>` flag in `main.go` that
-      unmarshals a `[]rules.Rule` (the struct already has JSON tags) into a `rules.Set`. Empty/no
-      flag = no rules (current behavior).
-   b. Give `Proxy` a rule set (e.g. `WithRules(*rules.Set)`, like `WithMITM`). In `serveRelayed`,
-      before calling `relay`, build a `rules.Request{Method, URL: loggedURL}` and call
-      `set.FirstMatch(req, rules.ActionBlock, ...)`. For a block match, write a configured
-      failure (e.g. 403) and record the exchange with a note, instead of relaying.
-   c. **Verify running:** start with a rules file blocking a host; `curl` through the proxy to
-      that host returns the block status; a non-matching host still works. Add a unit test for the
-      block path (a matched block request is not relayed).
-2. **P3-03 redirect**, **P3-04 header rewrite** (request before relay, response after),
-   **P3-05 mock response** (synthetic, skip origin), **P3-06 response-body rewrite** (literal
-   `BodySearch`→`BodyReplace` on the captured response body before writing to client). One slice
-   at a time, each runtime-verified.
+Established pattern:
+- `Proxy` holds a `RuleEngine` (set via `WithRules`, nil = no rules). `main.go` loads rules from
+  `--rules <file.json>` via `loadRules` → `rules.NewSet`.
+- `serveRelayed` is the single hook for BOTH plain HTTP and decrypted HTTPS. `applyBlock` runs
+  there before `relay` and short-circuits with 403 on a block match.
+- `example-rules.json` at the repo root is a working sample (currently a block rule).
 
-Design notes: keep the matching core pure (done); keep proxy wiring thin — `serveRelayed` is the
-single hook point for both HTTP and decrypted HTTPS, so wiring once covers both. A C compiler is
-NOT installed, so `go test -race` cannot run here.
+Remaining slices (one at a time, each runtime-verified + unit-tested):
+
+1. **P3-03 — redirect.** Before `relay`, check `engine.FirstMatch(req, ActionRedirect)`. On match,
+   send an HTTP redirect to `rule.RedirectTo` (302) OR re-point the outbound request — simplest is
+   to return a 302 to the client. Record the exchange. **Verify:** curl -v shows the redirect.
+2. **P3-04 — header rewrite.** `rule.Headers []HeaderOp` with `OnResp` flag. For request headers:
+   mutate `r.Header` before `relay`. For response headers: mutate `resp.Header`/`w.Header()` after
+   relay, before writing. A rule can match AND relay (not short-circuit), so collect ALL matching
+   rewrite-header rules (`engine` may need a `Match` method, or add one to the interface).
+   **Verify:** capture detail shows the added/removed header.
+3. **P3-05 — mock response.** On `ActionMockResponse` match (short-circuit like block): write
+   `rule.MockStatus` + `rule.MockBody`, skip origin. **Verify:** mocked body returned, origin not
+   hit.
+4. **P3-06 — response-body rewrite.** On `ActionRewriteResponseBody` match, after reading the
+   response body, do a literal `strings.ReplaceAll(body, rule.BodySearch, rule.BodyReplace)` before
+   writing to the client (and before capturing). **Verify:** client receives the modified body.
+
+Note: block/redirect/mock are short-circuiting (use `FirstMatch`); header/body rewrite modify a
+real relay (need all matches). You may extend the `RuleEngine` interface with a `Match` method.
+A C compiler is NOT installed, so `go test -race` cannot run here.
 
 Validate every slice with: `go build ./...` · `go test ./...` · `go vet ./...` · `gofmt -l .` ·
 then run it and confirm the behavior. Update this file + `BACKLOG.md` with evidence; commit.

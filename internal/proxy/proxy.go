@@ -14,6 +14,8 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/qa-interceptor/platform/internal/rules"
 )
 
 // Observer is notified of each completed HTTP exchange (HTTP or decrypted
@@ -72,12 +74,20 @@ type CertProvider interface {
 	TLSConfigForHost(host string) *tls.Config
 }
 
+// RuleEngine decides which modification rule applies to a request. It is
+// satisfied by *rules.Set. Keeping it an interface preserves a clean seam and
+// lets the proxy run with no rules (a nil engine).
+type RuleEngine interface {
+	FirstMatch(req rules.Request, wanted ...rules.ActionType) (rules.Rule, bool)
+}
+
 // Proxy is a forward HTTP(S) proxy. Construct it with New.
 type Proxy struct {
 	transport  http.RoundTripper
 	observer   Observer
 	certs      CertProvider           // nil => HTTPS CONNECT is tunneled raw, never decrypted
 	shouldMITM func(host string) bool // nil => MITM every host (when certs is set)
+	engine     RuleEngine             // nil => no rules applied
 }
 
 // New creates a Proxy that relays plain HTTP only. A nil observer is allowed
@@ -105,6 +115,14 @@ func (p *Proxy) WithMITM(certs CertProvider) *Proxy {
 func (p *Proxy) WithTunnelDecider(shouldMITM func(host string) bool) *Proxy {
 	clone := *p
 	clone.shouldMITM = shouldMITM
+	return &clone
+}
+
+// WithRules returns a copy of the proxy that applies modification rules from
+// engine. A nil engine means no rules (plain relay).
+func (p *Proxy) WithRules(engine RuleEngine) *Proxy {
+	clone := *p
+	clone.engine = engine
 	return &clone
 }
 
@@ -139,6 +157,11 @@ func (p *Proxy) serveRelayed(w http.ResponseWriter, r *http.Request, urlOverride
 		exchange.ReqBody, exchange.ReqBodyTruncated = clampBody(full)
 	}
 
+	// Apply short-circuiting rules (block) before contacting the origin.
+	if p.applyBlock(w, r, loggedURL, &exchange, start) {
+		return
+	}
+
 	resp, err := p.relay(r)
 	if err != nil {
 		exchange.Err = err
@@ -161,6 +184,30 @@ func (p *Proxy) serveRelayed(w http.ResponseWriter, r *http.Request, urlOverride
 	exchange.StatusCode = resp.StatusCode
 	exchange.Duration = time.Since(start)
 	p.notify(exchange)
+}
+
+// applyBlock checks for a matching block rule and, if found, writes the block
+// response, records the exchange, and returns true (the caller must stop). It
+// returns false when no block rule matches (relay should proceed).
+func (p *Proxy) applyBlock(w http.ResponseWriter, r *http.Request, loggedURL string, exchange *Exchange, start time.Time) bool {
+	if p.engine == nil {
+		return false
+	}
+	rule, ok := p.engine.FirstMatch(rules.Request{Method: r.Method, URL: loggedURL}, rules.ActionBlock)
+	if !ok {
+		return false
+	}
+
+	const blockStatus = http.StatusForbidden
+	body := "blocked by rule: " + rule.Name
+
+	exchange.StatusCode = blockStatus
+	exchange.RespBody = []byte(body)
+	exchange.Duration = time.Since(start)
+	p.notify(*exchange)
+
+	http.Error(w, body, blockStatus)
+	return true
 }
 
 // clampBody returns at most maxCapturedBody bytes of b (copied so it does not

@@ -7,7 +7,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -19,6 +21,7 @@ import (
 	"github.com/qa-interceptor/platform/internal/capture"
 	"github.com/qa-interceptor/platform/internal/mitm"
 	"github.com/qa-interceptor/platform/internal/proxy"
+	"github.com/qa-interceptor/platform/internal/rules"
 	"github.com/qa-interceptor/platform/internal/ui"
 )
 
@@ -28,6 +31,7 @@ func main() {
 	certDir := flag.String("cert-dir", ".certs", "directory for the local MITM root CA")
 	exportCA := flag.String("export-ca", "", "write the CA certificate to this path and exit")
 	noMITMHosts := flag.String("no-mitm-hosts", "", "comma-separated hosts to tunnel without decryption")
+	rulesFile := flag.String("rules", "", "path to a JSON file of modification rules")
 	flag.Parse()
 
 	addr := "127.0.0.1:" + strconv.Itoa(*port)
@@ -50,13 +54,20 @@ func main() {
 
 	leaves := mitm.NewLeafCache(ca)
 
+	// Load modification rules, if a file was given.
+	ruleSet, ruleCount, err := loadRules(*rulesFile)
+	if err != nil {
+		log.Fatalf("failed to load rules: %v", err)
+	}
+
 	// The proxy fans each exchange out to the stdout logger (live view) and the
 	// in-memory capture store (inspectable; surfaced by the UI in Phase 2).
 	store := capture.NewStore(0)
 	observer := proxy.MultiObserver(proxy.StdoutLogger(), store)
 	handler := proxy.New(observer).
 		WithMITM(leaves).
-		WithTunnelDecider(mitmDecider(*noMITMHosts))
+		WithTunnelDecider(mitmDecider(*noMITMHosts)).
+		WithRules(ruleSet)
 
 	srv, err := proxy.ListenAndServe(addr, handler)
 	if err != nil {
@@ -74,6 +85,9 @@ func main() {
 	log.Printf("Local CA at %s/ca-cert.pem — trust it to intercept HTTPS.", *certDir)
 	if *noMITMHosts != "" {
 		log.Printf("Tunneling without decryption for: %s", *noMITMHosts)
+	}
+	if ruleCount > 0 {
+		log.Printf("Loaded %d modification rule(s) from %s", ruleCount, *rulesFile)
 	}
 	log.Printf("Point your HTTP client at the proxy address. Press Ctrl-C to stop.")
 
@@ -93,6 +107,27 @@ func main() {
 	}
 	log.Printf("captured %d request(s) this session.", store.Len())
 	log.Printf("stopped.")
+}
+
+// loadRules reads a JSON array of rules from path. An empty path returns a nil
+// engine (no rules). Returns the engine, how many rules were loaded, and any
+// error. The nil interface is important: a typed-nil *rules.Set would panic.
+func loadRules(path string) (proxy.RuleEngine, int, error) {
+	if strings.TrimSpace(path) == "" {
+		return nil, 0, nil
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, 0, fmt.Errorf("read rules file: %w", err)
+	}
+
+	var loaded []rules.Rule
+	if err := json.Unmarshal(data, &loaded); err != nil {
+		return nil, 0, fmt.Errorf("parse rules JSON: %w", err)
+	}
+
+	return rules.NewSet(loaded), len(loaded), nil
 }
 
 // mitmDecider builds the "should this host be decrypted?" predicate from a

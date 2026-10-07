@@ -1,0 +1,8 @@
+[
+  {
+    "name": "block example.org",
+    "enabled": true,
+    "action": "block",
+    "condition": { "urlContains": "example.org" }
+  }
+]
