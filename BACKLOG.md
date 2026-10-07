@@ -77,9 +77,18 @@ Goal: see the captured traffic in something better than stdout.
 
 | ID    | Deliverable                               | Acceptance (runtime-verifiable)                                                              | Status | Deps  |
 | ----- | ----------------------------------------- | --------------------------------------------------------------------------------------------- | ------ | ----- |
-| P2-01 | Local web UI server (`internal/ui`)       | Opening a localhost URL lists captured requests, live-updating as traffic flows               | Todo   | P0-02 |
+| P2-01 | Local web UI server (`internal/ui`)       | Opening a localhost URL lists captured requests, live-updating as traffic flows               | **Done** | P0-02 |
 | P2-02 | Request/response detail view              | Clicking a request shows headers + body for request and response                              | Todo   | P2-01 |
 | P2-03 | Clear / filter / search captured list     | The list can be cleared and filtered by substring across URL/method/status                    | Todo   | P2-01 |
+
+> **P2-01 evidence (2026-10-07):** `internal/ui` serves a localhost page (`--ui-port`, default
+> 9090) that polls `/api/requests` (JSON, newest first) every 1s and renders a live table; static
+> HTML is `embed`-ed so the binary stays self-contained. The UI reads the store via a
+> `RecordSource` interface (one-way dep: ui → capture). Verified running: after one HTTP + one
+> HTTPS request through the proxy, `GET http://127.0.0.1:9091/api/requests` returned both records
+> newest-first and the index served the page. Tests cover newest-first ordering, empty `[]` (not
+> null), and HTML index. **Note:** `Record` has no headers/body yet — P2-02 must extend
+> `proxy.Exchange` + `capture.Record` to carry them.
 
 ## Phase 3 — Modify & mock (the QA value)
 

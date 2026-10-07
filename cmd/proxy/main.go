@@ -19,16 +19,19 @@ import (
 	"github.com/qa-interceptor/platform/internal/capture"
 	"github.com/qa-interceptor/platform/internal/mitm"
 	"github.com/qa-interceptor/platform/internal/proxy"
+	"github.com/qa-interceptor/platform/internal/ui"
 )
 
 func main() {
-	port := flag.Int("port", 8080, "port to listen on (127.0.0.1)")
+	port := flag.Int("port", 8080, "proxy port (127.0.0.1)")
+	uiPort := flag.Int("ui-port", 9090, "web UI port (127.0.0.1)")
 	certDir := flag.String("cert-dir", ".certs", "directory for the local MITM root CA")
 	exportCA := flag.String("export-ca", "", "write the CA certificate to this path and exit")
 	noMITMHosts := flag.String("no-mitm-hosts", "", "comma-separated hosts to tunnel without decryption")
 	flag.Parse()
 
 	addr := "127.0.0.1:" + strconv.Itoa(*port)
+	uiAddr := "127.0.0.1:" + strconv.Itoa(*uiPort)
 
 	// Load or create the local root CA, and build a per-host leaf cache for MITM.
 	ca, err := mitm.LoadOrCreateCA(*certDir)
@@ -59,12 +62,20 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to start proxy: %v", err)
 	}
+
+	// The inspection UI reads the capture store live (P2-01).
+	uiSrv, err := ui.ListenAndServe(uiAddr, store)
+	if err != nil {
+		log.Fatalf("failed to start UI: %v", err)
+	}
+
 	log.Printf("QA.Interceptor proxy listening on http://%s", addr)
+	log.Printf("Inspection UI at http://%s", uiAddr)
 	log.Printf("Local CA at %s/ca-cert.pem — trust it to intercept HTTPS.", *certDir)
 	if *noMITMHosts != "" {
 		log.Printf("Tunneling without decryption for: %s", *noMITMHosts)
 	}
-	log.Printf("Point your HTTP client at this address. Press Ctrl-C to stop.")
+	log.Printf("Point your HTTP client at the proxy address. Press Ctrl-C to stop.")
 
 	// Block until an interrupt signal arrives, then shut down gracefully.
 	stop := make(chan os.Signal, 1)
@@ -75,7 +86,10 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Printf("graceful shutdown failed: %v", err)
+		log.Printf("graceful proxy shutdown failed: %v", err)
+	}
+	if err := uiSrv.Shutdown(ctx); err != nil {
+		log.Printf("graceful UI shutdown failed: %v", err)
 	}
 	log.Printf("captured %d request(s) this session.", store.Len())
 	log.Printf("stopped.")

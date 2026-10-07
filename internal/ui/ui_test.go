@@ -1,0 +1,77 @@
+package ui
+
+import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/qa-interceptor/platform/internal/capture"
+)
+
+// stubSource is a fixed RecordSource for deterministic tests.
+type stubSource struct{ records []capture.Record }
+
+func (s stubSource) List() []capture.Record { return s.records }
+
+func TestAPIRequestsReturnsRecordsNewestFirst(t *testing.T) {
+	src := stubSource{records: []capture.Record{
+		{ID: 1, Method: "GET", URL: "http://a/", StatusCode: 200, Duration: 10 * time.Millisecond, CapturedAt: time.Now()},
+		{ID: 2, Method: "POST", URL: "http://b/", StatusCode: 500, Duration: 20 * time.Millisecond, CapturedAt: time.Now()},
+	}}
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/api/requests", nil)
+	New(src).mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status: got %d, want 200", rec.Code)
+	}
+	if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
+		t.Errorf("content-type: got %q", ct)
+	}
+
+	var got []requestDTO
+	if err := json.NewDecoder(rec.Body).Decode(&got); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("len: got %d, want 2", len(got))
+	}
+	// Newest first: ID 2 should lead.
+	if got[0].ID != 2 || got[1].ID != 1 {
+		t.Errorf("order: got [%d, %d], want [2, 1]", got[0].ID, got[1].ID)
+	}
+	if got[0].DurationMs != 20 {
+		t.Errorf("durationMs: got %d, want 20", got[0].DurationMs)
+	}
+}
+
+func TestAPIRequestsEmpty(t *testing.T) {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/api/requests", nil)
+	New(stubSource{}).mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status: got %d, want 200", rec.Code)
+	}
+	// Must be an empty JSON array, not null.
+	if body := strings.TrimSpace(rec.Body.String()); body != "[]" {
+		t.Errorf("empty body: got %q, want []", body)
+	}
+}
+
+func TestIndexServesHTML(t *testing.T) {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	New(stubSource{}).mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status: got %d, want 200", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), "QA.Interceptor") {
+		t.Error("index page does not contain expected title")
+	}
+}

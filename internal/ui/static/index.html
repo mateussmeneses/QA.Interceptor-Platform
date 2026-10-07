@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>QA.Interceptor</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --fg: #1a1a1a;
+        --muted: #666;
+        --border: #ddd;
+        --bg: #fff;
+        --row-hover: #f5f5f5;
+        --accent: #2563eb;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --fg: #e5e5e5;
+          --muted: #999;
+          --border: #333;
+          --bg: #161616;
+          --row-hover: #222;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font: 14px/1.4 system-ui, sans-serif;
+        color: var(--fg);
+        background: var(--bg);
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        background: var(--bg);
+      }
+      header h1 {
+        font-size: 16px;
+        margin: 0;
+      }
+      header .count {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      header .status {
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 8px 16px;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      th {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--muted);
+      }
+      td.url {
+        max-width: 60vw;
+        white-space: normal;
+        word-break: break-all;
+        font-family: ui-monospace, monospace;
+        font-size: 13px;
+      }
+      td.method {
+        font-weight: 600;
+      }
+      .status-2 {
+        color: #16a34a;
+      }
+      .status-3 {
+        color: #ca8a04;
+      }
+      .status-4,
+      .status-5 {
+        color: #dc2626;
+      }
+      .err {
+        color: #dc2626;
+      }
+      tbody tr:hover {
+        background: var(--row-hover);
+      }
+      .empty {
+        padding: 40px 16px;
+        text-align: center;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>QA.Interceptor</h1>
+      <span class="count" id="count">0 requests</span>
+      <span class="status" id="status">live</span>
+    </header>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 48px">#</th>
+          <th style="width: 72px">Method</th>
+          <th>URL</th>
+          <th style="width: 72px">Status</th>
+          <th style="width: 88px">Time</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty">No requests captured yet. Send traffic through the proxy.</div>
+
+    <script>
+      const rowsEl = document.getElementById("rows");
+      const countEl = document.getElementById("count");
+      const emptyEl = document.getElementById("empty");
+      const statusEl = document.getElementById("status");
+
+      function statusClass(code) {
+        if (code >= 200 && code < 300) return "status-2";
+        if (code >= 300 && code < 400) return "status-3";
+        if (code >= 400 && code < 500) return "status-4";
+        if (code >= 500) return "status-5";
+        return "";
+      }
+
+      function render(list) {
+        countEl.textContent = list.length + (list.length === 1 ? " request" : " requests");
+        emptyEl.style.display = list.length ? "none" : "block";
+
+        rowsEl.replaceChildren(
+          ...list.map((r) => {
+            const tr = document.createElement("tr");
+            const statusCell = r.error
+              ? `<span class="err">ERR</span>`
+              : `<span class="${statusClass(r.status)}">${r.status || ""}</span>`;
+            tr.innerHTML =
+              `<td>${r.id}</td>` +
+              `<td class="method">${r.method}</td>` +
+              `<td class="url"></td>` +
+              `<td>${statusCell}</td>` +
+              `<td>${r.durationMs} ms</td>`;
+            // Set URL via textContent to avoid HTML injection from captured data.
+            tr.querySelector(".url").textContent = r.error ? r.url + " — " + r.error : r.url;
+            return tr;
+          })
+        );
+      }
+
+      async function poll() {
+        try {
+          const res = await fetch("/api/requests");
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          render(await res.json());
+          statusEl.textContent = "live";
+        } catch (e) {
+          statusEl.textContent = "disconnected";
+        }
+      }
+
+      poll();
+      setInterval(poll, 1000);
+    </script>
+  </body>
+</html>

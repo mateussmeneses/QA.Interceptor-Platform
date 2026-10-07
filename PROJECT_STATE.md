@@ -41,7 +41,11 @@ Decision record: [`docs/adr/0001-why-proxy-and-go.md`](docs/adr/0001-why-proxy-a
 - ✅ **P1-04 DONE (verified):** `--export-ca <path>` exports the CA cert; README documents trust
   steps for Windows/macOS/Linux/Firefox.
 - ✅ **Phase 1 complete.** HTTP + HTTPS interception, pass-through, and CA trust all work.
-- ⬜ UI (Phase 2 — next), rules/mocks (Phase 3) not started.
+- ✅ **P2-01 DONE (verified running):** `internal/ui` serves a live localhost web UI
+  (`--ui-port`, default 9090) listing captured requests via a polled JSON API. After one HTTP +
+  one HTTPS request, `/api/requests` returned both newest-first and the page rendered.
+- ⬜ **P2-02 (detail view) + P2-03 (clear/filter/search) — next.**
+- ⬜ Rules/mocks (Phase 3) not started.
 
 > **Known limitation:** Windows `curl` (schannel) needs `--ssl-no-revoke` because our leaf has no
 > CRL/OCSP endpoint; browsers with the CA installed are fine. Documented in README; optional
@@ -60,10 +64,14 @@ Decision record: [`docs/adr/0001-why-proxy-and-go.md`](docs/adr/0001-why-proxy-a
 - `internal/mitm/leaf.go` — `LeafCache`: per-host leaf signing + `TLSConfigForHost(fallback)`.
 - `internal/proxy/connwriter.go` — `connResponseWriter` so the MITM path reuses the same relay
   code as plain HTTP (writes a response back over the raw TLS conn).
-- `cmd/proxy/main.go` — wires the CA + leaf cache + `MultiObserver(StdoutLogger, store)`, flags
-  `--port` and `--cert-dir`, graceful shutdown, prints the capture count on exit.
+- `internal/ui/ui.go` + `internal/ui/static/index.html` — the inspection UI: a `RecordSource`
+  interface (satisfied by `*capture.Store`), a JSON `/api/requests` endpoint, and an embedded
+  static page that polls it. `ListenAndServe(uiAddr, store)`.
+- `cmd/proxy/main.go` — wires the CA + leaf cache + `MultiObserver(StdoutLogger, store)` + the UI
+  server, flags `--port`, `--ui-port`, `--cert-dir`, `--export-ca`, `--no-mitm-hosts`, graceful
+  shutdown of both servers.
 - Tests: `internal/proxy/proxy_test.go`, `internal/proxy/mitm_test.go`,
-  `internal/capture/capture_test.go`, `internal/mitm/ca_test.go`.
+  `internal/capture/capture_test.go`, `internal/mitm/ca_test.go`, `internal/ui/ui_test.go`.
 
 ## 3. Architecture (target)
 
@@ -102,36 +110,39 @@ import or edit it.** Use it only to understand prior logic when porting a featur
 
 ## 6. Next step for the AI (read this if you are a new session)
 
-**Task: start Phase 2 — the inspection UI. Begin with P2-01, then P2-02, P2-03.** Phases 0 and 1
-are complete: the proxy captures HTTP and HTTPS into `capture.Store`. The UI makes that visible.
+**Task: continue Phase 2 — P2-02 (detail view) then P2-03 (clear/filter/search).** The live list
+UI (P2-01) works. Now make each request inspectable, then manageable.
 
 Current relevant state:
 
-- `internal/capture.Store.List()` returns `[]Record` (ID, Method, URL, StatusCode, Duration, Err,
-  CapturedAt), oldest first, as a copy — safe to read while the proxy keeps capturing. This is the
-  data source for the UI. The store is already wired in `cmd/proxy/main.go`.
-- `Record` today does NOT include request/response headers or bodies. P2-02 (detail view) will
-  need them — plan to extend `proxy.Exchange` + `capture.Record` to carry headers/body when you
-  get there. Do that as its own small step so P2-01 (the list) ships first.
+- `internal/ui/ui.go` serves `/api/requests` (JSON, newest first) and an embedded page
+  (`static/index.html`) that polls it every 1s. Data comes from `RecordSource.List()`.
+- `capture.Record` and `proxy.Exchange` currently carry only method/URL/status/duration/err —
+  **no headers or bodies.** Adding those is the main work for P2-02.
 
-Slices (map to BACKLOG P2-01 → P2-03):
+Slices:
 
-1. **P2-01 — local web UI server (`internal/ui`).** Add an HTTP server (separate port, e.g.
-   `--ui-port 9090`) that serves a page listing captured requests from `store.List()`, refreshing
-   live (simplest: a small HTML page that polls a JSON endpoint like `/api/requests` every second;
-   avoid heavy frontend deps — plain HTML+JS served from Go, or `embed` a static file). Wire it in
-   `main.go` alongside the proxy. **Verify:** start the proxy, browse some traffic, open the UI
-   URL, and see the list grow.
-2. **P2-02 — detail view.** Extend capture to store headers + bodies (see note above), and show
-   them when a request is clicked. **Verify:** click a captured request, see its req/resp headers
-   and body.
-3. **P2-03 — clear / filter / search.** A clear button (calls `store.Clear()` via an endpoint) and
-   substring filtering across URL/method/status. **Verify:** clear empties the list; filtering
-   narrows it.
+1. **P2-02 — detail view (the real work is plumbing headers/bodies through).**
+   a. Extend `proxy.Exchange` with request headers, request body, response headers, response body.
+      In `serveRelayed`, read the request body before relaying and restore it via
+      `io.NopCloser(bytes.NewReader(...))` so the relay still sends it; read the response body
+      after, then re-wrap it so it is still written to the client. **Bound stored body size**
+      (e.g. first 256 KB) so memory stays sane. Mirror these fields onto `capture.Record`.
+   b. Add `GET /api/requests/{id}` returning the full detail for one record (store needs a
+      `Get(id)` or the UI can find it in `List()`).
+   c. Make a row clickable to show a detail panel with req/resp headers + body.
+   **Verify:** click a captured request in the browser; see headers and body for both sides.
+2. **P2-03 — clear + filter + search.** Add `POST /api/clear` calling `store.Clear()` (extend the
+   UI's source interface with `Clear()` or type-assert). Add a clear button and a search box that
+   filters the rendered list by substring across URL/method/status (client-side over polled data
+   is fine to start). **Verify:** clear empties the list; typing in search narrows it.
 
-Design notes: keep UI/transport code in `internal/ui`; it may import `internal/capture`. Do NOT
-make `internal/capture` depend on `net/http` server types. A C compiler is NOT installed, so
-`go test -race` cannot run here.
+Design notes: keep server/transport code in `internal/ui` (may import `internal/capture`); do NOT
+make `internal/capture` depend on `net/http`. Bound body capture for streamed/large responses. A
+C compiler is NOT installed, so `go test -race` cannot run here.
+
+After Phase 2, the next milestone is **Phase 3 — modify & mock (P3-01…)**: the QA value. The
+legacy TS rule engine in `legacy/abandoned/` is a conceptual reference only; re-implement in Go.
 
 Validate every slice with: `go build ./...` · `go test ./...` · `go vet ./...` · `gofmt -l .` ·
 then run it and confirm the behavior in a browser. Update this file + `BACKLOG.md` with evidence;
@@ -140,8 +151,12 @@ commit.
 ## 7. How to run what exists today
 
 ```bash
-go run ./cmd/proxy --port 8080
-# then point an HTTP client at 127.0.0.1:8080, e.g.:
+go run ./cmd/proxy --port 8080 --ui-port 9090
+# Proxy on 127.0.0.1:8080, inspection UI on http://127.0.0.1:9090.
+# Point an HTTP client at the proxy:
 #   curl -x http://127.0.0.1:8080 http://example.com
-# HTTPS does not work yet (Phase 1). Ctrl-C stops the proxy cleanly.
+# For HTTPS, trust the CA (see README) then:
+#   curl -x http://127.0.0.1:8080 --cacert .certs/ca-cert.pem https://example.org
+#   (Windows curl.exe also needs --ssl-no-revoke)
+# Ctrl-C stops both servers cleanly.
 ```
