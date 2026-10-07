@@ -114,12 +114,19 @@ rule engine (do not import it; re-implement in Go).
 
 | ID    | Deliverable                                 | Acceptance (runtime-verifiable)                                                        | Status | Deps        |
 | ----- | ------------------------------------------- | --------------------------------------------------------------------------------------- | ------ | ----------- |
-| P3-01 | Rule model + matching (`internal/rules`)    | Pure, unit-tested matching of a request against rule conditions (URL/method)            | Todo   | P0-02       |
+| P3-01 | Rule model + matching (`internal/rules`)    | Pure, unit-tested matching of a request against rule conditions (URL/method)            | **Done** | P0-02       |
 | P3-02 | Block rule                                  | A matching request is blocked; verified in the client (request fails as configured)     | Todo   | P3-01       |
 | P3-03 | Redirect rule                               | A matching request is redirected to a new URL; verified in the client                   | Todo   | P3-01       |
 | P3-04 | Header rewrite (request + response)         | A matching request/response has headers added/removed; verified in capture              | Todo   | P3-01       |
 | P3-05 | Mock response (status + body)               | A matching request returns a synthetic response without hitting the origin              | Todo   | P3-01       |
 | P3-06 | Response body rewrite                       | A matching response body is modified before reaching the client                         | Todo   | P1-02,P3-01 |
+
+> **P3-01 evidence (2026-10-07):** `internal/rules` — a pure, net/http-free rule model
+> (`Rule`, `Condition`, `ActionType`, `HeaderOp`) and matcher. `Rule.Matches(Request)` handles
+> method (case-insensitive) + URL-substring conditions, empty-field wildcards, and disabled rules.
+> `Set.Match` returns all matching rules in order; `Set.FirstMatch(req, actions…)` picks the first
+> short-circuiting action. Fully unit-tested (method/url/wildcard/disabled/ordering/first-match).
+> No proxy wiring yet — P3-02 onward wires actions into `proxy.serveRelayed`.
 
 ## Phase 4 — Replay, persistence, polish
 

@@ -48,7 +48,10 @@ Decision record: [`docs/adr/0001-why-proxy-and-go.md`](docs/adr/0001-why-proxy-a
 - ✅ **P2-03 DONE (verified running):** `POST /api/clear` (204) empties the store; page has a Clear
   button + substring search box. Verified: 2 captures → clear → `/api/requests` returned `[]`.
 - ✅ **Phase 2 complete.** Live inspection UI: list, detail (headers+bodies), clear, filter.
-- ⬜ Rules/mocks (Phase 3 — next) not started.
+- ✅ **P3-01 DONE (unit-tested):** `internal/rules` — pure rule model + matcher (method/URL
+  conditions, wildcards, disabled rules, ordered match, first-short-circuit-action). No proxy
+  wiring yet.
+- ⬜ **P3-02 (block) — next**, then P3-03…P3-06 (redirect, header rewrite, mock, body rewrite).
 
 > **Known limitation:** Windows `curl` (schannel) needs `--ssl-no-revoke` because our leaf has no
 > CRL/OCSP endpoint; browsers with the CA installed are fine. Documented in README; optional
@@ -68,9 +71,11 @@ Decision record: [`docs/adr/0001-why-proxy-and-go.md`](docs/adr/0001-why-proxy-a
 - `internal/proxy/connwriter.go` — `connResponseWriter` so the MITM path reuses the same relay
   code as plain HTTP (writes a response back over the raw TLS conn).
 - `internal/ui/ui.go` + `internal/ui/static/index.html` — the inspection UI: a `RecordSource`
-  interface (`List()` + `Get(id)`, satisfied by `*capture.Store`), JSON endpoints
-  `/api/requests` (list) and `/api/requests/{id}` (full detail with headers + bodies), and an
-  embedded static page that polls the list and opens a detail drawer on click.
+  interface (`List()` + `Get(id)` + `Clear()`, satisfied by `*capture.Store`), JSON endpoints
+  `/api/requests` (list), `/api/requests/{id}` (detail), `POST /api/clear`, and an embedded page
+  that polls the list, filters client-side, opens a detail drawer, and clears.
+- `internal/rules/rules.go` — pure rule model + matcher (`Rule`, `Condition`, `ActionType`,
+  `Set.Match`/`FirstMatch`). No net/http coupling; the proxy adapts its request into `rules.Request`.
 - `cmd/proxy/main.go` — wires the CA + leaf cache + `MultiObserver(StdoutLogger, store)` + the UI
   server, flags `--port`, `--ui-port`, `--cert-dir`, `--export-ca`, `--no-mitm-hosts`, graceful
   shutdown of both servers.
@@ -127,28 +132,29 @@ Current relevant state:
 - The legacy TS rule engine lives in `legacy/abandoned/packages/rule-engine` — **conceptual
   reference only; re-implement in Go, do not import it.**
 
-Slices (map to BACKLOG P3-01 → P3-06):
+P3-01 is DONE: `internal/rules` has the pure model + matcher. Remaining slices wire actions into
+the proxy. **The main new work for P3-02 is: load rules + give the proxy a rule set + apply the
+first short-circuit action in `serveRelayed`.**
 
-1. **P3-01 — rule model + matching (`internal/rules`), pure + fully unit-tested.** Define a `Rule`
-   (condition: URL substring/method; action + action params) and a pure `Match(req) []Rule` style
-   function. No `net/http` server coupling in the matching core if avoidable; match on method +
-   URL string. Unit-test matching thoroughly FIRST (this is the piece that most benefits from
-   tests). No proxy wiring yet.
-2. **P3-02 — block:** a matching request returns a configured failure instead of relaying. Wire
-   into `serveRelayed` before `relay`. **Verify:** the client sees the request blocked.
-3. **P3-03 — redirect:** matching request is redirected to a new URL. **Verify** in the client.
-4. **P3-04 — header rewrite** (request + response): add/remove headers on match. **Verify** in
-   capture detail.
-5. **P3-05 — mock response:** return a synthetic status+body without hitting origin. **Verify.**
-6. **P3-06 — response-body rewrite:** modify the response body before it reaches the client.
-   **Verify.**
+1. **P3-02 — block (first proxy wiring).**
+   a. Add a way to load rules. Simplest: a `--rules <file.json>` flag in `main.go` that
+      unmarshals a `[]rules.Rule` (the struct already has JSON tags) into a `rules.Set`. Empty/no
+      flag = no rules (current behavior).
+   b. Give `Proxy` a rule set (e.g. `WithRules(*rules.Set)`, like `WithMITM`). In `serveRelayed`,
+      before calling `relay`, build a `rules.Request{Method, URL: loggedURL}` and call
+      `set.FirstMatch(req, rules.ActionBlock, ...)`. For a block match, write a configured
+      failure (e.g. 403) and record the exchange with a note, instead of relaying.
+   c. **Verify running:** start with a rules file blocking a host; `curl` through the proxy to
+      that host returns the block status; a non-matching host still works. Add a unit test for the
+      block path (a matched block request is not relayed).
+2. **P3-03 redirect**, **P3-04 header rewrite** (request before relay, response after),
+   **P3-05 mock response** (synthetic, skip origin), **P3-06 response-body rewrite** (literal
+   `BodySearch`→`BodyReplace` on the captured response body before writing to client). One slice
+   at a time, each runtime-verified.
 
-How rules get configured: start simple — a `--rules <file.json>` flag loaded at startup is enough
-for P3-01/02. A UI for editing rules can come later; do not block the engine on it. Decide and
-note the choice in an ADR if it is non-obvious.
-
-Design notes: keep the matching core pure and tested; keep proxy wiring thin. A C compiler is NOT
-installed, so `go test -race` cannot run here.
+Design notes: keep the matching core pure (done); keep proxy wiring thin — `serveRelayed` is the
+single hook point for both HTTP and decrypted HTTPS, so wiring once covers both. A C compiler is
+NOT installed, so `go test -race` cannot run here.
 
 Validate every slice with: `go build ./...` · `go test ./...` · `go vet ./...` · `gofmt -l .` ·
 then run it and confirm the behavior. Update this file + `BACKLOG.md` with evidence; commit.
