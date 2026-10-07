@@ -15,11 +15,22 @@ Each item: an ID, what it delivers, how you prove it works (acceptance), and dep
 Goal: the smallest proxy that actually intercepts and captures traffic. No HTTPS, no UI, no rules
 yet. This is the "capture works" milestone on the new stack.
 
-| ID    | Deliverable                                        | Acceptance (runtime-verifiable)                                                                                   | Status | Deps  |
-| ----- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------ | ----- |
-| P0-01 | HTTP forward proxy, `cmd/proxy`                    | `go run ./cmd/proxy` starts on a port; a client configured to use it loads an **http://** site successfully       | Todo   | —     |
-| P0-02 | In-memory capture store (`internal/capture`)       | Each proxied request/response is recorded (method, URL, status, timing); unit-tested; printed to stdout on the fly | Todo   | P0-01 |
-| P0-03 | Graceful start/stop + config (port flag)           | `--port` flag works; Ctrl-C shuts down cleanly without dropping in-flight connections                             | Todo   | P0-01 |
+| ID    | Deliverable                                  | Acceptance (runtime-verifiable)                                                                                    | Status   | Deps  |
+| ----- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | -------- | ----- |
+| P0-01 | HTTP forward proxy, `cmd/proxy`              | `go run ./cmd/proxy` starts on a port; a client configured to use it loads an **http://** site successfully        | **Done** | —     |
+| P0-02 | In-memory capture store (`internal/capture`) | Each proxied request/response is recorded (method, URL, status, timing); unit-tested; printed to stdout on the fly  | Todo     | P0-01 |
+| P0-03 | Graceful start/stop + config (port flag)     | `--port` flag works; Ctrl-C shuts down cleanly without dropping in-flight connections                              | **Done** | P0-01 |
+
+> **P0-01 evidence (2026-10-07):** `go run ./cmd/proxy --port 8080` started; a real request to
+> `http://example.com` through the proxy returned 200 with the real page body, and the proxy
+> logged `GET http://example.com/ -> 200`. Unit test `TestProxyRelaysAndObserves` covers the
+> full relay+observe path; `TestConnectRejectedInPhase0` confirms CONNECT is cleanly refused
+> until P1. **P0-03 evidence:** `--port` flag honored; `main.go` installs a SIGINT/SIGTERM
+> handler and calls `srv.Shutdown` with a 5s timeout.
+>
+> **P0-02 is the current `internal/proxy` has an `Observer` seam already** (`StdoutLogger` is
+> one implementation) — the capture store should be a second `Observer` so no proxy code
+> changes. See "Next step for the AI" in `PROJECT_STATE.md`.
 
 ## Phase 1 — HTTPS interception (the hard, defining capability)
 

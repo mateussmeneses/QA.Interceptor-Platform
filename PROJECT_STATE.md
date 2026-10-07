@@ -17,15 +17,27 @@ Decision record: [`docs/adr/0001-why-proxy-and-go.md`](docs/adr/0001-why-proxy-a
 
 ## 2. Current state (honest)
 
-**Foundation phase.** The repository has just been pivoted from the old TypeScript MV3 extension
-to a fresh Go project.
+**Phase 0 in progress — the walking skeleton proxy works.**
 
 - ✅ Old extension archived read-only in `legacy/abandoned/`.
-- ✅ Repository foundation created: `go.mod`, `.gitignore`, compass docs (`AGENTS.md`,
-  `CLAUDE.md`, `KIRO.md`), ADR-0001, this file, `BACKLOG.md`.
-- ✅ Go 1.27 toolchain confirmed installed.
-- ⬜ **No Go application code written yet.** `cmd/` and `internal/` are empty or not created.
-- ⬜ The proxy does not exist yet. First functional slice is backlog item **P0-01**.
+- ✅ Repository foundation: `go.mod`, `.gitignore`, compass docs (`AGENTS.md`, `CLAUDE.md`,
+  `KIRO.md`), steering (`.kiro/steering/project.md`), ADR-0001, this file, `BACKLOG.md`.
+- ✅ Go 1.27 toolchain confirmed installed (`C:\Program Files\Go\bin\go.exe`).
+- ✅ **P0-01 DONE (verified running):** forward HTTP proxy in `internal/proxy/proxy.go` +
+  entry point `cmd/proxy/main.go`. A real request to `http://example.com` through
+  `go run ./cmd/proxy` returned 200 and was logged. Tests green (`internal/proxy/proxy_test.go`).
+- ✅ **P0-03 DONE:** `--port` flag + graceful SIGINT/SIGTERM shutdown in `main.go`.
+- ⬜ **P0-02 TODO:** in-memory capture store (`internal/capture`). This is the next task.
+- ⬜ HTTPS MITM (Phase 1), UI (Phase 2), rules/mocks (Phase 3) not started.
+
+### What exists in code
+
+- `internal/proxy/proxy.go` — `Proxy` (an `http.Handler`), `ListenAndServe`, and an **`Observer`
+  seam**: the proxy reports each `Exchange` (method, URL, status, duration, err) to an `Observer`.
+  `StdoutLogger()` is the only implementation so far. CONNECT (HTTPS) is cleanly refused with 501
+  until Phase 1.
+- `cmd/proxy/main.go` — wires `StdoutLogger`, `--port`, graceful shutdown.
+- `internal/proxy/proxy_test.go` — full relay+observe test and a CONNECT-refused test.
 
 ## 3. Architecture (target)
 
@@ -62,9 +74,37 @@ go run ./cmd/proxy  # once P0-01 lands
 shared types, the plain-TS side panel UI, and extensive (over-grown) documentation. **Do not
 import or edit it.** Use it only to understand prior logic when porting a feature to Go.
 
-## 6. Recommended next task
+## 6. Next step for the AI (read this if you are a new session)
 
-**P0-01** in `BACKLOG.md`: a minimal HTTP proxy that forwards traffic and captures it in memory,
-printed to stdout. This is the smallest slice that proves the new platform works end to end —
-the equivalent of "capture works", which was the one thing confirmed working in the old
-extension.
+**Task: implement P0-02 — in-memory capture store (`internal/capture`).**
+
+Context so you don't get lost:
+
+- The proxy already emits every exchange through the `proxy.Observer` interface
+  (`internal/proxy/proxy.go`). `StdoutLogger()` is one observer. **Do not change the proxy to add
+  capture** — instead build the store as a *second* observer.
+- Create package `internal/capture` with a `Store` that implements `proxy.Observer` (i.e. has an
+  `Observe(proxy.Exchange)` method), keeps records in memory (thread-safe — the proxy serves
+  concurrently, so guard with a mutex), assigns each an ID + timestamp, and exposes a `List()`
+  (or similar) read method. Add a bound/cap so memory can't grow forever.
+- Wire it in `cmd/proxy/main.go`: construct the store, pass it (alongside or instead of the
+  stdout logger) to `ListenAndServe`. If you want both logging and capture, add a small
+  multi-observer helper, or have `main` fan out — keep it simple.
+- **Acceptance (golden rule):** unit-test the store (concurrent writes, ordering, cap). Then run
+  the proxy, send a couple of requests through it, and confirm they are captured (e.g. a temporary
+  stdout dump of `Store.List()` on shutdown, or a tiny debug print). Record the evidence in this
+  file and flip P0-02 to Done in `BACKLOG.md`.
+
+Validate with: `go build ./...` · `go test ./...` · `go vet ./...` · `gofmt -l .` · run it.
+
+After P0-02, the next milestone is **Phase 1 (HTTPS MITM, P1-01 → P1-04)** — the defining
+capability. Capture (P0-02) is a prerequisite for the UI (Phase 2).
+
+## 7. How to run what exists today
+
+```bash
+go run ./cmd/proxy --port 8080
+# then point an HTTP client at 127.0.0.1:8080, e.g.:
+#   curl -x http://127.0.0.1:8080 http://example.com
+# HTTPS does not work yet (Phase 1). Ctrl-C stops the proxy cleanly.
+```
